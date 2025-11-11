@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscripciones - Piso Cinco</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <a href="/dashboard" class="text-gray-600 hover:text-blue-600 transition-colors duration-300">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Volver al Dashboard
+                    </a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="w-10 h-10 flex items-center justify-center">
+                        <img src="/1.png" alt="Logo Piso Cinco" class="w-8 h-8 object-contain">
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-gray-800">Piso Cinco</h1>
+                        <p class="text-gray-600 text-sm">Gestión de Inscripciones</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Page Header -->
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">
+                <i class="fas fa-users mr-3 text-blue-600"></i>
+                Todas las Inscripciones
+            </h2>
+            <p class="text-gray-600">Consulta y gestiona todos los registros de inscripción con sus resultados</p>
+        </div>
+
+        <!-- Stats Summary -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">Total Inscripciones</p>
+                        <p class="text-3xl font-bold text-gray-800" th:text="${#lists.size(inscripciones)}">0</p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-users text-blue-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">Aprobados</p>
+                        <p class="text-3xl font-bold text-green-600" th:text="${#lists.size(inscripciones.?[aprobado == true])}">0</p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">Desaprobados</p>
+                        <p class="text-3xl font-bold text-red-600" th:text="${#lists.size(inscripciones.?[aprobado == false])}">0</p>
+                    </div>
+                    <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-times-circle text-red-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">Promedio General</p>
+                        <p class="text-3xl font-bold text-purple-600" th:text="${#numbers.formatDecimal(promedioGeneral, 1, 1)}">0.0</p>
+                    </div>
+                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-star text-purple-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtros de Búsqueda -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-800">
+                    <i class="fas fa-search mr-2 text-blue-600"></i>
+                    Filtros de Búsqueda
+                </h3>
+                <button type="button" onclick="limpiarFiltros()" class="text-sm text-gray-500 hover:text-gray-700 transition-colors duration-200">
+                    <i class="fas fa-times mr-1"></i>
+                    Limpiar Filtros
+                </button>
+            </div>
+            
+            <form th:action="@{/inscripciones}" method="get" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Filtro por DNI -->
+                <div>
+                    <label for="dni" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-id-card mr-1"></i>
+                        DNI
+                    </label>
+                    <input type="text" 
+                           id="dni" 
+                           name="dni" 
+                           th:value="${param.dni}"
+                           placeholder="Ej: 12345678"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200">
+                </div>
+                
+                <!-- Filtro por CUIL -->
+                <div>
+                    <label for="cuil" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-id-badge mr-1"></i>
+                        CUIL
+                    </label>
+                    <input type="text" 
+                           id="cuil" 
+                           name="cuil" 
+                           th:value="${param.cuil}"
+                           placeholder="Ej: 20123456789"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200">
+                </div>
+                
+                <!-- Filtro por Email -->
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-envelope mr-1"></i>
+                        Correo Electrónico
+                    </label>
+                    <input type="email" 
+                           id="email" 
+                           name="email" 
+                           th:value="${param.email}"
+                           placeholder="Ej: usuario@email.com"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200">
+                </div>
+                
+                <!-- Botones de acción -->
+                <div class="md:col-span-3 flex justify-end space-x-3">
+                    <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                        <i class="fas fa-search mr-2"></i>
+                        Buscar
+                    </button>
+                    <a th:href="@{/inscripciones}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                        <i class="fas fa-refresh mr-2"></i>
+                        Ver Todos
+                    </a>
+                    <a th:href="@{/inscripciones/excel}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200">
+                        <i class="fas fa-file-excel mr-2"></i>
+                        Descargar Excel
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Table Container -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-xl font-semibold text-gray-800">
+                    <i class="fas fa-table mr-2 text-blue-600"></i>
+                    Lista de Inscripciones
+                </h3>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <i class="fas fa-user mr-2"></i>Datos Personales
+                            </th>
+
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <i class="fas fa-code mr-2"></i>Programación
+                            </th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <i class="fas fa-brain mr-2"></i>Lógica
+                            </th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <i class="fas fa-calculator mr-2"></i>Matemática
+                            </th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <i class="fas fa-lightbulb mr-2"></i>Creatividad
+                            </th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <i class="fas fa-chart-line mr-2"></i>Promedio
+                            </th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <i class="fas fa-calendar mr-2"></i>Fecha
+                            </th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <i class="fas fa-status mr-2"></i>Estado
+                            </th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <i class="fas fa-file-pdf mr-2"></i>Acciones
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr th:each="inscripcion : ${inscripciones}" class="hover:bg-gray-50 transition-colors duration-200">
+                            <!-- Datos Personales -->
+                            <td class="px-6 py-4">
+                                <div>
+                                    <div class="text-sm font-medium text-gray-900" th:text="${inscripcion.nombre + ' ' + inscripcion.apellido}">Juan Doe</div>
+                                    <div class="text-sm text-gray-500" th:text="${inscripcion.email}">juan@example.com</div>
+                                    <div class="text-xs text-gray-400">
+                                        <span class="font-medium">DNI:</span> <span th:text="${inscripcion.dni}">12345678</span> | 
+                                        <span class="font-medium">CUIL:</span> <span th:text="${inscripcion.cuil}">20123456789</span>
+                                    </div>
+                                </div>
+                            </td>
+                            
+
+                            
+                            <!-- Programación Básica -->
+                            <td class="px-6 py-4">
+                                <div class="flex items-center">
+                                    <div class="w-16 bg-gray-200 rounded-full h-2 mr-2">
+                                        <div class="bg-blue-600 h-2 rounded-full" th:style="'width: ' + ${inscripcion.programacionBasica != null ? inscripcion.programacionBasica : 0} + '%'"></div>
+                                    </div>
+                                    <span class="text-sm font-medium text-gray-900" th:text="${inscripcion.programacionBasica != null ? inscripcion.programacionBasica + '%' : 'N/A'}">85%</span>
+                                </div>
+                            </td>
+                            
+                            <!-- Lógica -->
+                            <td class="px-6 py-4">
+                                <div class="flex items-center">
+                                    <div class="w-16 bg-gray-200 rounded-full h-2 mr-2">
+                                        <div class="bg-green-600 h-2 rounded-full" th:style="'width: ' + ${inscripcion.estructurasDatos != null ? inscripcion.estructurasDatos : 0} + '%'"></div>
+                                    </div>
+                                    <span class="text-sm font-medium text-gray-900" th:text="${inscripcion.estructurasDatos != null ? inscripcion.estructurasDatos + '%' : 'N/A'}">92%</span>
+                                </div>
+                            </td>
+                            
+                            <!-- Matemática -->
+                            <td class="px-6 py-4">
+                                <div class="flex items-center">
+                                    <div class="w-16 bg-gray-200 rounded-full h-2 mr-2">
+                                        <div class="bg-purple-600 h-2 rounded-full" th:style="'width: ' + ${inscripcion.algoritmos != null ? inscripcion.algoritmos : 0} + '%'"></div>
+                                    </div>
+                                    <span class="text-sm font-medium text-gray-900" th:text="${inscripcion.algoritmos != null ? inscripcion.algoritmos + '%' : 'N/A'}">78%</span>
+                                </div>
+                            </td>
+                            
+                            <!-- Creatividad -->
+                            <td class="px-6 py-4">
+                                <div class="flex items-center">
+                                    <div class="w-16 bg-gray-200 rounded-full h-2 mr-2">
+                                        <div class="bg-orange-600 h-2 rounded-full" th:style="'width: ' + ${inscripcion.baseDatos != null ? inscripcion.baseDatos : 0} + '%'"></div>
+                                    </div>
+                                    <span class="text-sm font-medium text-gray-900" th:text="${inscripcion.baseDatos != null ? inscripcion.baseDatos + '%' : 'N/A'}">88%</span>
+                                </div>
+                            </td>
+                            
+                            <!-- Promedio -->
+                            <td class="px-6 py-4">
+                                <div class="flex items-center">
+                                    <div class="w-16 bg-gray-200 rounded-full h-2 mr-2">
+                                        <div class="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full" th:style="'width: ' + ${inscripcion.promedio != null ? inscripcion.promedio : 0} + '%'"></div>
+                                    </div>
+                                    <span class="text-sm font-bold" th:class="${inscripcion.promedio != null && inscripcion.promedio >= 70 ? 'text-green-600' : 'text-red-600'}" th:text="${inscripcion.promedio != null ? #numbers.formatDecimal(inscripcion.promedio, 1, 1) + '%' : 'N/A'}">85.8%</span>
+                                </div>
+                            </td>
+                            
+                            <!-- Fecha -->
+                            <td class="px-6 py-4 text-sm text-gray-900" th:text="${inscripcion.fechaExamen}">15/12/2024 14:30</td>
+                            
+                            <!-- Estado -->
+                            <td class="px-6 py-4">
+                                <span th:if="${inscripcion.aprobado == true}" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    <i class="fas fa-check-circle mr-1"></i>
+                                    Aprobado
+                                </span>
+                                <span th:if="${inscripcion.aprobado == false}" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    <i class="fas fa-times-circle mr-1"></i>
+                                    No Aprobado
+                                </span>
+                                <span th:if="${inscripcion.aprobado == null}" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                    <i class="fas fa-clock mr-1"></i>
+                                    Pendiente
+                                </span>
+                            </td>
+                            
+                            <!-- Acciones -->
+                            <td class="px-6 py-4">
+                                <div class="flex items-center space-x-2">
+                                    <!-- Botón PDF Solo Resultado -->
+                                    <a th:href="@{/pdf/solo-resultado/{id}(id=${inscripcion.id})}" 
+                                       class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200"
+                                       title="Descargar PDF Solo Resultado">
+                                        <i class="fas fa-file-pdf mr-1"></i>
+                                        Resultado
+                                    </a>
+                                    
+                                    <!-- Botón PDF Completo -->
+                                    <a th:href="@{/pdf/resultado-completo/{id}(id=${inscripcion.id})}" 
+                                       class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200"
+                                       title="Descargar PDF Completo">
+                                        <i class="fas fa-file-pdf mr-1"></i>
+                                        Completo
+                                    </a>
+                                    
+                                    <!-- Botón PDF Admin (Completo con Preguntas) -->
+                                    <a th:href="@{/pdf/admin/completo/{id}(id=${inscripcion.id})}" 
+                                       class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors duration-200"
+                                       title="Descargar PDF Completo con Preguntas (Admin)">
+                                        <i class="fas fa-file-pdf mr-1"></i>
+                                        Admin
+                                    </a>
+                                    
+                                    <!-- Botón Ver Recomendaciones -->
+                                    <a th:href="@{/recomendaciones/{id}(id=${inscripcion.id})}" 
+                                       target="_blank"
+                                       class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+                                       title="Ver Recomendaciones en Nueva Ventana">
+                                        <i class="fas fa-lightbulb mr-1"></i>
+                                        Recomendaciones
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- PDF Legend -->
+            <div class="p-6 bg-gray-50 border-t border-gray-200">
+                <h5 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                    <i class="fas fa-info-circle mr-2 text-blue-600"></i>Información de Exportación
+                </h5>
+                <div class="grid md:grid-cols-5 gap-4 text-sm">
+                    <div class="flex items-center">
+                        <div class="w-6 h-6 bg-red-100 rounded mr-3 flex items-center justify-center">
+                            <i class="fas fa-file-pdf text-red-600 text-xs"></i>
+                        </div>
+                        <span class="text-gray-700"><strong>Resultado:</strong> Solo porcentajes y estado</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-6 h-6 bg-green-100 rounded mr-3 flex items-center justify-center">
+                            <i class="fas fa-file-pdf text-green-600 text-xs"></i>
+                        </div>
+                        <span class="text-gray-700"><strong>Completo:</strong> Resultado + recomendaciones</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-6 h-6 bg-purple-100 rounded mr-3 flex items-center justify-center">
+                            <i class="fas fa-file-pdf text-purple-600 text-xs"></i>
+                        </div>
+                        <span class="text-gray-700"><strong>Admin:</strong> Completo + preguntas y respuestas</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-6 h-6 bg-blue-100 rounded mr-3 flex items-center justify-center">
+                            <i class="fas fa-lightbulb text-blue-600 text-xs"></i>
+                        </div>
+                        <span class="text-gray-700"><strong>Recomendaciones:</strong> Ver en nueva ventana</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-6 h-6 bg-green-100 rounded mr-3 flex items-center justify-center">
+                            <i class="fas fa-file-excel text-green-600 text-xs"></i>
+                        </div>
+                        <span class="text-gray-700"><strong>Excel:</strong> Datos completos con 5 hojas</span>
+                    </div>
+                </div>
+                <div class="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <h6 class="font-semibold text-blue-800 mb-2 flex items-center">
+                        <i class="fas fa-file-excel mr-2"></i>
+                        Archivo Excel Completo
+                    </h6>
+                    <p class="text-blue-700 text-sm">
+                        El archivo Excel incluye 5 hojas: <strong>Resumen</strong> (datos principales), 
+                        <strong>Datos Personales</strong> (información de contacto), <strong>Resultados por Área</strong> (porcentajes detallados), 
+                        <strong>Preguntas y Respuestas</strong> (respuestas individuales) y <strong>Estadísticas</strong> (métricas generales).
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Empty State -->
+            <div th:if="${#lists.isEmpty(inscripciones)}" class="text-center py-12">
+                <i class="fas fa-inbox text-4xl text-gray-400 mb-4"></i>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">No hay inscripciones</h3>
+                <p class="text-gray-500">Aún no se han registrado inscripciones en el sistema.</p>
+                <a href="/" class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-300">
+                    <i class="fas fa-plus mr-2"></i>
+                    Crear Primera Inscripción
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 mt-12">
+        <div class="container mx-auto px-4 py-6">
+            <div class="text-center text-gray-600 text-sm">
+                <p>© 2024 Piso Cinco. Todos los derechos reservados.</p>
+                <p class="mt-1">Sistema de Administración - Versión 1.0</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript para funcionalidad de filtros -->
+    <script>
+        function limpiarFiltros() {
+            document.getElementById('dni').value = '';
+            document.getElementById('cuil').value = '';
+            document.getElementById('email').value = '';
+            window.location.href = '/inscripciones';
+        }
+    </script>
+</body>
+</html> 

@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Examen de Conocimientos - Piso Cinco</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-white min-h-screen font-sans">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <!-- Header -->
+            <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden mb-6">
+                <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h1 class="text-2xl font-bold mb-2">
+                                <i class="fas fa-clipboard-check mr-3"></i>Examen de Conocimientos
+                            </h1>
+                            <p class="text-blue-100">32 preguntas múltiple choice - 4 áreas de conocimiento</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-3xl font-bold" id="timer">60:00</div>
+                            <div class="text-sm text-blue-100">Tiempo restante</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Progress Bar -->
+                <div class="p-6 bg-white">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-gray-700">Progreso del examen</span>
+                        <span class="text-sm font-medium text-gray-700">
+                            <span id="preguntaActual">1</span> de <span id="totalPreguntas">32</span>
+                        </span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-3">
+                        <div class="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-500" 
+                             id="progressBar" style="width: 3.125%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Candidate Info -->
+            <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-6 mb-6">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mr-4">
+                        <i class="fas fa-user text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800" th:text="${persona.nombre + ' ' + persona.apellido}">
+                            Juan Pérez
+                        </h3>
+                        <p class="text-gray-600" th:text="${persona.email}">juan@email.com</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Exam Form -->
+            <form id="examForm" th:action="@{/examen/finalizar}" method="post" class="space-y-6">
+                <input type="hidden" name="examenId" th:value="${examen.id}">
+                
+                <!-- Questions Container -->
+                <div id="questionsContainer">
+                    <!-- Las preguntas se cargarán dinámicamente -->
+                </div>
+
+                <!-- Navigation Buttons -->
+                <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-6">
+                    <div class="flex justify-between items-center">
+                        <button type="button" id="prevBtn" class="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <i class="fas fa-arrow-left mr-2"></i>Anterior
+                        </button>
+                        
+                        <div class="flex space-x-2">
+                            <button type="button" id="nextBtn" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                                Siguiente<i class="fas fa-arrow-right ml-2"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Submit Button (hidden until last question) -->
+                    <div class="mt-4 text-center" id="submitSection" style="display: none;">
+                        <button type="button" onclick="enviarExamen()" class="px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-lg hover:from-green-700 hover:to-emerald-700 transform hover:scale-105 transition-all duration-200 shadow-lg">
+                            <i class="fas fa-check mr-2"></i>Finalizar Examen
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Question Navigation Modal -->
+    <div id="questionModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-96 overflow-y-auto">
+                <div class="p-6 border-b border-gray-200">
+                    <h3 class="text-xl font-bold text-gray-800">Navegación de Preguntas</h3>
+                    <p class="text-gray-600 mt-2">Haz clic en una pregunta para ir directamente a ella</p>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-8 gap-2" id="questionGrid">
+                        <!-- Los botones de preguntas se generarán dinámicamente -->
+                    </div>
+                </div>
+                <div class="p-6 border-t border-gray-200">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center space-x-4">
+                            <div class="flex items-center">
+                                <div class="w-4 h-4 bg-gray-300 rounded mr-2"></div>
+                                <span class="text-sm text-gray-600">Sin responder</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-4 h-4 bg-blue-500 rounded mr-2"></div>
+                                <span class="text-sm text-gray-600">Respondida</span>
+                            </div>
+                        </div>
+                        <button type="button" id="closeModal" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors duration-200">
+                            Cerrar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        // Datos del examen
+        const examData = {
+            examenId: /*[[${examen.id}]]*/ null,
+            totalPreguntas: 32,
+            tiempoLimite: 60 * 60, // 60 minutos en segundos
+            tiempoRestante: 60 * 60,
+            preguntaActual: 1,
+            respuestas: {},
+            preguntas: []
+        };
+        
+        // Cargar preguntas desde el endpoint REST
+        async function cargarPreguntasExamen() {
+            try {
+                console.log('Cargando preguntas para examen:', examData.examenId);
+                
+                // Primero probar el endpoint de test
+                console.log('Probando endpoint de test...');
+                const testResponse = await fetch('/api/test');
+                if (!testResponse.ok) {
+                    throw new Error(`Test endpoint failed: ${testResponse.status}`);
+                }
+                const testResult = await testResponse.json();
+                console.log('Test endpoint OK:', testResult);
+                
+                // Ahora cargar las preguntas
+                const response = await fetch(`/api/examen/${examData.examenId}/preguntas`);
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Error response:', errorText);
+                    throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
+                }
+                
+                const data = await response.json();
+                console.log('Datos recibidos:', data);
+                
+                if (data.preguntas) {
+                    examData.preguntas = data.preguntas;
+                    examData.totalPreguntas = data.totalPreguntas || data.preguntas.length;
+                    console.log('Preguntas cargadas exitosamente:', examData.preguntas.length);
+                } else {
+                    throw new Error('Formato de respuesta inválido: no se encontraron preguntas');
+                }
+                
+                // Inicializar el examen después de cargar las preguntas
+                inicializarExamen();
+                
+            } catch (error) {
+                console.error('Error al cargar preguntas:', error);
+                questionsContainer.innerHTML = '<div class="bg-red-100 p-4 rounded">Error al cargar las preguntas del examen: ' + error.message + '</div>';
+            }
+        }
+
+        // Elementos del DOM
+        const questionsContainer = document.getElementById('questionsContainer');
+        const progressBar = document.getElementById('progressBar');
+        const preguntaActualSpan = document.getElementById('preguntaActual');
+        const totalPreguntasSpan = document.getElementById('totalPreguntas');
+        const timer = document.getElementById('timer');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const submitSection = document.getElementById('submitSection');
+        const examForm = document.getElementById('examForm');
+
+        // Inicializar el examen
+        function inicializarExamen() {
+            console.log('Inicializando examen...');
+            console.log('Datos del examen:', examData);
+            
+            if (!examData.preguntas || examData.preguntas.length === 0) {
+                console.error('No hay preguntas disponibles');
+                questionsContainer.innerHTML = '<div class="bg-red-100 p-4 rounded">Error: No hay preguntas disponibles para el examen</div>';
+                return;
+            }
+            
+            totalPreguntasSpan.textContent = examData.totalPreguntas;
+            cargarPregunta(1);
+            actualizarNavegacion();
+            iniciarTimer();
+        }
+
+        // Cargar una pregunta específica
+        function cargarPregunta(numeroPregunta) {
+            console.log('Cargando pregunta:', numeroPregunta);
+            
+            if (numeroPregunta < 1 || numeroPregunta > examData.totalPreguntas) {
+                console.error('Número de pregunta fuera de rango:', numeroPregunta);
+                return;
+            }
+
+            examData.preguntaActual = numeroPregunta;
+            const pregunta = examData.preguntas[numeroPregunta - 1];
+            
+            if (!pregunta) {
+                console.error('Pregunta no encontrada:', numeroPregunta);
+                console.log('Preguntas disponibles:', examData.preguntas.length);
+                return;
+            }
+
+            console.log('Pregunta cargada:', pregunta);
+
+            // Actualizar UI
+            preguntaActualSpan.textContent = numeroPregunta;
+            const progreso = (numeroPregunta / examData.totalPreguntas) * 100;
+            progressBar.style.width = progreso + '%';
+
+            // Generar HTML de la pregunta
+            const preguntaHTML = generarHTMLPregunta(pregunta, numeroPregunta);
+            questionsContainer.innerHTML = preguntaHTML;
+
+            // Restaurar respuesta si existe
+            if (examData.respuestas[pregunta.id]) {
+                const radioButton = document.querySelector(`input[name="pregunta_${numeroPregunta}"][value="${examData.respuestas[pregunta.id]}"]`);
+                if (radioButton) {
+                    radioButton.checked = true;
+                }
+            }
+
+            // Actualizar navegación
+            actualizarNavegacion();
+        }
+
+        // Generar HTML para una pregunta
+        function generarHTMLPregunta(pregunta, numeroPregunta) {
+            console.log('Generando HTML para pregunta:', pregunta);
+            
+            if (!pregunta) {
+                console.error('Pregunta es null o undefined');
+                return '<div class="bg-red-100 p-4 rounded">Error: Pregunta no disponible</div>';
+            }
+            
+            const opciones = pregunta.opciones || [];
+            console.log('Opciones encontradas:', opciones.length);
+            
+            if (opciones.length === 0) {
+                console.error('No hay opciones para la pregunta:', pregunta.id);
+                return '<div class="bg-red-100 p-4 rounded">Error: No hay opciones disponibles</div>';
+            }
+            
+            const opcionesHTML = opciones.map((opcion, index) => {
+                if (!opcion) {
+                    console.error('Opción es null o undefined en índice:', index);
+                    return '';
+                }
+                
+                return `
+                    <div class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200 cursor-pointer">
+                        <input type="radio" 
+                               name="pregunta_${numeroPregunta}" 
+                               value="${opcion.orden || index + 1}" 
+                               id="opcion_${numeroPregunta}_${opcion.orden || index + 1}"
+                               class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                               onchange="guardarRespuesta(${numeroPregunta}, ${opcion.orden || index + 1})">
+                        <label for="opcion_${numeroPregunta}_${opcion.orden || index + 1}" class="ml-3 text-gray-700 cursor-pointer flex-1">
+                            ${opcion.texto || 'Opción sin texto'}
+                        </label>
+                    </div>
+                `;
+            }).join('');
+
+            return `
+                <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8">
+                    <div class="mb-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-xl font-bold text-gray-800">Pregunta ${numeroPregunta}</h2>
+                            <span class="text-sm text-gray-500">${pregunta.areaConocimiento || 'Sin área'}</span>
+                        </div>
+                        <p class="text-lg text-gray-700 leading-relaxed">${pregunta.enunciado || 'Sin enunciado'}</p>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        ${opcionesHTML}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Guardar respuesta
+        function guardarRespuesta(numeroPregunta, respuesta) {
+            // Obtener la pregunta actual para acceder a su ID
+            const pregunta = examData.preguntas[numeroPregunta - 1];
+            if (pregunta && pregunta.id) {
+                examData.respuestas[pregunta.id] = respuesta;
+            } else {
+                console.error('No se pudo obtener el ID de la pregunta:', numeroPregunta);
+            }
+            actualizarNavegacion();
+        }
+
+        // Actualizar navegación
+        function actualizarNavegacion() {
+            const numeroPregunta = examData.preguntaActual;
+            
+            // Botón anterior
+            prevBtn.disabled = numeroPregunta === 1;
+            
+            // Botón siguiente
+            if (numeroPregunta === examData.totalPreguntas) {
+                nextBtn.style.display = 'none';
+                submitSection.style.display = 'block';
+            } else {
+                nextBtn.style.display = 'inline-flex';
+                submitSection.style.display = 'none';
+            }
+        }
+
+        // Navegación
+        function preguntaAnterior() {
+            if (examData.preguntaActual > 1) {
+                cargarPregunta(examData.preguntaActual - 1);
+            }
+        }
+
+        function preguntaSiguiente() {
+            if (examData.preguntaActual < examData.totalPreguntas) {
+                cargarPregunta(examData.preguntaActual + 1);
+            }
+        }
+
+        // Timer
+        function iniciarTimer() {
+            const interval = setInterval(() => {
+                examData.tiempoRestante--;
+                
+                const minutos = Math.floor(examData.tiempoRestante / 60);
+                const segundos = examData.tiempoRestante % 60;
+                
+                timer.textContent = `${minutos.toString().padStart(2, '0')}:${segundos.toString().padStart(2, '0')}`;
+                
+                if (examData.tiempoRestante <= 0) {
+                    clearInterval(interval);
+                    alert('¡Tiempo agotado! El examen se enviará automáticamente.');
+                    enviarExamen();
+                }
+            }, 1000);
+        }
+
+        // Enviar examen
+        function enviarExamen() {
+            console.log('Iniciando envío del examen...');
+            
+            // Crear el objeto de respuestas para enviar usando los IDs de las preguntas
+            const respuestasData = {};
+            
+            // Iterar sobre todas las preguntas para obtener sus IDs y respuestas
+            examData.preguntas.forEach((pregunta, index) => {
+                const numeroPregunta = index + 1;
+                if (examData.respuestas[pregunta.id]) {
+                    respuestasData[pregunta.id] = examData.respuestas[pregunta.id];
+                }
+            });
+            
+            console.log('Respuestas a enviar:', respuestasData);
+            console.log('JSON de respuestas:', JSON.stringify(respuestasData));
+            
+            // Verificar que el formulario existe
+            if (!examForm) {
+                console.error('Formulario no encontrado!');
+                return;
+            }
+            
+            // Crear un formulario temporal para enviar los datos
+            const tempForm = document.createElement('form');
+            tempForm.method = 'POST';
+            tempForm.action = '/examen/finalizar';
+            
+            // Agregar el examenId
+            const examenIdInput = document.createElement('input');
+            examenIdInput.type = 'hidden';
+            examenIdInput.name = 'examenId';
+            examenIdInput.value = examData.examenId;
+            tempForm.appendChild(examenIdInput);
+            
+            // Agregar las respuestas
+            const respuestasInput = document.createElement('input');
+            respuestasInput.type = 'hidden';
+            respuestasInput.name = 'respuestas';
+            respuestasInput.value = JSON.stringify(respuestasData);
+            tempForm.appendChild(respuestasInput);
+            
+            // Verificar los datos antes de enviar
+            console.log('Datos a enviar:');
+            console.log('examenId:', examData.examenId);
+            console.log('respuestas:', JSON.stringify(respuestasData));
+            
+            // Agregar el formulario al DOM y enviarlo
+            document.body.appendChild(tempForm);
+            tempForm.submit();
+        }
+
+        // Event listeners
+        prevBtn.addEventListener('click', preguntaAnterior);
+        nextBtn.addEventListener('click', preguntaSiguiente);
+
+        // Inicializar cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', cargarPreguntasExamen);
+    </script>
+</body>
+</html> 

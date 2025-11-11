@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Recomendaciones</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-8 text-center">Test de Recomendaciones</h1>
+        
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Diagnóstico de Recomendaciones</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">ID de Persona:</label>
+                    <input type="number" id="personaId" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ingrese el ID de la persona">
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button onclick="diagnosticoCompleto()" class="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
+                        Diagnóstico Completo
+                    </button>
+                    <button onclick="testFlujo()" class="bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors">
+                        Test Flujo Completo
+                    </button>
+                    <button onclick="inicializarPosiciones()" class="bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 transition-colors">
+                        Inicializar Posiciones
+                    </button>
+                    <button onclick="debugSistema()" class="bg-orange-600 text-white py-2 px-4 rounded-md hover:bg-orange-700 transition-colors">
+                        Debug Sistema
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="resultado" class="bg-white rounded-lg shadow-lg p-6 hidden">
+            <h2 class="text-xl font-semibold mb-4">Resultado del Diagnóstico</h2>
+            <pre id="diagnosticoOutput" class="bg-gray-100 p-4 rounded-md text-sm overflow-auto whitespace-pre-wrap"></pre>
+        </div>
+        
+        <div id="error" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded hidden">
+            <strong>Error:</strong> <span id="errorMessage"></span>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-lg p-6 mt-6">
+            <h2 class="text-xl font-semibold mb-4">Enlaces de Prueba</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <a href="/recomendaciones/test" class="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors text-center">
+                    Test Endpoint
+                </a>
+                <a href="/recomendaciones/debug" class="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors text-center">
+                    Debug Sistema
+                </a>
+                <a href="/recomendaciones/init" class="bg-purple-500 text-white py-2 px-4 rounded-md hover:bg-purple-600 transition-colors text-center">
+                    Inicializar Posiciones
+                </a>
+                <a href="/" class="bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600 transition-colors text-center">
+                    Ir al Inicio
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function diagnosticoCompleto() {
+            const personaId = document.getElementById('personaId').value;
+            if (!personaId) {
+                mostrarError('Por favor ingrese un ID de persona');
+                return;
+            }
+            
+            try {
+                // Ocultar resultados anteriores
+                document.getElementById('resultado').classList.add('hidden');
+                document.getElementById('error').classList.add('hidden');
+                
+                // Hacer la petición al endpoint de diagnóstico
+                const response = await fetch(`/recomendaciones/diagnostico/${personaId}`);
+                const data = await response.text();
+                
+                // Mostrar el resultado
+                document.getElementById('diagnosticoOutput').textContent = data;
+                document.getElementById('resultado').classList.remove('hidden');
+                
+            } catch (error) {
+                mostrarError('Error al conectar con el servidor: ' + error.message);
+            }
+        }
+        
+        async function testFlujo() {
+            const personaId = document.getElementById('personaId').value;
+            if (!personaId) {
+                mostrarError('Por favor ingrese un ID de persona');
+                return;
+            }
+            
+            try {
+                // Ocultar resultados anteriores
+                document.getElementById('resultado').classList.add('hidden');
+                document.getElementById('error').classList.add('hidden');
+                
+                // Hacer la petición al endpoint de test flujo
+                const response = await fetch(`/recomendaciones/test-flujo/${personaId}`);
+                const data = await response.text();
+                
+                // Mostrar el resultado
+                document.getElementById('diagnosticoOutput').textContent = data;
+                document.getElementById('resultado').classList.remove('hidden');
+                
+            } catch (error) {
+                mostrarError('Error al conectar con el servidor: ' + error.message);
+            }
+        }
+        
+        async function inicializarPosiciones() {
+            try {
+                // Ocultar resultados anteriores
+                document.getElementById('resultado').classList.add('hidden');
+                document.getElementById('error').classList.add('hidden');
+                
+                // Hacer la petición al endpoint de inicialización
+                const response = await fetch('/recomendaciones/init');
+                const data = await response.text();
+                
+                // Mostrar el resultado
+                document.getElementById('diagnosticoOutput').textContent = data;
+                document.getElementById('resultado').classList.remove('hidden');
+                
+            } catch (error) {
+                mostrarError('Error al conectar con el servidor: ' + error.message);
+            }
+        }
+        
+        async function debugSistema() {
+            try {
+                // Ocultar resultados anteriores
+                document.getElementById('resultado').classList.add('hidden');
+                document.getElementById('error').classList.add('hidden');
+                
+                // Hacer la petición al endpoint de debug
+                const response = await fetch('/recomendaciones/debug');
+                const data = await response.text();
+                
+                // Mostrar el resultado
+                document.getElementById('diagnosticoOutput').textContent = data;
+                document.getElementById('resultado').classList.remove('hidden');
+                
+            } catch (error) {
+                mostrarError('Error al conectar con el servidor: ' + error.message);
+            }
+        }
+        
+        function mostrarError(mensaje) {
+            document.getElementById('errorMessage').textContent = mensaje;
+            document.getElementById('error').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html> 

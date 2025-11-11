@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test de Cálculo de Compatibilidad</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#8B5CF6',
+                        success: '#10B981',
+                        warning: '#F59E0B',
+                        danger: '#EF4444'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-calculator text-primary mr-3"></i>
+                Test de Cálculo de Compatibilidad
+            </h1>
+            <p class="text-lg text-gray-600">Verificación del algoritmo de recomendaciones</p>
+        </div>
+
+        <!-- Resultados -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-6">
+                <i class="fas fa-chart-line text-primary mr-2"></i>Resultados del Test
+            </h2>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full border-collapse border border-gray-300">
+                    <thead>
+                        <tr class="bg-gray-100">
+                            <th class="border border-gray-300 px-4 py-2 text-left font-semibold">Examen</th>
+                            <th class="border border-gray-300 px-4 py-2 text-left font-semibold">Rol</th>
+                            <th class="border border-gray-300 px-4 py-2 text-left font-semibold">Compatibilidad</th>
+                            <th class="border border-gray-300 px-4 py-2 text-left font-semibold">Nivel</th>
+                            <th class="border border-gray-300 px-4 py-2 text-left font-semibold">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="resultado : ${resultados}" 
+                            th:class="${resultado.cumpleRequisitos ? 'bg-green-50' : 'bg-red-50'}">
+                            <td class="border border-gray-300 px-4 py-2" th:text="${resultado.examen}">Examen 1</td>
+                            <td class="border border-gray-300 px-4 py-2" th:text="${resultado.rol}">Frontend Developer</td>
+                            <td class="border border-gray-300 px-4 py-2 font-mono" 
+                                th:text="${#numbers.formatDecimal(resultado.compatibilidad, 1, 1)} + '%'">85.0%</td>
+                            <td class="border border-gray-300 px-4 py-2">
+                                <span th:class="${resultado.nivelCompatibilidad == 'Excelente' ? 'text-green-600' : 
+                                                resultado.nivelCompatibilidad == 'Muy Buena' ? 'text-blue-600' :
+                                                resultado.nivelCompatibilidad == 'Buena' ? 'text-yellow-600' :
+                                                resultado.nivelCompatibilidad == 'Regular' ? 'text-orange-600' : 'text-red-600'}"
+                                      th:text="${resultado.nivelCompatibilidad}">Muy Buena</span>
+                            </td>
+                            <td class="border border-gray-300 px-4 py-2">
+                                <span th:if="${resultado.cumpleRequisitos}" 
+                                      class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm font-medium">
+                                    <i class="fas fa-check mr-1"></i>CUMPLE
+                                </span>
+                                <span th:unless="${resultado.cumpleRequisitos}" 
+                                      class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-sm font-medium">
+                                    <i class="fas fa-times mr-1"></i>NO CUMPLE
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Explicación del Algoritmo -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-6">
+                <i class="fas fa-info-circle text-primary mr-2"></i>Explicación del Algoritmo
+            </h2>
+            
+            <div class="space-y-4">
+                <div class="bg-blue-50 border-l-4 border-blue-400 p-4">
+                    <h3 class="font-semibold text-blue-800 mb-2">1. Verificación de Requisitos Mínimos</h3>
+                    <p class="text-blue-700">Si el candidato no cumple algún requisito mínimo, la compatibilidad es 0%.</p>
+                </div>
+                
+                <div class="bg-green-50 border-l-4 border-green-400 p-4">
+                    <h3 class="font-semibold text-green-800 mb-2">2. Cálculo de Score por Área</h3>
+                    <p class="text-green-700">Para cada área que cumple el mínimo:</p>
+                    <ul class="text-green-700 ml-4 mt-2">
+                        <li>• 100% si cumple exactamente el mínimo</li>
+                        <li>• Hasta 120% si supera el mínimo (bonificación por excelencia)</li>
+                        <li>• 0% si no cumple el mínimo</li>
+                    </ul>
+                </div>
+                
+                <div class="bg-purple-50 border-l-4 border-purple-400 p-4">
+                    <h3 class="font-semibold text-purple-800 mb-2">3. Cálculo Ponderado Final</h3>
+                    <p class="text-purple-700">Compatibilidad = (Score₁ × Peso₁ + Score₂ × Peso₂ + ...) / PesoTotal</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Casos de Prueba -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-6">
+                <i class="fas fa-flask text-primary mr-2"></i>Casos de Prueba
+            </h2>
+            
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="bg-blue-50 rounded-lg p-4">
+                    <h3 class="font-semibold text-blue-800 mb-2">Examen 1: Bueno en Todo</h3>
+                    <ul class="text-blue-700 text-sm space-y-1">
+                        <li>• Lógica: 85%</li>
+                        <li>• Matemática: 80%</li>
+                        <li>• Creatividad: 90%</li>
+                        <li>• Programación: 85%</li>
+                    </ul>
+                    <p class="text-blue-600 text-xs mt-2">Debería tener alta compatibilidad con todos los roles.</p>
+                </div>
+                
+                <div class="bg-yellow-50 rounded-lg p-4">
+                    <h3 class="font-semibold text-yellow-800 mb-2">Examen 2: Débil en Matemática</h3>
+                    <ul class="text-yellow-700 text-sm space-y-1">
+                        <li>• Lógica: 75%</li>
+                        <li>• Matemática: 45%</li>
+                        <li>• Creatividad: 80%</li>
+                        <li>• Programación: 70%</li>
+                    </ul>
+                    <p class="text-yellow-600 text-xs mt-2">Debería fallar en roles que requieren matemática alta.</p>
+                </div>
+                
+                <div class="bg-red-50 rounded-lg p-4">
+                    <h3 class="font-semibold text-red-800 mb-2">Examen 3: Muy Débil</h3>
+                    <ul class="text-red-700 text-sm space-y-1">
+                        <li>• Lógica: 30%</li>
+                        <li>• Matemática: 25%</li>
+                        <li>• Creatividad: 35%</li>
+                        <li>• Programación: 20%</li>
+                    </ul>
+                    <p class="text-red-600 text-xs mt-2">Solo debería calificar para roles junior con requisitos muy bajos.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuraciones - Piso Cinco</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <a href="/dashboard" class="text-gray-600 hover:text-blue-600 transition-colors duration-300">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Volver al Dashboard
+                    </a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="w-10 h-10 flex items-center justify-center">
+                        <img src="/1.png" alt="Logo Piso Cinco" class="w-full h-full object-contain">
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-gray-800">Piso Cinco</h1>
+                        <p class="text-gray-600 text-sm">Configuraciones del Sistema</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Mensajes de éxito/error -->
+        <div th:if="${mensaje}" class="mb-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
+            <i class="fas fa-check-circle mr-2"></i>
+            <span th:text="${mensaje}"></span>
+        </div>
+
+        <div th:if="${error}" class="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+            <i class="fas fa-exclamation-triangle mr-2"></i>
+            <span th:text="${error}"></span>
+        </div>
+
+        <!-- Page Header -->
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">
+                <i class="fas fa-cogs mr-3 text-blue-600"></i>
+                Configuraciones del Sistema
+            </h2>
+            <p class="text-gray-600">Gestiona las configuraciones generales del sistema de inscripciones</p>
+        </div>
+
+        <!-- Configuraciones -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Estado de Inscripciones -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                <div class="p-6 border-b border-gray-200">
+                    <h3 class="text-xl font-semibold text-gray-800">
+                        <i class="fas fa-users mr-2 text-green-600"></i>
+                        Estado de Inscripciones
+                    </h3>
+                    <p class="text-gray-600 text-sm mt-1">Controla si los usuarios pueden registrarse en el sistema</p>
+                </div>
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h4 class="text-lg font-medium text-gray-800">Inscripciones</h4>
+                            <p class="text-sm text-gray-600">
+                                <span th:if="${inscripcionesAbiertas}" class="text-green-600 font-medium">
+                                    <i class="fas fa-check-circle mr-1"></i>
+                                    ABIERTAS
+                                </span>
+                                <span th:unless="${inscripcionesAbiertas}" class="text-red-600 font-medium">
+                                    <i class="fas fa-times-circle mr-1"></i>
+                                    CERRADAS
+                                </span>
+                                - Los usuarios pueden registrarse
+                            </p>
+                        </div>
+                        <div class="flex items-center">
+                            <span th:if="${inscripcionesAbiertas}" class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                                <i class="fas fa-unlock mr-1"></i>
+                                Abiertas
+                            </span>
+                            <span th:unless="${inscripcionesAbiertas}" class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                                <i class="fas fa-lock mr-1"></i>
+                                Cerradas
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <form th:action="@{/configuracion/inscripciones}" method="post" class="space-y-4">
+                            <div class="flex items-center space-x-4">
+                                <button type="submit" name="abiertas" value="true" 
+                                        th:class="${inscripcionesAbiertas} ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-300 hover:bg-gray-400'"
+                                        class="flex-1 px-4 py-2 text-white font-medium rounded-lg transition-colors duration-300">
+                                    <i class="fas fa-unlock mr-2"></i>
+                                    Abrir Inscripciones
+                                </button>
+                                <button type="submit" name="abiertas" value="false"
+                                        th:class="${!inscripcionesAbiertas} ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-300 hover:bg-gray-400'"
+                                        class="flex-1 px-4 py-2 text-white font-medium rounded-lg transition-colors duration-300">
+                                    <i class="fas fa-lock mr-2"></i>
+                                    Cerrar Inscripciones
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div class="flex items-start">
+                                <i class="fas fa-info-circle text-blue-600 mt-1 mr-3"></i>
+                                <div class="text-sm text-blue-800">
+                                    <p class="font-medium mb-1">¿Qué hace esta configuración?</p>
+                                    <p th:if="${inscripcionesAbiertas}">
+                                        Cuando las inscripciones están <strong>abiertas</strong>, cualquier usuario puede acceder al formulario de registro y completar el proceso de inscripción.
+                                    </p>
+                                    <p th:unless="${inscripcionesAbiertas}">
+                                        Cuando las inscripciones están <strong>cerradas</strong>, los usuarios no pueden acceder al formulario de registro y verán un mensaje indicando que las inscripciones están cerradas.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Información del Sistema -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                <div class="p-6 border-b border-gray-200">
+                    <h3 class="text-xl font-semibold text-gray-800">
+                        <i class="fas fa-info-circle mr-2 text-blue-600"></i>
+                        Información del Sistema
+                    </h3>
+                    <p class="text-gray-600 text-sm mt-1">Detalles sobre la configuración actual</p>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div>
+                                <p class="text-sm font-medium text-gray-700">Última Actualización</p>
+                                <p class="text-xs text-gray-500">Configuración de inscripciones</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-600" th:text="${#temporals.format(#temporals.createNow(), 'dd/MM/yyyy HH:mm')}">01/01/2024 12:00</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div>
+                                <p class="text-sm font-medium text-gray-700">Usuario Administrador</p>
+                                <p class="text-xs text-gray-500">Sesión activa</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-600" th:text="${usuario.nombreCompleto}">Administrador</p>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                            <div class="flex items-start">
+                                <i class="fas fa-exclamation-triangle text-yellow-600 mt-1 mr-3"></i>
+                                <div class="text-sm text-yellow-800">
+                                    <p class="font-medium mb-1">Importante</p>
+                                    <p>Los cambios en las configuraciones se aplican inmediatamente. Asegúrate de que los cambios sean necesarios antes de confirmarlos.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Configuraciones Adicionales -->
+        <div class="mt-8 bg-white rounded-xl shadow-sm border border-gray-200">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-xl font-semibold text-gray-800">
+                    <i class="fas fa-list mr-2 text-purple-600"></i>
+                    Todas las Configuraciones
+                </h3>
+                <p class="text-gray-600 text-sm mt-1">Lista completa de configuraciones del sistema</p>
+            </div>
+            <div class="p-6">
+                <div th:if="${#lists.isEmpty(configuraciones)}" class="text-center py-8">
+                    <i class="fas fa-cogs text-4xl text-gray-400 mb-4"></i>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">No hay configuraciones</h3>
+                    <p class="text-gray-500">Aún no se han definido configuraciones adicionales en el sistema.</p>
+                </div>
+                
+                <div th:unless="${#lists.isEmpty(configuraciones)}" class="space-y-4">
+                    <div th:each="config : ${configuraciones}" class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1">
+                                <h4 class="font-medium text-gray-800" th:text="${config.clave}">Clave</h4>
+                                <p class="text-sm text-gray-600" th:text="${config.descripcion}">Descripción</p>
+                                <p class="text-xs text-gray-500 mt-1">
+                                    Última actualización: 
+                                    <span th:text="${#temporals.format(config.fechaActualizacion, 'dd/MM/yyyy HH:mm')}">01/01/2024 12:00</span>
+                                    por <span th:text="${config.usuarioActualizacion}">usuario</span>
+                                </p>
+                            </div>
+                            <div class="ml-4">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800" 
+                                      th:text="${config.valor}">Valor</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 mt-12">
+        <div class="container mx-auto px-4 py-6">
+            <div class="text-center text-gray-600 text-sm">
+                <p>© 2024 Piso Cinco. Todos los derechos reservados.</p>
+                <p class="mt-1">Sistema de Administración - Versión 1.0</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html> 

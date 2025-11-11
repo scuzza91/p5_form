@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paso 1 - Datos Personales</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-white min-h-screen font-sans">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <!-- Form Container -->
+            <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden">
+                <!-- Header -->
+                <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-8 text-center">
+                    <h2 class="text-3xl font-bold mb-2">
+                        <i class="fas fa-user mr-3"></i>Paso 1: Datos Personales
+                    </h2>
+                    <p class="text-lg opacity-90">Complete la información básica para continuar</p>
+                </div>
+                
+                <!-- Form Body -->
+                <div class="p-8">
+                    <!-- Progress Bar -->
+                    <div class="mb-8">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-medium text-gray-700">Progreso</span>
+                            <span class="text-sm font-medium text-gray-700">50%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-500" style="width: 50%"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Error Messages -->
+                    <div th:if="${error}" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                        <div class="flex items-center">
+                            <i class="fas fa-exclamation-triangle text-red-500 mr-3"></i>
+                            <span class="text-red-700" th:text="${error}"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Form -->
+                    <form th:action="@{/paso1}" th:object="${persona}" method="post" class="space-y-6">
+                        <!-- Name Fields -->
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="nombre" class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-user mr-2 text-blue-600"></i>Nombre *
+                                </label>
+                                <input type="text" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" 
+                                       id="nombre" th:field="*{nombre}" 
+                                       placeholder="Ingrese su nombre">
+                                <div th:if="${#fields.hasErrors('nombre')}" class="mt-1 text-sm text-red-600">
+                                    <span th:errors="*{nombre}"></span>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label for="apellido" class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-user mr-2 text-blue-600"></i>Apellido *
+                                </label>
+                                <input type="text" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" 
+                                       id="apellido" th:field="*{apellido}" 
+                                       placeholder="Ingrese su apellido">
+                                <div th:if="${#fields.hasErrors('apellido')}" class="mt-1 text-sm text-red-600">
+                                    <span th:errors="*{apellido}"></span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Contact Fields -->
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-envelope mr-2 text-blue-600"></i>Email *
+                                </label>
+                                <input type="email" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" 
+                                       id="email" th:field="*{email}" 
+                                       placeholder="ejemplo@correo.com">
+                                <div th:if="${#fields.hasErrors('email')}" class="mt-1 text-sm text-red-600">
+                                    <span th:errors="*{email}"></span>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label for="telefono" class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-phone mr-2 text-blue-600"></i>Teléfono *
+                                </label>
+                                <input type="tel" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" 
+                                       id="telefono" th:field="*{telefono}" 
+                                       placeholder="1234567890">
+                                <div th:if="${#fields.hasErrors('telefono')}" class="mt-1 text-sm text-red-600">
+                                    <span th:errors="*{telefono}"></span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Date and CUIL -->
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="fechaNacimiento" class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-calendar mr-2 text-blue-600"></i>Fecha de Nacimiento *
+                                </label>
+                                <input type="date" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" 
+                                       id="fechaNacimiento" th:field="*{fechaNacimiento}">
+                                <div th:if="${#fields.hasErrors('fechaNacimiento')}" class="mt-1 text-sm text-red-600">
+                                    <span th:errors="*{fechaNacimiento}"></span>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label for="cuil" class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-id-card mr-2 text-blue-600"></i>CUIL *
+                                </label>
+                                <input type="text" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" 
+                                       id="cuil" th:field="*{cuil}" 
+                                       placeholder="20XXXXXXXXX">
+                                <div th:if="${#fields.hasErrors('cuil')}" class="mt-1 text-sm text-red-600">
+                                    <span th:errors="*{cuil}"></span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Género -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-venus-mars mr-2 text-blue-600"></i>Género *
+                            </label>
+                            <div class="grid grid-cols-3 gap-4">
+                                <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-all duration-200">
+                                    <input type="radio" 
+                                           name="genero" 
+                                           value="Masculino" 
+                                           th:field="*{genero}" 
+                                           class="mr-3 text-blue-600 focus:ring-blue-500">
+                                    <span class="text-sm font-medium text-gray-700">Masculino</span>
+                                </label>
+                                <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-all duration-200">
+                                    <input type="radio" 
+                                           name="genero" 
+                                           value="Femenino" 
+                                           th:field="*{genero}" 
+                                           class="mr-3 text-blue-600 focus:ring-blue-500">
+                                    <span class="text-sm font-medium text-gray-700">Femenino</span>
+                                </label>
+                                <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-all duration-200">
+                                    <input type="radio" 
+                                           name="genero" 
+                                           value="X" 
+                                           th:field="*{genero}" 
+                                           class="mr-3 text-blue-600 focus:ring-blue-500">
+                                    <span class="text-sm font-medium text-gray-700">X</span>
+                                </label>
+                            </div>
+                            <div th:if="${#fields.hasErrors('genero')}" class="mt-1 text-sm text-red-600">
+                                <span th:errors="*{genero}"></span>
+                            </div>
+                        </div>
+                        
+                        <!-- Conocimientos de Programación -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-code mr-2 text-blue-600"></i>¿Tienes conocimientos en programación? *
+                            </label>
+                            <div class="grid grid-cols-3 gap-4">
+                                <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-all duration-200">
+                                    <input type="radio" 
+                                           name="conocimientosProgramacion" 
+                                           value="Basico" 
+                                           th:field="*{conocimientosProgramacion}" 
+                                           class="mr-3 text-blue-600 focus:ring-blue-500">
+                                    <span class="text-sm font-medium text-gray-700">Básico</span>
+                                </label>
+                                <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-all duration-200">
+                                    <input type="radio" 
+                                           name="conocimientosProgramacion" 
+                                           value="Intermedio" 
+                                           th:field="*{conocimientosProgramacion}" 
+                                           class="mr-3 text-blue-600 focus:ring-blue-500">
+                                    <span class="text-sm font-medium text-gray-700">Intermedio</span>
+                                </label>
+                                <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-all duration-200">
+                                    <input type="radio" 
+                                           name="conocimientosProgramacion" 
+                                           value="Avanzado" 
+                                           th:field="*{conocimientosProgramacion}" 
+                                           class="mr-3 text-blue-600 focus:ring-blue-500">
+                                    <span class="text-sm font-medium text-gray-700">Avanzado</span>
+                                </label>
+                            </div>
+                            <div th:if="${#fields.hasErrors('conocimientosProgramacion')}" class="mt-1 text-sm text-red-600">
+                                <span th:errors="*{conocimientosProgramacion}"></span>
+                            </div>
+                        </div>
+                        
+                        <!-- Internet en el Hogar -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-wifi mr-2 text-blue-600"></i>¿Contas con Internet en tu hogar? *
+                            </label>
+                            <div class="grid grid-cols-2 gap-4">
+                                <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-all duration-200">
+                                    <input type="radio" 
+                                           name="internetHogar" 
+                                           value="Si" 
+                                           th:field="*{internetHogar}" 
+                                           class="mr-3 text-blue-600 focus:ring-blue-500">
+                                    <span class="text-sm font-medium text-gray-700">Si</span>
+                                </label>
+                                <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-all duration-200">
+                                    <input type="radio" 
+                                           name="internetHogar" 
+                                           value="No" 
+                                           th:field="*{internetHogar}" 
+                                           class="mr-3 text-blue-600 focus:ring-blue-500">
+                                    <span class="text-sm font-medium text-gray-700">No</span>
+                                </label>
+                            </div>
+                            <div th:if="${#fields.hasErrors('internetHogar')}" class="mt-1 text-sm text-red-600">
+                                <span th:errors="*{internetHogar}"></span>
+                            </div>
+                        </div>
+                        
+                        <!-- Trabaja Actualmente -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-briefcase mr-2 text-blue-600"></i>¿Actualmente trabajas? *
+                            </label>
+                            <div class="grid grid-cols-2 gap-4">
+                                <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-all duration-200">
+                                    <input type="radio" 
+                                           name="trabajaActualmente" 
+                                           value="Si" 
+                                           th:field="*{trabajaActualmente}" 
+                                           class="mr-3 text-blue-600 focus:ring-blue-500"
+                                           onchange="toggleSectorIT()">
+                                    <span class="text-sm font-medium text-gray-700">Si</span>
+                                </label>
+                                <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-all duration-200">
+                                    <input type="radio" 
+                                           name="trabajaActualmente" 
+                                           value="No" 
+                                           th:field="*{trabajaActualmente}" 
+                                           class="mr-3 text-blue-600 focus:ring-blue-500"
+                                           onchange="toggleSectorIT()">
+                                    <span class="text-sm font-medium text-gray-700">No</span>
+                                </label>
+                            </div>
+                            <div th:if="${#fields.hasErrors('trabajaActualmente')}" class="mt-1 text-sm text-red-600">
+                                <span th:errors="*{trabajaActualmente}"></span>
+                            </div>
+                        </div>
+                        
+                        <!-- Trabaja en Sector IT (condicional) -->
+                        <div id="sectorITSection" style="display: none;">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-laptop-code mr-2 text-blue-600"></i>¿Trabajas en el sector IT?
+                            </label>
+                            <div class="grid grid-cols-2 gap-4">
+                                <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-all duration-200">
+                                    <input type="radio" 
+                                           name="trabajaSectorIT" 
+                                           value="Si" 
+                                           th:field="*{trabajaSectorIT}" 
+                                           class="mr-3 text-blue-600 focus:ring-blue-500">
+                                    <span class="text-sm font-medium text-gray-700">Si</span>
+                                </label>
+                                <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-all duration-200">
+                                    <input type="radio" 
+                                           name="trabajaSectorIT" 
+                                           value="No" 
+                                           th:field="*{trabajaSectorIT}" 
+                                           class="mr-3 text-blue-600 focus:ring-blue-500">
+                                    <span class="text-sm font-medium text-gray-700">No</span>
+                                </label>
+                            </div>
+                            <div th:if="${#fields.hasErrors('trabajaSectorIT')}" class="mt-1 text-sm text-red-600">
+                                <span th:errors="*{trabajaSectorIT}"></span>
+                            </div>
+                        </div>
+                        
+                        <!-- Address -->
+                        <div>
+                            <label for="direccion" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-home mr-2 text-blue-600"></i>Dirección *
+                            </label>
+                            <input type="text" 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" 
+                                   id="direccion" th:field="*{direccion}" 
+                                   placeholder="Calle, número, colonia">
+                            <div th:if="${#fields.hasErrors('direccion')}" class="mt-1 text-sm text-red-600">
+                                <span th:errors="*{direccion}"></span>
+                            </div>
+                        </div>
+                        
+                        <!-- Provincia y Localidad -->
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="provincia" class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-map mr-2 text-blue-600"></i>Provincia *
+                                </label>
+                                <select class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" 
+                                        id="provincia" th:field="*{provincia}" required>
+                                    <option value="">Seleccione una provincia</option>
+                                    <option th:each="prov : ${provincias}" 
+                                            th:value="${prov.id}" 
+                                            th:text="${prov.nombre}"></option>
+                                </select>
+                                <div th:if="${#fields.hasErrors('provincia')}" class="mt-1 text-sm text-red-600">
+                                    <span th:errors="*{provincia}"></span>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label for="localidad" class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-city mr-2 text-blue-600"></i>Localidad *
+                                </label>
+                                <select class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" 
+                                        id="localidad" th:field="*{localidad}" required disabled>
+                                    <option value="">Primero seleccione una provincia</option>
+                                </select>
+                                <div th:if="${#fields.hasErrors('localidad')}" class="mt-1 text-sm text-red-600">
+                                    <span th:errors="*{localidad}"></span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="flex flex-col sm:flex-row justify-between gap-4 pt-6">
+                            <a href="/" class="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-all duration-200">
+                                <i class="fas fa-arrow-left mr-2"></i>Volver
+                            </a>
+                            <button type="submit" class="inline-flex items-center justify-center px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg">
+                                Continuar al Paso 2
+                                <i class="fas fa-arrow-right ml-2"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- JavaScript para cargar localidades dinámicamente -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const provinciaSelect = document.getElementById('provincia');
+            const localidadSelect = document.getElementById('localidad');
+            
+            console.log('Inicializando carga de localidades...');
+            
+            // Función para cargar localidades
+            function cargarLocalidades(provinciaId) {
+                console.log('Cargando localidades para provincia ID:', provinciaId);
+                
+                // Limpiar y deshabilitar el selector de localidades
+                localidadSelect.innerHTML = '<option value="">Cargando localidades...</option>';
+                localidadSelect.disabled = true;
+                
+                if (provinciaId) {
+                    // Cargar localidades desde el servidor
+                    return fetch(`/api/localidades/${provinciaId}`)
+                        .then(response => {
+                            console.log('Respuesta del servidor:', response.status, response.statusText);
+                            if (!response.ok) {
+                                if (response.status === 404) {
+                                    localidadSelect.innerHTML = '<option value="">No hay localidades para esta provincia</option>';
+                                    localidadSelect.disabled = true;
+                                    throw new Error('No hay localidades para esta provincia');
+                                }
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+                        .then(localidades => {
+                            console.log('Localidades recibidas:', localidades);
+                            localidadSelect.innerHTML = '<option value="">Seleccione una localidad</option>';
+                            
+                            if (localidades && localidades.length > 0) {
+                                localidades.forEach(localidad => {
+                                    const option = document.createElement('option');
+                                    option.value = localidad.id;
+                                    option.textContent = localidad.nombre;
+                                    localidadSelect.appendChild(option);
+                                });
+                                console.log('Localidades cargadas:', localidades.length);
+                            } else {
+                                localidadSelect.innerHTML = '<option value="">No hay localidades disponibles</option>';
+                                console.log('No se encontraron localidades');
+                            }
+                            
+                            localidadSelect.disabled = false;
+                        })
+                        .catch(error => {
+                            console.error('Error al cargar localidades:', error);
+                            localidadSelect.innerHTML = `<option value="">${error.message}</option>`;
+                            localidadSelect.disabled = true;
+                        });
+                } else {
+                    localidadSelect.innerHTML = '<option value="">Primero seleccione una provincia</option>';
+                    localidadSelect.disabled = true;
+                    return Promise.resolve();
+                }
+            }
+            
+            // Event listener para cambio de provincia
+            provinciaSelect.addEventListener('change', function() {
+                const provinciaId = this.value;
+                console.log('Provincia seleccionada:', provinciaId);
+                cargarLocalidades(provinciaId);
+            });
+            
+            // Si hay una provincia seleccionada al cargar la página (por errores de validación)
+            const provinciaSeleccionada = provinciaSelect.value;
+            const localidadSeleccionada = localidadSelect.value;
+            
+            if (provinciaSeleccionada) {
+                console.log('Provincia ya seleccionada:', provinciaSeleccionada);
+                cargarLocalidades(provinciaSeleccionada).then(() => {
+                    // Restaurar la localidad seleccionada si existe
+                    if (localidadSeleccionada) {
+                        console.log('Restaurando localidad seleccionada:', localidadSeleccionada);
+                        localidadSelect.value = localidadSeleccionada;
+                    }
+                });
+            }
+            
+            // Verificar si hay provincias cargadas
+            console.log('Provincias disponibles:', provinciaSelect.options.length - 1);
+        });
+        
+        // Función para mostrar/ocultar la sección de sector IT
+        function toggleSectorIT() {
+            const trabajaActualmente = document.querySelector('input[name="trabajaActualmente"]:checked');
+            const sectorITSection = document.getElementById('sectorITSection');
+            const sectorITInputs = document.querySelectorAll('input[name="trabajaSectorIT"]');
+            
+            if (trabajaActualmente && trabajaActualmente.value === 'Si') {
+                sectorITSection.style.display = 'block';
+                sectorITSection.style.opacity = '0';
+                setTimeout(() => {
+                    sectorITSection.style.opacity = '1';
+                }, 10);
+            } else {
+                sectorITSection.style.opacity = '0';
+                setTimeout(() => {
+                    sectorITSection.style.display = 'none';
+                    // Limpiar las selecciones cuando se oculta
+                    sectorITInputs.forEach(input => input.checked = false);
+                }, 200);
+            }
+        }
+        
+        // Verificar estado inicial al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleSectorIT();
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Resultado Completo del Examen - Piso Cinco (Administrador)</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.4;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #dc2626;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #dc2626;
+            font-size: 24px;
+            margin: 0 0 10px 0;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 14px;
+            margin: 5px 0;
+        }
+        
+        .admin-badge {
+            background-color: #dc2626;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            page-break-inside: avoid;
+        }
+        
+        .section-title {
+            background-color: #f3f4f6;
+            padding: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #374151;
+            border-left: 4px solid #dc2626;
+            margin-bottom: 15px;
+        }
+        
+        .info-grid {
+            display: table;
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .info-row {
+            display: table-row;
+        }
+        
+        .info-label {
+            display: table-cell;
+            width: 30%;
+            font-weight: bold;
+            padding: 8px;
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .info-value {
+            display: table-cell;
+            width: 70%;
+            padding: 8px;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .score-card {
+            background-color: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            text-align: center;
+        }
+        
+        .score-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #3b82f6;
+            margin: 10px 0;
+        }
+        
+        .score-label {
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 10px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        
+        .status-approved {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        
+        .status-failed {
+            background-color: #fef2f2;
+            color: #dc2626;
+        }
+        
+        .areas-grid {
+            display: table;
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        .area-row {
+            display: table-row;
+        }
+        
+        .area-name {
+            display: table-cell;
+            width: 25%;
+            padding: 10px;
+            background-color: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        .area-score {
+            display: table-cell;
+            width: 25%;
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .question-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin: 15px 0;
+            page-break-inside: avoid;
+        }
+        
+        .question-header {
+            background-color: #f3f4f6;
+            padding: 10px;
+            border-radius: 8px 8px 0 0;
+        }
+        
+        .question-content {
+            padding: 15px;
+        }
+        
+        .question-text {
+            margin-bottom: 15px;
+        }
+        
+        .options {
+            margin-bottom: 15px;
+        }
+        
+        .option {
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .option-selected {
+            background-color: #dbeafe;
+            border: 2px solid #3b82f6;
+        }
+        
+        .option-correct {
+            border: 2px solid #10b981;
+        }
+        
+        .result {
+            text-align: center;
+            padding: 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
+        .result-correct {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        
+        .result-incorrect {
+            background-color: #fef2f2;
+            color: #dc2626;
+        }
+        
+        .recommendation-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin: 15px 0;
+            page-break-inside: avoid;
+        }
+        
+        .recommendation-header {
+            background-color: #3b82f6;
+            color: white;
+            padding: 15px;
+            border-radius: 8px 8px 0 0;
+        }
+        
+        .recommendation-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .recommendation-meta {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+        
+        .recommendation-content {
+            padding: 15px;
+        }
+        
+        .recommendation-section {
+            margin-bottom: 15px;
+        }
+        
+        .recommendation-section h4 {
+            font-size: 14px;
+            font-weight: bold;
+            color: #374151;
+            margin-bottom: 5px;
+        }
+        
+        .recommendation-section p {
+            font-size: 12px;
+            color: #6b7280;
+            margin: 0;
+        }
+        
+        .compatibility-bar {
+            background-color: #e5e7eb;
+            height: 8px;
+            border-radius: 4px;
+            margin: 5px 0;
+            overflow: hidden;
+        }
+        
+        .compatibility-fill {
+            height: 100%;
+            background-color: #3b82f6;
+        }
+        
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            text-align: center;
+            font-size: 10px;
+            color: #6b7280;
+        }
+        
+        .page-break {
+            page-break-before: always;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="admin-badge">VERSIÓN ADMINISTRADOR</div>
+        <h1>Resultado Completo del Examen - Piso Cinco</h1>
+        <p>Sistema de Evaluación de Conocimientos</p>
+        <p>Generado el: <span th:text="${fechaGeneracion}">01/01/2024 12:00</span></p>
+    </div>
+
+    <!-- Información del Candidato -->
+    <div class="section">
+        <div class="section-title">Información del Candidato</div>
+        <div class="info-grid">
+            <div class="info-row">
+                <div class="info-label">Nombre Completo:</div>
+                <div class="info-value" th:text="${resultado.nombre} + ' ' + ${resultado.apellido}">Juan Pérez</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Email:</div>
+                <div class="info-value" th:text="${resultado.email}">juan@ejemplo.com</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Teléfono:</div>
+                <div class="info-value" th:text="${resultado.telefono}">+54 11 1234-5678</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">CUIL:</div>
+                <div class="info-value" th:text="${resultado.cuil}">20-12345678-9</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Ubicación:</div>
+                <div class="info-value" th:text="${resultado.localidadNombre} + ', ' + ${resultado.provinciaNombre}">Buenos Aires, Buenos Aires</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Conocimientos de Programación:</div>
+                <div class="info-value" th:text="${resultado.conocimientosProgramacion}">Básico</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resultado del Examen -->
+    <div class="section">
+        <div class="section-title">Resultado del Examen</div>
+        
+        <!-- Puntuación Promedio -->
+        <div class="score-card">
+            <div class="score-label">Puntuación Promedio</div>
+            <div class="score-value" th:text="${#numbers.formatDecimal(resultado.promedio, 1, 1)}">85.0</div>
+            <div th:class="${resultado.aprobado ? 'status-badge status-approved' : 'status-badge status-failed'}"
+                 th:text="${resultado.aprobado ? 'APROBADO' : 'REPROBADO'}">APROBADO</div>
+        </div>
+        
+        <!-- Detalle por Áreas -->
+        <div class="areas-grid">
+            <div class="area-row">
+                <div class="area-name">Lógica</div>
+                <div class="area-score" th:text="${resultado.logica} + '%'">85%</div>
+                <div class="area-name">Matemática</div>
+                <div class="area-score" th:text="${resultado.matematica} + '%'">78%</div>
+            </div>
+            <div class="area-row">
+                <div class="area-name">Creatividad</div>
+                <div class="area-score" th:text="${resultado.creatividad} + '%'">92%</div>
+                <div class="area-name">Programación</div>
+                <div class="area-score" th:text="${resultado.programacion} + '%'">88%</div>
+            </div>
+        </div>
+        
+        <!-- Información del Examen -->
+        <div class="info-grid">
+            <div class="info-row">
+                <div class="info-label">Fecha de Examen:</div>
+                <div class="info-value" th:text="${#temporals.format(resultado.fechaFin, 'dd/MM/yyyy HH:mm')}">01/01/2024 12:00</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Tiempo Total:</div>
+                <div class="info-value" th:text="${resultado.tiempoTotalMinutos} + ' minutos'">45 minutos</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Preguntas Respondidas:</div>
+                <div class="info-value" th:text="${resultado.respuestasCorrectas} + ' de ' + ${resultado.totalPreguntas}">18 de 20</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preguntas y Respuestas del Examen -->
+    <div class="section page-break">
+        <div class="section-title">Preguntas y Respuestas del Examen</div>
+        
+        <div th:if="${respuestas != null and !respuestas.empty}">
+            <p style="margin-bottom: 20px; font-size: 14px; color: #6b7280;">
+                A continuación se muestran todas las preguntas del examen con las respuestas seleccionadas:
+            </p>
+            
+            <div th:each="respuesta, iterStat : ${respuestas}" class="question-card">
+                <div class="question-header">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: bold; color: #374151;">Pregunta <span th:text="${iterStat.count}">1</span></span>
+                        <span style="font-size: 12px; color: #6b7280;" th:text="${respuesta.pregunta.areaConocimiento}">Lógica</span>
+                    </div>
+                </div>
+                
+                <div class="question-content">
+                    <div class="question-text">
+                        <p style="font-size: 14px; color: #374151; margin: 0;" th:text="${respuesta.pregunta.enunciado}">Enunciado de la pregunta...</p>
+                    </div>
+                    
+                    <div class="options">
+                        <div th:each="opcion : ${respuesta.pregunta.opciones}" 
+                             th:class="'option' + 
+                                      (${opcion.orden == respuesta.respuestaSeleccionada} ? ' option-selected' : '') + 
+                                      (${opcion.orden == respuesta.pregunta.opcionCorrecta} ? ' option-correct' : '')">
+                            <span style="font-weight: bold; margin-right: 8px;" th:text="${opcion.orden}">1.</span>
+                            <span th:text="${opcion.texto}">Opción de respuesta</span>
+                            <span th:if="${opcion.orden == respuesta.respuestaSeleccionada}" style="color: #3b82f6; font-weight: bold; margin-left: 8px;">← Tu respuesta</span>
+                            <span th:if="${opcion.orden == respuesta.pregunta.opcionCorrecta}" style="color: #10b981; font-weight: bold; margin-left: 8px;">← Correcta</span>
+                        </div>
+                    </div>
+                    
+                    <div th:class="'result ' + (${respuesta.esCorrecta} ? 'result-correct' : 'result-incorrect')">
+                        <span th:text="${respuesta.esCorrecta ? '✓ CORRECTA' : '✗ INCORRECTA'}">Resultado</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div th:if="${respuestas == null or respuestas.empty}" style="text-align: center; padding: 40px;">
+            <p style="font-size: 16px; color: #6b7280;">No se encontraron respuestas para este examen.</p>
+        </div>
+    </div>
+
+    <!-- Recomendaciones Laborales -->
+    <div class="section page-break">
+        <div class="section-title">Recomendaciones de Roles Profesionales</div>
+        
+        <div th:if="${recomendaciones != null and !recomendaciones.empty}">
+            <p style="margin-bottom: 20px; font-size: 14px; color: #6b7280;">
+                Basado en tus resultados, te recomendamos los siguientes roles profesionales:
+            </p>
+            
+            <div th:each="recomendacion, iterStat : ${recomendaciones}" class="recommendation-card">
+                <div class="recommendation-header">
+                    <div class="recommendation-title" th:text="${recomendacion.titulo}">Desarrollador Full Stack</div>
+                    <div class="recommendation-meta">
+                        <span th:text="${recomendacion.categoria}">Desarrollo</span> • 
+                        <span th:text="${recomendacion.nivel}">Junior</span> • 
+                        Compatibilidad: <span th:text="${#numbers.formatDecimal(recomendacion.compatibilidad, 1, 1)} + '%'">85.5%</span>
+                    </div>
+                </div>
+                
+                <div class="recommendation-content">
+                    <div class="recommendation-section">
+                        <h4>Descripción</h4>
+                        <p th:text="${recomendacion.descripcion}">Descripción del rol...</p>
+                    </div>
+                    
+                    <div class="recommendation-section">
+                        <h4>Responsabilidades</h4>
+                        <p th:text="${recomendacion.responsabilidades}">Responsabilidades del rol...</p>
+                    </div>
+                    
+                    <div class="recommendation-section">
+                        <h4>Habilidades Requeridas</h4>
+                        <p th:text="${recomendacion.habilidadesRequeridas}">Habilidades necesarias...</p>
+                    </div>
+                    
+                    <div class="recommendation-section">
+                        <h4>Tecnologías Recomendadas</h4>
+                        <p th:text="${recomendacion.tecnologiasRecomendadas}">Tecnologías sugeridas...</p>
+                    </div>
+                    
+                    <div class="recommendation-section">
+                        <h4>Ruta de Carrera</h4>
+                        <p th:text="${recomendacion.rutaCarrera}">Progresión profesional...</p>
+                    </div>
+                    
+                    <!-- Comparación de Habilidades -->
+                    <div class="recommendation-section">
+                        <h4>Comparación de Habilidades</h4>
+                        <div style="margin: 10px 0;">
+                            <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 2px;">
+                                <span>Lógica: <span th:text="${recomendacion.logica} + '%'">85%</span></span>
+                                <span>Requerido: <span th:text="${recomendacion.minLogica} + '%'">70%</span></span>
+                            </div>
+                            <div class="compatibility-bar">
+                                <div class="compatibility-fill" th:style="'width: ' + ${recomendacion.logica} + '%'"></div>
+                            </div>
+                        </div>
+                        
+                        <div style="margin: 10px 0;">
+                            <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 2px;">
+                                <span>Matemática: <span th:text="${recomendacion.matematica} + '%'">78%</span></span>
+                                <span>Requerido: <span th:text="${recomendacion.minMatematica} + '%'">60%</span></span>
+                            </div>
+                            <div class="compatibility-bar">
+                                <div class="compatibility-fill" th:style="'width: ' + ${recomendacion.matematica} + '%'"></div>
+                            </div>
+                        </div>
+                        
+                        <div style="margin: 10px 0;">
+                            <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 2px;">
+                                <span>Creatividad: <span th:text="${recomendacion.creatividad} + '%'">92%</span></span>
+                                <span>Requerido: <span th:text="${recomendacion.minCreatividad} + '%'">50%</span></span>
+                            </div>
+                            <div class="compatibility-bar">
+                                <div class="compatibility-fill" th:style="'width: ' + ${recomendacion.creatividad} + '%'"></div>
+                            </div>
+                        </div>
+                        
+                        <div style="margin: 10px 0;">
+                            <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 2px;">
+                                <span>Programación: <span th:text="${recomendacion.programacion} + '%'">88%</span></span>
+                                <span>Requerido: <span th:text="${recomendacion.minProgramacion} + '%'">75%</span></span>
+                            </div>
+                            <div class="compatibility-bar">
+                                <div class="compatibility-fill" th:style="'width: ' + ${recomendacion.programacion} + '%'"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div th:if="${recomendaciones == null or recomendaciones.empty}" style="text-align: center; padding: 40px;">
+            <p style="font-size: 16px; color: #6b7280;">No se encontraron recomendaciones laborales para tu perfil actual.</p>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>Documento generado automáticamente por el Sistema de Evaluación de Piso Cinco</p>
+        <p>Este documento contiene información confidencial y es de uso exclusivo del administrador</p>
+        <p style="color: #dc2626; font-weight: bold;">VERSIÓN ADMINISTRADOR - Incluye preguntas y respuestas detalladas</p>
+    </div>
+</body>
+</html> 

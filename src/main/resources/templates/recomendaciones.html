@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recomendaciones de Posiciones Laborales</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#8B5CF6',
+                        success: '#10B981',
+                        warning: '#F59E0B',
+                        danger: '#EF4444'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-user-tie text-primary mr-3"></i>
+                Recomendaciones de Roles Profesionales
+            </h1>
+            <p class="text-lg text-gray-600">Basado en tus resultados del examen</p>
+        </div>
+
+
+
+        <!-- Lista de Recomendaciones -->
+        <div th:if="${recomendaciones != null and !recomendaciones.empty}" class="space-y-6">
+            <div th:each="recomendacion : ${recomendaciones}" class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+                
+                <!-- Header del rol -->
+                <div class="bg-gradient-to-r from-primary to-secondary p-6 text-white">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <h3 class="text-2xl font-bold mb-2" th:text="${recomendacion.titulo}">Título del Rol</h3>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="bg-white bg-opacity-20 px-3 py-1 rounded-full text-sm font-medium" 
+                                      th:text="${recomendacion.categoria}">Categoría</span>
+                                <span class="bg-white bg-opacity-20 px-3 py-1 rounded-full text-sm font-medium" 
+                                      th:text="${recomendacion.nivel}">Nivel</span>
+                                <span class="bg-white bg-opacity-20 px-3 py-1 rounded-full text-sm font-medium">
+                                    <i class="fas fa-route mr-1"></i>Rol Profesional
+                                </span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Contenido -->
+                <div class="p-6">
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <!-- Información del rol -->
+                        <div>
+                            <h4 class="text-lg font-semibold text-gray-800 mb-3">
+                                <i class="fas fa-info-circle text-primary mr-2"></i>Descripción
+                            </h4>
+                            <p class="text-gray-600 mb-4" th:text="${recomendacion.descripcion}">Descripción del rol...</p>
+                            
+                            <div class="space-y-3">
+                                <div>
+                                    <h5 class="font-medium text-gray-800 mb-2">
+                                        <i class="fas fa-tasks text-blue-500 mr-2"></i>Responsabilidades
+                                    </h5>
+                                    <p class="text-sm text-gray-600" th:text="${recomendacion.responsabilidades}">Responsabilidades del rol...</p>
+                                </div>
+                                <div>
+                                    <h5 class="font-medium text-gray-800 mb-2">
+                                        <i class="fas fa-lightbulb text-green-500 mr-2"></i>Habilidades Requeridas
+                                    </h5>
+                                    <p class="text-sm text-gray-600" th:text="${recomendacion.habilidadesRequeridas}">Habilidades necesarias...</p>
+                                </div>
+                                <div>
+                                    <h5 class="font-medium text-gray-800 mb-2">
+                                        <i class="fas fa-code text-purple-500 mr-2"></i>Tecnologías Recomendadas
+                                    </h5>
+                                    <p class="text-sm text-gray-600" th:text="${recomendacion.tecnologiasRecomendadas}">Tecnologías sugeridas...</p>
+                                </div>
+                                <div>
+                                    <h5 class="font-medium text-gray-800 mb-2">
+                                        <i class="fas fa-route text-orange-500 mr-2"></i>Ruta de Carrera
+                                    </h5>
+                                    <p class="text-sm text-gray-600" th:text="${recomendacion.rutaCarrera}">Progresión profesional...</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Comparación de puntuaciones -->
+                        <div>
+                            <h4 class="text-lg font-semibold text-gray-800 mb-3">
+                                <i class="fas fa-chart-bar text-primary mr-2"></i>Comparación de Habilidades
+                            </h4>
+                            <div class="space-y-3">
+                                <!-- Lógica -->
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span class="font-medium">Lógica</span>
+                                        <span th:text="${recomendacion.logica} + '% vs ' + ${recomendacion.minLogica} + '%'">85% vs 70%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-blue-500 h-2 rounded-full" 
+                                             th:style="'width: ' + ${recomendacion.logica} + '%'"></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Matemática -->
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span class="font-medium">Matemática</span>
+                                        <span th:text="${recomendacion.matematica} + '% vs ' + ${recomendacion.minMatematica} + '%'">75% vs 60%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-green-500 h-2 rounded-full" 
+                                             th:style="'width: ' + ${recomendacion.matematica} + '%'"></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Creatividad -->
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span class="font-medium">Creatividad</span>
+                                        <span th:text="${recomendacion.creatividad} + '% vs ' + ${recomendacion.minCreatividad} + '%'">80% vs 50%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-purple-500 h-2 rounded-full" 
+                                             th:style="'width: ' + ${recomendacion.creatividad} + '%'"></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Programación -->
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span class="font-medium">Programación</span>
+                                        <span th:text="${recomendacion.programacion} + '% vs ' + ${recomendacion.minProgramacion} + '%'">90% vs 75%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-orange-500 h-2 rounded-full" 
+                                             th:style="'width: ' + ${recomendacion.programacion} + '%'"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Sin recomendaciones -->
+        <div th:if="${recomendaciones != null and recomendaciones.empty}" class="text-center py-12">
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <i class="fas fa-search text-6xl text-gray-300 mb-4"></i>
+                <h3 class="text-2xl font-semibold text-gray-700 mb-2">No se encontraron recomendaciones</h3>
+                <p class="text-gray-500 mb-6">No hay roles profesionales que coincidan con tu perfil actual.</p>
+                <a href="/paso1" class="bg-primary hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200">
+                    <i class="fas fa-redo mr-2"></i>Volver al inicio
+                </a>
+            </div>
+        </div>
+        
+        <!-- PDF Download Buttons -->
+        <div th:if="${recomendaciones != null and !recomendaciones.empty}" class="mt-8 p-6 bg-white rounded-xl shadow-lg">
+            <h4 class="text-xl font-semibold text-gray-800 mb-4 text-center">
+                <i class="fas fa-file-pdf mr-2 text-red-500"></i>Descargar Recomendaciones en PDF
+            </h4>
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <a th:href="@{/pdf/solo-recomendaciones/{personaId}(personaId=${personaId})}" 
+                   class="inline-flex items-center justify-center px-6 py-3 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-all duration-200">
+                    <i class="fas fa-file-pdf mr-2"></i>Solo Recomendaciones
+                </a>
+                <a th:href="@{/pdf/resultado-completo/{personaId}(personaId=${personaId})}" 
+                   class="inline-flex items-center justify-center px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-all duration-200">
+                    <i class="fas fa-file-pdf mr-2"></i>Resultado + Recomendaciones
+                </a>
+            </div>
+        </div>
+
+        <!-- Error -->
+        <div th:if="${error}" class="text-center py-12">
+            <div class="bg-red-50 border border-red-200 rounded-xl p-8">
+                <i class="fas fa-exclamation-triangle text-6xl text-red-300 mb-4"></i>
+                <h3 class="text-2xl font-semibold text-red-700 mb-2">Error</h3>
+                <p class="text-red-600 mb-6" th:text="${error}">Mensaje de error</p>
+                <a href="/paso1" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200">
+                    <i class="fas fa-home mr-2"></i>Volver al inicio
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 
