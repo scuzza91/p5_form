@@ -225,7 +225,7 @@ public class ExamenService {
             new Opcion("30", p1, 2),
             new Opcion("28", p1, 3),
             new Opcion("34", p1, 4)
-        );
+        ));
         opcionRepository.saveAll(opciones1);
         p1.setOpciones(opciones1);
         preguntaRepository.save(p1);
@@ -240,7 +240,7 @@ public class ExamenService {
             new Opcion("Juan no es lógico", p2, 2),
             new Opcion("No se puede determinar", p2, 3),
             new Opcion("Juan es programador", p2, 4)
-        );
+        ));
         opcionRepository.saveAll(opciones2);
         p2.setOpciones(opciones2);
         preguntaRepository.save(p2);
@@ -255,7 +255,7 @@ public class ExamenService {
             new Opcion("20", p3, 2),
             new Opcion("22", p3, 3),
             new Opcion("19", p3, 4)
-        );
+        ));
         opcionRepository.saveAll(opciones3);
         p3.setOpciones(opciones3);
         preguntaRepository.save(p3);
@@ -270,7 +270,7 @@ public class ExamenService {
             new Opcion("A ≠ C", p4, 2),
             new Opcion("No se puede determinar", p4, 3),
             new Opcion("A > C", p4, 4)
-        );
+        ));
         opcionRepository.saveAll(opciones4);
         p4.setOpciones(opciones4);
         preguntaRepository.save(p4);
@@ -285,7 +285,7 @@ public class ExamenService {
             new Opcion("Ningún estudiante es inteligente", p5, 2),
             new Opcion("Todos los estudiantes son tontos", p5, 3),
             new Opcion("Algunos estudiantes son inteligentes", p5, 4)
-        );
+        ));
         opcionRepository.saveAll(opciones5);
         p5.setOpciones(opciones5);
         preguntaRepository.save(p5);
@@ -300,7 +300,7 @@ public class ExamenService {
             new Opcion("Multiplicar por 2", p6, 2),
             new Opcion("Sumar 4", p6, 3),
             new Opcion("Multiplicar por 3", p6, 4)
-        );
+        ));
         opcionRepository.saveAll(opciones6);
         p6.setOpciones(opciones6);
         preguntaRepository.save(p6);
@@ -315,7 +315,7 @@ public class ExamenService {
             new Opcion("P debe ser verdadero", p7, 2),
             new Opcion("No se puede determinar P", p7, 3),
             new Opcion("P puede ser verdadero o falso", p7, 4)
-        );
+        ));
         opcionRepository.saveAll(opciones7);
         p7.setOpciones(opciones7);
         preguntaRepository.save(p7);
@@ -330,7 +330,7 @@ public class ExamenService {
             new Opcion("35", p8, 2),
             new Opcion("37", p8, 3),
             new Opcion("34", p8, 4)
-        );
+        ));
         opcionRepository.saveAll(opciones8);
         p8.setOpciones(opciones8);
         preguntaRepository.save(p8);
@@ -349,7 +349,7 @@ public class ExamenService {
             new Opcion("95", p1, 2),
             new Opcion("115", p1, 3),
             new Opcion("125", p1, 4)
-        );
+        ));
         opcionRepository.saveAll(opciones1);
         p1.setOpciones(opciones1);
         preguntaRepository.save(p1);
@@ -364,7 +364,7 @@ public class ExamenService {
             new Opcion("25", p2, 2),
             new Opcion("35", p2, 3),
             new Opcion("40", p2, 4)
-        );
+        ));
         opcionRepository.saveAll(opciones2);
         p2.setOpciones(opciones2);
         preguntaRepository.save(p2);
@@ -379,7 +379,7 @@ public class ExamenService {
             new Opcion("6", p3, 2),
             new Opcion("10", p3, 3),
             new Opcion("12", p3, 4)
-        );
+        ));
         opcionRepository.saveAll(opciones3);
         p3.setOpciones(opciones3);
         preguntaRepository.save(p3);
@@ -394,7 +394,7 @@ public class ExamenService {
             new Opcion("16.5", p4, 2),
             new Opcion("18.5", p4, 3),
             new Opcion("19.5", p4, 4)
-        );
+        ));
         opcionRepository.saveAll(opciones4);
         p4.setOpciones(opciones4);
         preguntaRepository.save(p4);
@@ -409,7 +409,7 @@ public class ExamenService {
             new Opcion("25", p5, 2),
             new Opcion("30", p5, 3),
             new Opcion("35", p5, 4)
-        );
+        ));
         opcionRepository.saveAll(opciones5);
         p5.setOpciones(opciones5);
         preguntaRepository.save(p5);
@@ -424,7 +424,7 @@ public class ExamenService {
             new Opcion("24", p6, 2),
             new Opcion("30", p6, 3),
             new Opcion("42", p6, 4)
-        );
+        ));
         opcionRepository.saveAll(opciones6);
         p6.setOpciones(opciones6);
         preguntaRepository.save(p6);
@@ -439,7 +439,7 @@ public class ExamenService {
             new Opcion("20", p7, 2),
             new Opcion("30", p7, 3),
             new Opcion("15", p7, 4)
-        );
+        ));
         opcionRepository.saveAll(opciones7);
         p7.setOpciones(opciones7);
         preguntaRepository.save(p7);
@@ -454,7 +454,7 @@ public class ExamenService {
             new Opcion("20", p8, 2),
             new Opcion("14", p8, 3),
             new Opcion("23", p8, 4)
-        );
+        ));
         opcionRepository.saveAll(opciones8);
         p8.setOpciones(opciones8);
         preguntaRepository.save(p8);
@@ -471,7 +471,7 @@ public class ExamenService {
             new Opcion("Eliminando todas las funciones", p1, 2),
             new Opcion("Haciendo la interfaz más compleja", p1, 3),
             new Opcion("Reduciendo las opciones de pago", p1, 4)
-        );
+        ));
         opcionRepository.saveAll(opciones1);
         p1.setOpciones(opciones1);
         preguntaRepository.save(p1);
@@ -486,7 +486,7 @@ public class ExamenService {
             new Opcion("Rojo", p2, 2),
             new Opcion("Amarillo", p2, 3),
             new Opcion("Verde", p2, 4)
-        );
+        ));
         opcionRepository.saveAll(opciones2);
         p2.setOpciones(opciones2);
         preguntaRepository.save(p2);
@@ -501,7 +501,7 @@ public class ExamenService {
             new Opcion("Solo usando colores oscuros", p3, 2),
             new Opcion("Sin considerar el medio ambiente", p3, 3),
             new Opcion("Copiando otros logos", p3, 4)
-        );
+        ));
         opcionRepository.saveAll(opciones3);
         p3.setOpciones(opciones3);
         preguntaRepository.save(p3);
@@ -516,7 +516,7 @@ public class ExamenService {
             new Opcion("Más botones físicos", p4, 2),
             new Opcion("Una pantalla más pequeña", p4, 3),
             new Opcion("Menos aplicaciones", p4, 4)
-        );
+        ));
         opcionRepository.saveAll(opciones4);
         p4.setOpciones(opciones4);
         preguntaRepository.save(p4);
@@ -531,7 +531,7 @@ public class ExamenService {
             new Opcion("Agregando más texto", p5, 2),
             new Opcion("Usando solo colores grises", p5, 3),
             new Opcion("Eliminando las imágenes", p5, 4)
-        );
+        ));
         opcionRepository.saveAll(opciones5);
         p5.setOpciones(opciones5);
         preguntaRepository.save(p5);
@@ -546,7 +546,7 @@ public class ExamenService {
             new Opcion("Solo videos largos", p6, 2),
             new Opcion("Sin interacción", p6, 3),
             new Opcion("Sin evaluación", p6, 4)
-        );
+        ));
         opcionRepository.saveAll(opciones6);
         p6.setOpciones(opciones6);
         preguntaRepository.save(p6);
@@ -561,7 +561,7 @@ public class ExamenService {
             new Opcion("Usando solo colores claros", p7, 2),
             new Opcion("Eliminando el texto", p7, 3),
             new Opcion("Sin considerar la accesibilidad", p7, 4)
-        );
+        ));
         opcionRepository.saveAll(opciones7);
         p7.setOpciones(opciones7);
         preguntaRepository.save(p7);
@@ -576,7 +576,7 @@ public class ExamenService {
             new Opcion("Solo bancos", p8, 2),
             new Opcion("Sin colores", p8, 3),
             new Opcion("Sin juegos", p8, 4)
-        );
+        ));
         opcionRepository.saveAll(opciones8);
         p8.setOpciones(opciones8);
         preguntaRepository.save(p8);
@@ -593,7 +593,7 @@ public class ExamenService {
             new Opcion("Un tipo de bucle", p1, 2),
             new Opcion("Una función", p1, 3),
             new Opcion("Un comentario", p1, 4)
-        );
+        ));
         opcionRepository.saveAll(opciones1);
         p1.setOpciones(opciones1);
         preguntaRepository.save(p1);
@@ -608,7 +608,7 @@ public class ExamenService {
             new Opcion("'===' compara valor y tipo, '==' solo valor", p2, 2),
             new Opcion("'==' es más rápido", p2, 3),
             new Opcion("'===' es obsoleto", p2, 4)
-        );
+        ));
         opcionRepository.saveAll(opciones2);
         p2.setOpciones(opciones2);
         preguntaRepository.save(p2);
@@ -623,7 +623,7 @@ public class ExamenService {
             new Opcion("Un tipo de base de datos", p3, 2),
             new Opcion("Un lenguaje de programación", p3, 3),
             new Opcion("Un framework web", p3, 4)
-        );
+        ));
         opcionRepository.saveAll(opciones3);
         p3.setOpciones(opciones3);
         preguntaRepository.save(p3);
@@ -638,7 +638,7 @@ public class ExamenService {
             new Opcion("Una función matemática", p4, 2),
             new Opcion("Un tipo de variable", p4, 3),
             new Opcion("Un error de programación", p4, 4)
-        );
+        ));
         opcionRepository.saveAll(opciones4);
         p4.setOpciones(opciones4);
         preguntaRepository.save(p4);
@@ -653,7 +653,7 @@ public class ExamenService {
             new Opcion("Una variable global", p5, 2),
             new Opcion("Un tipo de dato", p5, 3),
             new Opcion("Un comentario", p5, 4)
-        );
+        ));
         opcionRepository.saveAll(opciones5);
         p5.setOpciones(opciones5);
         preguntaRepository.save(p5);
@@ -668,7 +668,7 @@ public class ExamenService {
             new Opcion("Un tipo de bucle", p6, 2),
             new Opcion("Una función", p6, 3),
             new Opcion("Una variable", p6, 4)
-        );
+        ));
         opcionRepository.saveAll(opciones6);
         p6.setOpciones(opciones6);
         preguntaRepository.save(p6);
@@ -683,7 +683,7 @@ public class ExamenService {
             new Opcion("Un tipo de bucle", p7, 2),
             new Opcion("Una variable", p7, 3),
             new Opcion("Un error", p7, 4)
-        );
+        ));
         opcionRepository.saveAll(opciones7);
         p7.setOpciones(opciones7);
         preguntaRepository.save(p7);
@@ -698,7 +698,7 @@ public class ExamenService {
             new Opcion("Un número entero", p8, 2),
             new Opcion("Un booleano", p8, 3),
             new Opcion("Un array", p8, 4)
-        );
+        ));
         opcionRepository.saveAll(opciones8);
         p8.setOpciones(opciones8);
         preguntaRepository.save(p8);
