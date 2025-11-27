@@ -1,0 +1,47 @@
+# Archivos de compilación
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.idea/
+.vscode/
+*.iml
+.project
+.classpath
+.settings/
+
+# Logs
+*.log
+logs/
+
+# Archivos temporales
+*.tmp
+*.temp
+
+# Git
+.git/
+.gitignore
+
+# Documentación (opcional, puedes incluirla si quieres)
+# docs/
+
+# Scripts de Windows (no necesarios en Docker)
+*.bat
+
+# Archivos de datos locales (se pueden incluir si son necesarios)
+# datos/
+
+# Archivos de configuración local
+.env.local
+*.local
+
