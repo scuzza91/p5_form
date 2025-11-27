@@ -220,7 +220,7 @@ public class ExamenService {
             Pregunta.AreaConocimiento.LOGICA, 1);
         p1 = preguntaRepository.save(p1);
         
-        List<Opcion> opciones1 = Arrays.asList(
+        List<Opcion> opciones1 = new ArrayList<>(Arrays.asList(
             new Opcion("32", p1, 1),
             new Opcion("30", p1, 2),
             new Opcion("28", p1, 3),
@@ -235,7 +235,7 @@ public class ExamenService {
             Pregunta.AreaConocimiento.LOGICA, 1);
         p2 = preguntaRepository.save(p2);
         
-        List<Opcion> opciones2 = Arrays.asList(
+        List<Opcion> opciones2 = new ArrayList<>(Arrays.asList(
             new Opcion("Juan es lógico", p2, 1),
             new Opcion("Juan no es lógico", p2, 2),
             new Opcion("No se puede determinar", p2, 3),
@@ -250,7 +250,7 @@ public class ExamenService {
             Pregunta.AreaConocimiento.LOGICA, 1);
         p3 = preguntaRepository.save(p3);
         
-        List<Opcion> opciones3 = Arrays.asList(
+        List<Opcion> opciones3 = new ArrayList<>(Arrays.asList(
             new Opcion("21", p3, 1),
             new Opcion("20", p3, 2),
             new Opcion("22", p3, 3),
@@ -265,7 +265,7 @@ public class ExamenService {
             Pregunta.AreaConocimiento.LOGICA, 1);
         p4 = preguntaRepository.save(p4);
         
-        List<Opcion> opciones4 = Arrays.asList(
+        List<Opcion> opciones4 = new ArrayList<>(Arrays.asList(
             new Opcion("A = C", p4, 1),
             new Opcion("A ≠ C", p4, 2),
             new Opcion("No se puede determinar", p4, 3),
@@ -280,7 +280,7 @@ public class ExamenService {
             Pregunta.AreaConocimiento.LOGICA, 1);
         p5 = preguntaRepository.save(p5);
         
-        List<Opcion> opciones5 = Arrays.asList(
+        List<Opcion> opciones5 = new ArrayList<>(Arrays.asList(
             new Opcion("Al menos un estudiante no es inteligente", p5, 1),
             new Opcion("Ningún estudiante es inteligente", p5, 2),
             new Opcion("Todos los estudiantes son tontos", p5, 3),
@@ -295,7 +295,7 @@ public class ExamenService {
             Pregunta.AreaConocimiento.LOGICA, 1);
         p6 = preguntaRepository.save(p6);
         
-        List<Opcion> opciones6 = Arrays.asList(
+        List<Opcion> opciones6 = new ArrayList<>(Arrays.asList(
             new Opcion("Sumar números pares consecutivos", p6, 1),
             new Opcion("Multiplicar por 2", p6, 2),
             new Opcion("Sumar 4", p6, 3),
@@ -310,7 +310,7 @@ public class ExamenService {
             Pregunta.AreaConocimiento.LOGICA, 1);
         p7 = preguntaRepository.save(p7);
         
-        List<Opcion> opciones7 = Arrays.asList(
+        List<Opcion> opciones7 = new ArrayList<>(Arrays.asList(
             new Opcion("P debe ser falso", p7, 1),
             new Opcion("P debe ser verdadero", p7, 2),
             new Opcion("No se puede determinar P", p7, 3),
@@ -325,7 +325,7 @@ public class ExamenService {
             Pregunta.AreaConocimiento.LOGICA, 1);
         p8 = preguntaRepository.save(p8);
         
-        List<Opcion> opciones8 = Arrays.asList(
+        List<Opcion> opciones8 = new ArrayList<>(Arrays.asList(
             new Opcion("36", p8, 1),
             new Opcion("35", p8, 2),
             new Opcion("37", p8, 3),
@@ -344,7 +344,7 @@ public class ExamenService {
             Pregunta.AreaConocimiento.MATEMATICA, 1);
         p1 = preguntaRepository.save(p1);
         
-        List<Opcion> opciones1 = Arrays.asList(
+        List<Opcion> opciones1 = new ArrayList<>(Arrays.asList(
             new Opcion("105", p1, 1),
             new Opcion("95", p1, 2),
             new Opcion("115", p1, 3),
@@ -359,7 +359,7 @@ public class ExamenService {
             Pregunta.AreaConocimiento.MATEMATICA, 1);
         p2 = preguntaRepository.save(p2);
         
-        List<Opcion> opciones2 = Arrays.asList(
+        List<Opcion> opciones2 = new ArrayList<>(Arrays.asList(
             new Opcion("30", p2, 1),
             new Opcion("25", p2, 2),
             new Opcion("35", p2, 3),
@@ -374,7 +374,7 @@ public class ExamenService {
             Pregunta.AreaConocimiento.MATEMATICA, 1);
         p3 = preguntaRepository.save(p3);
         
-        List<Opcion> opciones3 = Arrays.asList(
+        List<Opcion> opciones3 = new ArrayList<>(Arrays.asList(
             new Opcion("8", p3, 1),
             new Opcion("6", p3, 2),
             new Opcion("10", p3, 3),
@@ -389,7 +389,7 @@ public class ExamenService {
             Pregunta.AreaConocimiento.MATEMATICA, 1);
         p4 = preguntaRepository.save(p4);
         
-        List<Opcion> opciones4 = Arrays.asList(
+        List<Opcion> opciones4 = new ArrayList<>(Arrays.asList(
             new Opcion("17.5", p4, 1),
             new Opcion("16.5", p4, 2),
             new Opcion("18.5", p4, 3),
@@ -404,7 +404,7 @@ public class ExamenService {
             Pregunta.AreaConocimiento.MATEMATICA, 1);
         p5 = preguntaRepository.save(p5);
         
-        List<Opcion> opciones5 = Arrays.asList(
+        List<Opcion> opciones5 = new ArrayList<>(Arrays.asList(
             new Opcion("32", p5, 1),
             new Opcion("25", p5, 2),
             new Opcion("30", p5, 3),
@@ -419,7 +419,7 @@ public class ExamenService {
             Pregunta.AreaConocimiento.MATEMATICA, 1);
         p6 = preguntaRepository.save(p6);
         
-        List<Opcion> opciones6 = Arrays.asList(
+        List<Opcion> opciones6 = new ArrayList<>(Arrays.asList(
             new Opcion("36", p6, 1),
             new Opcion("24", p6, 2),
             new Opcion("30", p6, 3),
@@ -434,7 +434,7 @@ public class ExamenService {
             Pregunta.AreaConocimiento.MATEMATICA, 1);
         p7 = preguntaRepository.save(p7);
         
-        List<Opcion> opciones7 = Arrays.asList(
+        List<Opcion> opciones7 = new ArrayList<>(Arrays.asList(
             new Opcion("25", p7, 1),
             new Opcion("20", p7, 2),
             new Opcion("30", p7, 3),
@@ -449,7 +449,7 @@ public class ExamenService {
             Pregunta.AreaConocimiento.MATEMATICA, 1);
         p8 = preguntaRepository.save(p8);
         
-        List<Opcion> opciones8 = Arrays.asList(
+        List<Opcion> opciones8 = new ArrayList<>(Arrays.asList(
             new Opcion("17", p8, 1),
             new Opcion("20", p8, 2),
             new Opcion("14", p8, 3),
@@ -466,7 +466,7 @@ public class ExamenService {
             Pregunta.AreaConocimiento.CREATIVIDAD, 1);
         p1 = preguntaRepository.save(p1);
         
-        List<Opcion> opciones1 = Arrays.asList(
+        List<Opcion> opciones1 = new ArrayList<>(Arrays.asList(
             new Opcion("Agregando un sistema de gamificación", p1, 1),
             new Opcion("Eliminando todas las funciones", p1, 2),
             new Opcion("Haciendo la interfaz más compleja", p1, 3),
@@ -481,7 +481,7 @@ public class ExamenService {
             Pregunta.AreaConocimiento.CREATIVIDAD, 1);
         p2 = preguntaRepository.save(p2);
         
-        List<Opcion> opciones2 = Arrays.asList(
+        List<Opcion> opciones2 = new ArrayList<>(Arrays.asList(
             new Opcion("Azul", p2, 1),
             new Opcion("Rojo", p2, 2),
             new Opcion("Amarillo", p2, 3),
@@ -496,7 +496,7 @@ public class ExamenService {
             Pregunta.AreaConocimiento.CREATIVIDAD, 1);
         p3 = preguntaRepository.save(p3);
         
-        List<Opcion> opciones3 = Arrays.asList(
+        List<Opcion> opciones3 = new ArrayList<>(Arrays.asList(
             new Opcion("Usando elementos naturales y tecnología", p3, 1),
             new Opcion("Solo usando colores oscuros", p3, 2),
             new Opcion("Sin considerar el medio ambiente", p3, 3),
@@ -511,7 +511,7 @@ public class ExamenService {
             Pregunta.AreaConocimiento.CREATIVIDAD, 1);
         p4 = preguntaRepository.save(p4);
         
-        List<Opcion> opciones4 = Arrays.asList(
+        List<Opcion> opciones4 = new ArrayList<>(Arrays.asList(
             new Opcion("Un asistente de salud personal", p4, 1),
             new Opcion("Más botones físicos", p4, 2),
             new Opcion("Una pantalla más pequeña", p4, 3),
@@ -526,7 +526,7 @@ public class ExamenService {
             Pregunta.AreaConocimiento.CREATIVIDAD, 1);
         p5 = preguntaRepository.save(p5);
         
-        List<Opcion> opciones5 = Arrays.asList(
+        List<Opcion> opciones5 = new ArrayList<>(Arrays.asList(
             new Opcion("Usando imágenes de alta calidad y testimonios", p5, 1),
             new Opcion("Agregando más texto", p5, 2),
             new Opcion("Usando solo colores grises", p5, 3),
@@ -541,7 +541,7 @@ public class ExamenService {
             Pregunta.AreaConocimiento.CREATIVIDAD, 1);
         p6 = preguntaRepository.save(p6);
         
-        List<Opcion> opciones6 = Arrays.asList(
+        List<Opcion> opciones6 = new ArrayList<>(Arrays.asList(
             new Opcion("Realidad virtual para prácticas", p6, 1),
             new Opcion("Solo videos largos", p6, 2),
             new Opcion("Sin interacción", p6, 3),
@@ -556,7 +556,7 @@ public class ExamenService {
             Pregunta.AreaConocimiento.CREATIVIDAD, 1);
         p7 = preguntaRepository.save(p7);
         
-        List<Opcion> opciones7 = Arrays.asList(
+        List<Opcion> opciones7 = new ArrayList<>(Arrays.asList(
             new Opcion("Agregando funciones de audio y alto contraste", p7, 1),
             new Opcion("Usando solo colores claros", p7, 2),
             new Opcion("Eliminando el texto", p7, 3),
@@ -571,7 +571,7 @@ public class ExamenService {
             Pregunta.AreaConocimiento.CREATIVIDAD, 1);
         p8 = preguntaRepository.save(p8);
         
-        List<Opcion> opciones8 = Arrays.asList(
+        List<Opcion> opciones8 = new ArrayList<>(Arrays.asList(
             new Opcion("Un área de juegos interactivos", p8, 1),
             new Opcion("Solo bancos", p8, 2),
             new Opcion("Sin colores", p8, 3),
@@ -588,7 +588,7 @@ public class ExamenService {
             Pregunta.AreaConocimiento.PROGRAMACION, 1);
         p1 = preguntaRepository.save(p1);
         
-        List<Opcion> opciones1 = Arrays.asList(
+        List<Opcion> opciones1 = new ArrayList<>(Arrays.asList(
             new Opcion("Un contenedor que almacena datos", p1, 1),
             new Opcion("Un tipo de bucle", p1, 2),
             new Opcion("Una función", p1, 3),
@@ -603,7 +603,7 @@ public class ExamenService {
             Pregunta.AreaConocimiento.PROGRAMACION, 2);
         p2 = preguntaRepository.save(p2);
         
-        List<Opcion> opciones2 = Arrays.asList(
+        List<Opcion> opciones2 = new ArrayList<>(Arrays.asList(
             new Opcion("No hay diferencia", p2, 1),
             new Opcion("'===' compara valor y tipo, '==' solo valor", p2, 2),
             new Opcion("'==' es más rápido", p2, 3),
@@ -618,7 +618,7 @@ public class ExamenService {
             Pregunta.AreaConocimiento.PROGRAMACION, 1);
         p3 = preguntaRepository.save(p3);
         
-        List<Opcion> opciones3 = Arrays.asList(
+        List<Opcion> opciones3 = new ArrayList<>(Arrays.asList(
             new Opcion("Un paradigma que organiza el código en objetos", p3, 1),
             new Opcion("Un tipo de base de datos", p3, 2),
             new Opcion("Un lenguaje de programación", p3, 3),
@@ -633,7 +633,7 @@ public class ExamenService {
             Pregunta.AreaConocimiento.PROGRAMACION, 1);
         p4 = preguntaRepository.save(p4);
         
-        List<Opcion> opciones4 = Arrays.asList(
+        List<Opcion> opciones4 = new ArrayList<>(Arrays.asList(
             new Opcion("Una estructura que repite código un número específico de veces", p4, 1),
             new Opcion("Una función matemática", p4, 2),
             new Opcion("Un tipo de variable", p4, 3),
@@ -648,7 +648,7 @@ public class ExamenService {
             Pregunta.AreaConocimiento.PROGRAMACION, 1);
         p5 = preguntaRepository.save(p5);
         
-        List<Opcion> opciones5 = Arrays.asList(
+        List<Opcion> opciones5 = new ArrayList<>(Arrays.asList(
             new Opcion("Un bloque de código reutilizable", p5, 1),
             new Opcion("Una variable global", p5, 2),
             new Opcion("Un tipo de dato", p5, 3),
@@ -663,7 +663,7 @@ public class ExamenService {
             Pregunta.AreaConocimiento.PROGRAMACION, 1);
         p6 = preguntaRepository.save(p6);
         
-        List<Opcion> opciones6 = Arrays.asList(
+        List<Opcion> opciones6 = new ArrayList<>(Arrays.asList(
             new Opcion("Una colección ordenada de elementos", p6, 1),
             new Opcion("Un tipo de bucle", p6, 2),
             new Opcion("Una función", p6, 3),
@@ -678,7 +678,7 @@ public class ExamenService {
             Pregunta.AreaConocimiento.PROGRAMACION, 1);
         p7 = preguntaRepository.save(p7);
         
-        List<Opcion> opciones7 = Arrays.asList(
+        List<Opcion> opciones7 = new ArrayList<>(Arrays.asList(
             new Opcion("Una función que se llama a sí misma", p7, 1),
             new Opcion("Un tipo de bucle", p7, 2),
             new Opcion("Una variable", p7, 3),
@@ -693,7 +693,7 @@ public class ExamenService {
             Pregunta.AreaConocimiento.PROGRAMACION, 1);
         p8 = preguntaRepository.save(p8);
         
-        List<Opcion> opciones8 = Arrays.asList(
+        List<Opcion> opciones8 = new ArrayList<>(Arrays.asList(
             new Opcion("Una secuencia de caracteres", p8, 1),
             new Opcion("Un número entero", p8, 2),
             new Opcion("Un booleano", p8, 3),
