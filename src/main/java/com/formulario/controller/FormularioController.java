@@ -54,6 +54,7 @@ public class FormularioController {
     
     // Endpoint para recibir datos de persona desde la API de Bondarea
     @PostMapping("/api/persona/crear")
+    @CrossOrigin(origins = "*")
     public ResponseEntity<?> crearPersonaDesdeApi(
             @RequestBody PersonaApiDTO personaApi,
             @RequestHeader(value = "X-API-Token", required = false) String apiToken,
