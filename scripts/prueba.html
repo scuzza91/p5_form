@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enviar POST</title>
+    <script>
+        function enviarPOST() {
+            const data = {
+                "idStage": "B26F5HRR",
+                "custom_B26FNN8U": "Francisco",
+                "custom_B26FNN83": "Scuzzarello",
+                "custom_B26FNHKS": "36335260",
+                "custom_B26FNN87": "",
+                "custom_B26FNN8P": "fscuzzalopez@gmail.com"
+            };
+
+            fetch('http://34.238.57.131:8083/api/persona/crear', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Éxito:', data);
+                alert('Datos enviados con éxito: ' + JSON.stringify(data));
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                alert('Error al enviar los datos: ' + error);
+            });
+        }
+    </script>
+</head>
+<body>
+    <h1>Enviar Datos POST</h1>
+    <button onclick="enviarPOST()">Enviar POST</button>
+</body>
+</html>
