@@ -57,26 +57,12 @@
             <div class="max-w-4xl mx-auto">
                 <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8 md:p-12 transform hover:scale-105 transition-all duration-300">
                     <!-- Steps Overview -->
-                    <div class="grid md:grid-cols-2 gap-8 mb-12">
-                        <div class="text-center group">
-                            <div class="w-24 h-24 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                                <i class="fas fa-user text-3xl text-white"></i>
-                            </div>
-                            <h5 class="text-2xl font-bold text-gray-800 mb-3">Paso 1: Datos Personales</h5>
-                            <p class="text-gray-600 text-lg mb-4">Información básica del candidato</p>
-                            <div class="bg-blue-50 rounded-lg p-4 border-l-4 border-blue-500">
-                                <p class="text-blue-800 text-sm font-medium">
-                                    <i class="fas fa-info-circle mr-2"></i>
-                                    Completa tus datos personales y de contacto
-                                </p>
-                            </div>
-                        </div>
-                        
+                    <div class="grid md:grid-cols-1 gap-8 mb-12">
                         <div class="text-center group">
                             <div class="w-24 h-24 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                                <i class="fas fa-clock text-3xl text-white"></i>
+                                <i class="fas fa-clipboard-check text-3xl text-white"></i>
                             </div>
-                            <h5 class="text-2xl font-bold text-gray-800 mb-3">Paso 2: Examen de Conocimientos</h5>
+                            <h5 class="text-2xl font-bold text-gray-800 mb-3">Examen de Conocimientos</h5>
                             <p class="text-gray-600 text-lg mb-4">Evaluación en 4 áreas técnicas</p>
                             <div class="bg-purple-50 rounded-lg p-4 border-l-4 border-purple-500">
                                 <p class="text-purple-800 text-sm font-medium">
@@ -85,7 +71,11 @@
                                 </p>
                                 <p class="text-purple-700 text-xs mt-1">
                                     <i class="fas fa-list-check mr-1"></i>
-                                    4 áreas técnicas evaluadas
+                                    32 preguntas múltiple choice - 4 áreas técnicas
+                                </p>
+                                <p class="text-purple-700 text-xs mt-1">
+                                    <i class="fas fa-database mr-1"></i>
+                                    Los datos personales se cargan automáticamente desde la API
                                 </p>
                             </div>
                         </div>
@@ -107,10 +97,15 @@
                     
                     <!-- Action Buttons -->
                     <div class="flex justify-center">
-                        <a th:if="${inscripcionesAbiertas}" href="/paso1" class="inline-flex items-center justify-center px-10 py-5 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold text-lg rounded-full hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-300 shadow-xl">
-                            <i class="fas fa-play mr-4"></i>
-                            Comenzar Inscripción
-                        </a>
+                        <div th:if="${inscripcionesAbiertas}" class="text-center">
+                            <p class="text-gray-600 mb-4">
+                                <i class="fas fa-info-circle mr-2"></i>
+                                Los datos personales se recibirán automáticamente desde la API de Bondarea
+                            </p>
+                            <p class="text-sm text-gray-500 mb-4">
+                                Para iniciar el examen, los datos deben ser enviados mediante POST a <code class="bg-gray-100 px-2 py-1 rounded">/api/persona/crear</code>
+                            </p>
+                        </div>
                         <div th:unless="${inscripcionesAbiertas}" class="inline-flex items-center justify-center px-10 py-5 bg-gray-400 text-white font-bold text-lg rounded-full cursor-not-allowed shadow-xl">
                             <i class="fas fa-lock mr-4"></i>
                             Inscripciones Cerradas

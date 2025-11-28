@@ -32,9 +32,11 @@ public class ConfiguracionController {
         
         List<ConfiguracionSistema> configuraciones = configuracionService.obtenerTodasLasConfiguraciones();
         boolean inscripcionesAbiertas = configuracionService.estanInscripcionesAbiertas();
+        String apiTokenBondarea = configuracionService.obtenerApiTokenBondarea();
         
         model.addAttribute("configuraciones", configuraciones);
         model.addAttribute("inscripcionesAbiertas", inscripcionesAbiertas);
+        model.addAttribute("apiTokenBondarea", apiTokenBondarea);
         model.addAttribute("usuario", usuarioSesion);
         
         return "configuracion";
@@ -92,6 +94,31 @@ public class ConfiguracionController {
             redirectAttributes.addFlashAttribute("mensaje", "Configuración actualizada exitosamente");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error al actualizar la configuración: " + e.getMessage());
+        }
+        
+        return "redirect:/configuracion";
+    }
+    
+    /**
+     * Guarda o actualiza el token de API de Bondarea
+     */
+    @PostMapping("/api-token")
+    public String guardarApiToken(
+            @RequestParam String token,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+        
+        Usuario usuarioSesion = (Usuario) session.getAttribute("usuario");
+        if (usuarioSesion == null || usuarioSesion.getRol() != Usuario.Rol.ADMIN) {
+            redirectAttributes.addFlashAttribute("error", "Acceso denegado");
+            return "redirect:/login";
+        }
+        
+        try {
+            configuracionService.guardarApiTokenBondarea(token, usuarioSesion.getUsername());
+            redirectAttributes.addFlashAttribute("mensaje", "Token de API de Bondarea guardado exitosamente");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error al guardar el token: " + e.getMessage());
         }
         
         return "redirect:/configuracion";

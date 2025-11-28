@@ -39,6 +39,20 @@ public class LocalidadService {
         return localidadRepository.findById(id);
     }
     
+    public Optional<Provincia> obtenerProvinciaPorNombre(String nombre) {
+        Provincia provincia = provinciaRepository.findByNombre(nombre);
+        return provincia != null ? Optional.of(provincia) : Optional.empty();
+    }
+    
+    public Optional<Localidad> obtenerLocalidadPorNombreYProvincia(String nombreLocalidad, String nombreProvincia) {
+        Optional<Provincia> provinciaOpt = obtenerProvinciaPorNombre(nombreProvincia);
+        if (provinciaOpt.isPresent()) {
+            Localidad localidad = localidadRepository.findByNombreAndProvincia(nombreLocalidad, provinciaOpt.get());
+            return localidad != null ? Optional.of(localidad) : Optional.empty();
+        }
+        return Optional.empty();
+    }
+    
     public void cargarDatosDesdeExcel(String rutaArchivo) {
         try (FileInputStream fis = new FileInputStream(rutaArchivo);
              Workbook workbook = new XSSFWorkbook(fis)) {

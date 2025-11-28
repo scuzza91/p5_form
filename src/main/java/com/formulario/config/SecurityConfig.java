@@ -25,6 +25,9 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
+                // Permitir acceso al endpoint de API sin autenticación
+                .requestMatchers("/api/persona/crear").permitAll()
+                .requestMatchers("/api/**").permitAll()
                 // Permitir todas las rutas temporalmente para debug
                 .anyRequest().permitAll()
             )

@@ -25,6 +25,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import com.formulario.model.ResultadoDTO;
+import com.formulario.model.PersonaApiDTO;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Controller
 public class FormularioController {
@@ -42,12 +44,162 @@ public class FormularioController {
     @Autowired
     private ConfiguracionService configuracionService;
     
-    // Página principal
+    // Página principal - Ahora redirige directamente al examen
     @GetMapping("/")
     public String index(Model model) {
         boolean inscripcionesAbiertas = configuracionService.estanInscripcionesAbiertas();
         model.addAttribute("inscripcionesAbiertas", inscripcionesAbiertas);
         return "index";
+    }
+    
+    // Endpoint para recibir datos de persona desde la API de Bondarea
+    @PostMapping("/api/persona/crear")
+    public ResponseEntity<?> crearPersonaDesdeApi(
+            @RequestBody PersonaApiDTO personaApi,
+            @RequestHeader(value = "X-API-Token", required = false) String apiToken,
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            HttpServletRequest request,
+            RedirectAttributes redirectAttributes) {
+        try {
+            logger.info("Recibiendo datos de persona desde API: {}", personaApi.getEmail());
+            
+            // Validar token de API
+            String token = apiToken;
+            if (token == null && authorization != null && authorization.startsWith("Bearer ")) {
+                token = authorization.substring(7);
+            }
+            
+            if (!configuracionService.validarApiToken(token)) {
+                logger.warn("Intento de acceso con token inválido desde IP: {}", 
+                           getClientIpAddress(request));
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Token de API inválido o no proporcionado"));
+            }
+            
+            logger.info("Token de API válido, procesando solicitud");
+            
+            // Verificar si las inscripciones están abiertas
+            if (!configuracionService.estanInscripcionesAbiertas()) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "Las inscripciones están cerradas actualmente"));
+            }
+            
+            // Verificar si el email ya existe
+            if (formularioService.existeEmail(personaApi.getEmail())) {
+                Persona personaExistente = formularioService.buscarPersonaPorEmail(personaApi.getEmail());
+                // Si ya existe, verificar si tiene examen
+                if (formularioService.existeExamenParaPersona(personaExistente)) {
+                    return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body(Map.of("error", "Ya existe un examen para esta persona", 
+                                     "personaId", personaExistente.getId()));
+                }
+                // Si no tiene examen, crear uno nuevo
+                Examen examen = new Examen(personaExistente);
+                examen = formularioService.guardarExamen(examen);
+                return ResponseEntity.ok(Map.of("examenId", examen.getId(), 
+                                               "personaId", personaExistente.getId(),
+                                               "mensaje", "Persona existente, examen creado"));
+            }
+            
+            // Mapear PersonaApiDTO a Persona
+            Persona persona = mapearPersonaDesdeApi(personaApi);
+            
+            // Guardar la persona
+            Persona personaGuardada = formularioService.guardarPersona(persona);
+            
+            // Crear examen
+            Examen examen = new Examen(personaGuardada);
+            examen = formularioService.guardarExamen(examen);
+            
+            logger.info("Persona y examen creados exitosamente - Persona ID: {}, Examen ID: {}", 
+                       personaGuardada.getId(), examen.getId());
+            
+            return ResponseEntity.ok(Map.of("examenId", examen.getId(), 
+                                           "personaId", personaGuardada.getId(),
+                                           "mensaje", "Persona y examen creados exitosamente"));
+            
+        } catch (Exception e) {
+            logger.error("Error al crear persona desde API", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", "Error al procesar los datos: " + e.getMessage()));
+        }
+    }
+    
+    // Método auxiliar para mapear PersonaApiDTO a Persona
+    private Persona mapearPersonaDesdeApi(PersonaApiDTO personaApi) {
+        Persona persona = new Persona();
+        
+        // Mapear campos básicos recibidos de la API
+        // Validar que los campos requeridos no estén vacíos
+        String nombre = personaApi.getNombre();
+        String apellido = personaApi.getApellido();
+        String email = personaApi.getEmail();
+        
+        if (nombre == null || nombre.trim().isEmpty()) {
+            nombre = "No especificado";
+        }
+        if (apellido == null || apellido.trim().isEmpty()) {
+            apellido = "No especificado";
+        }
+        if (email == null || email.trim().isEmpty()) {
+            email = "sin-email-" + System.currentTimeMillis() + "@example.com";
+        }
+        
+        persona.setNombre(nombre);
+        persona.setApellido(apellido);
+        persona.setEmail(email);
+        
+        // El Documento (DNI) se puede usar para generar el CUIL si es necesario
+        // Por ahora, si viene Documento, lo usamos como CUIL (ajustar según necesidad)
+        if (personaApi.getDocumento() != null && !personaApi.getDocumento().isEmpty()) {
+            // Si el documento tiene 11 dígitos, es CUIL; si tiene menos, es DNI
+            String documento = personaApi.getDocumento().replaceAll("[^0-9]", "");
+            if (documento.length() == 11) {
+                persona.setCuil(documento);
+            } else if (documento.length() == 8) {
+                // DNI de 8 dígitos - generar CUIL básico (esto es un ejemplo, ajustar según lógica real)
+                persona.setCuil(documento + "000"); // Placeholder - ajustar según lógica de CUIL
+            } else {
+                persona.setCuil(documento);
+            }
+        } else {
+            // Generar CUIL por defecto válido (11 dígitos)
+            persona.setCuil("00000000000");
+        }
+        
+        // Asegurar que el CUIL tenga exactamente 11 dígitos
+        String cuil = persona.getCuil().replaceAll("[^0-9]", "");
+        if (cuil.length() != 11) {
+            // Rellenar con ceros a la izquierda o truncar
+            if (cuil.length() < 11) {
+                cuil = String.format("%011d", Long.parseLong(cuil.isEmpty() ? "0" : cuil));
+            } else {
+                cuil = cuil.substring(0, 11);
+            }
+            persona.setCuil(cuil);
+        }
+        
+        // Campos requeridos por el modelo pero que no vienen de la API - valores por defecto válidos
+        persona.setTelefono("0000000000"); // 10 dígitos requeridos
+        persona.setFechaNacimiento("1990-01-01"); // Fecha válida requerida (no puede ser null ni vacío)
+        persona.setGenero("No especificado"); // No puede ser vacío
+        persona.setDireccion("No especificada"); // No puede ser vacío
+        persona.setConocimientosProgramacion("Ninguno");
+        persona.setInternetHogar("No");
+        persona.setTrabajaActualmente("No");
+        persona.setTrabajaSectorIT(null);
+        
+        // Asignar provincia y localidad por defecto (primera disponible)
+        List<Provincia> provincias = localidadService.obtenerTodasLasProvincias();
+        if (!provincias.isEmpty()) {
+            persona.setProvincia(provincias.get(0));
+            List<Localidad> localidades = localidadService.obtenerLocalidadesPorProvincia(provincias.get(0).getId());
+            if (!localidades.isEmpty()) {
+                persona.setLocalidad(localidades.get(0));
+            }
+        }
+        
+        return persona;
     }
     
     // Paso 1: Formulario de datos personales
@@ -99,34 +251,42 @@ public class FormularioController {
         return "redirect:/paso2";
     }
     
-    // Paso 2: Formulario de examen
+    // Paso 2: Formulario de examen - Ahora se accede directamente con examenId
     @GetMapping("/paso2")
     public String mostrarPaso2(Model model, 
+                              @RequestParam(required = false) Long examenId,
                               @ModelAttribute("personaId") Long personaId,
                               RedirectAttributes redirectAttributes) {
         
-        if (personaId == null) {
-            redirectAttributes.addFlashAttribute("error", "Debe completar el paso 1 primero");
-            return "redirect:/paso1";
+        // Si viene examenId, redirigir directamente al examen
+        if (examenId != null) {
+            return "redirect:/examen/" + examenId;
         }
         
-        Optional<Persona> persona = formularioService.buscarPersonaPorId(personaId);
-        if (persona.isEmpty()) {
-            redirectAttributes.addFlashAttribute("error", "Persona no encontrada");
-            return "redirect:/paso1";
+        // Si viene personaId (compatibilidad con flujo anterior)
+        if (personaId != null) {
+            Optional<Persona> persona = formularioService.buscarPersonaPorId(personaId);
+            if (persona.isEmpty()) {
+                redirectAttributes.addFlashAttribute("error", "Persona no encontrada");
+                return "redirect:/";
+            }
+            
+            // Verificar si ya existe un examen para esta persona
+            if (formularioService.existeExamenParaPersona(persona.get())) {
+                redirectAttributes.addFlashAttribute("error", "Ya existe un examen para esta persona");
+                return "redirect:/resultado/" + personaId;
+            }
+            
+            // Crear nuevo examen y redirigir al examen múltiple choice
+            Examen examen = new Examen(persona.get());
+            examen = formularioService.guardarExamen(examen);
+            
+            return "redirect:/examen/" + examen.getId();
         }
         
-        // Verificar si ya existe un examen para esta persona
-        if (formularioService.existeExamenParaPersona(persona.get())) {
-            redirectAttributes.addFlashAttribute("error", "Ya existe un examen para esta persona");
-            return "redirect:/resultado/" + personaId;
-        }
-        
-        // Crear nuevo examen y redirigir al examen múltiple choice
-        Examen examen = new Examen(persona.get());
-        examen = formularioService.guardarExamen(examen);
-        
-        return "redirect:/examen/" + examen.getId();
+        // Si no viene ningún parámetro, redirigir al inicio
+        redirectAttributes.addFlashAttribute("error", "Debe proporcionar un ID de examen o persona");
+        return "redirect:/";
     }
     
     // Página de resultado
@@ -141,7 +301,7 @@ public class FormularioController {
             
             if (resultadoOpt.isEmpty()) {
                 logger.warn("No se encontró resultado para persona ID: {}", personaId);
-                return "redirect:/paso1";
+                return "redirect:/";
             }
             
             ResultadoDTO resultado = resultadoOpt.get();
@@ -156,7 +316,7 @@ public class FormularioController {
             
         } catch (Exception e) {
             logger.error("Error al mostrar resultado para persona ID: {}", personaId, e);
-            return "redirect:/paso1";
+            return "redirect:/";
         }
     }
     
@@ -171,7 +331,7 @@ public class FormularioController {
             if (examenOpt.isEmpty()) {
                 logger.warn("Examen no encontrado con ID: {}", examenId);
                 redirectAttributes.addFlashAttribute("error", "Examen no encontrado");
-                return "redirect:/paso1";
+                return "redirect:/";
             }
             
             Examen examen = examenOpt.get();
@@ -211,7 +371,7 @@ public class FormularioController {
             if (respuestas == null || respuestas.trim().isEmpty()) {
                 logger.error("El parámetro 'respuestas' está vacío o es null");
                 redirectAttributes.addFlashAttribute("error", "No se recibieron respuestas del examen");
-                return "redirect:/paso1";
+                return "redirect:/";
             }
             
             // Parsear las respuestas JSON
@@ -222,7 +382,7 @@ public class FormularioController {
             if (respuestasMap.isEmpty()) {
                 logger.warn("No hay respuestas para procesar");
                 redirectAttributes.addFlashAttribute("error", "No se encontraron respuestas válidas");
-                return "redirect:/paso1";
+                return "redirect:/";
             }
             
             // Convertir a Map<Long, Integer>
@@ -246,7 +406,7 @@ public class FormularioController {
         } catch (Exception e) {
             logger.error("Error al procesar el examen", e);
             redirectAttributes.addFlashAttribute("error", "Error al procesar el examen: " + e.getMessage());
-            return "redirect:/paso1";
+            return "redirect:/";
         }
     }
     
@@ -444,5 +604,17 @@ public class FormularioController {
             logger.error("Error al generar Excel de inscripciones", e);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+    
+    // Método auxiliar para obtener la IP del cliente
+    private String getClientIpAddress(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("X-Real-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getRemoteAddr();
+        }
+        return ip;
     }
 } 

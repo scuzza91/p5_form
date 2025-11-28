@@ -18,6 +18,7 @@ public class ConfiguracionService {
     
     // Constantes para las claves de configuración
     public static final String CLAVE_INSCRIPCIONES_ABIERTAS = "inscripciones_abiertas";
+    public static final String CLAVE_API_TOKEN_BONDAREA = "api_token_bondarea";
     
     /**
      * Obtiene el valor de una configuración por su clave
@@ -74,6 +75,35 @@ public class ConfiguracionService {
             "Las inscripciones están cerradas y los usuarios no pueden registrarse";
         
         return guardarConfiguracion(CLAVE_INSCRIPCIONES_ABIERTAS, valor, descripcion, usuario);
+    }
+    
+    /**
+     * Obtiene el token de API de Bondarea
+     */
+    public String obtenerApiTokenBondarea() {
+        Optional<ConfiguracionSistema> config = configuracionRepository.findByClave(CLAVE_API_TOKEN_BONDAREA);
+        return config.map(ConfiguracionSistema::getValor).orElse("");
+    }
+    
+    /**
+     * Guarda o actualiza el token de API de Bondarea
+     */
+    @Transactional
+    public ConfiguracionSistema guardarApiTokenBondarea(String token, String usuario) {
+        String descripcion = "Token de autenticación para la API de Bondarea";
+        return guardarConfiguracion(CLAVE_API_TOKEN_BONDAREA, token, descripcion, usuario);
+    }
+    
+    /**
+     * Verifica si el token proporcionado es válido
+     */
+    public boolean validarApiToken(String token) {
+        String tokenConfigurado = obtenerApiTokenBondarea();
+        // Si no hay token configurado, permitir acceso (para desarrollo)
+        if (tokenConfigurado == null || tokenConfigurado.isEmpty()) {
+            return true;
+        }
+        return tokenConfigurado.equals(token);
     }
     
     /**

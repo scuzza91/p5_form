@@ -46,6 +46,8 @@ services:
       SPRING_JPA_SHOW_SQL: ${SPRING_JPA_SHOW_SQL:-false}
       # Logging
       LOGGING_LEVEL_COM_FORMULARIO: ${LOGGING_LEVEL:-INFO}
+      # Token de API de Bondarea (opcional - también se puede configurar desde la UI)
+      # API_TOKEN_BONDAREA: ${API_TOKEN_BONDAREA:-}
     ports:
       - "${SERVER_PORT:-8083}:8083"
     depends_on:
