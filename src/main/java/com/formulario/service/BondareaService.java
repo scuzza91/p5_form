@@ -37,8 +37,8 @@ public class BondareaService {
         "B26F5HRR"   // Del código existente
     };
     
-    // Formato correcto de la URL según la documentación: /monitoring/{idStage}/{idCaso}
-    private static final String BONDAREA_API_PATH = "/monitoring/{idStage}/{idCaso}";
+    // Formato correcto de la URL según la documentación: /api/v2/monitoring/{idStage}/{idCaso}
+    private static final String BONDAREA_API_PATH = "/api/v2/monitoring/{idStage}/{idCaso}";
     
     public BondareaService() {
         this.restTemplate = new RestTemplate();
@@ -144,6 +144,87 @@ public class BondareaService {
         logger.error("❌ No se pudo obtener datos de Bondarea para idStage: {}, idCaso: {} después de intentar {} URLs. Último error: {}", 
             idStage, idCaso, totalIntentos, ultimoError);
         return null;
+    }
+    
+    /**
+     * Valida que un ID de caso existe en Bondarea usando el idStage específico B26F5NF6
+     * @param idCaso ID del caso en Bondarea (ej: 128379, 128276)
+     * @return true si el ID existe, false en caso contrario
+     */
+    public boolean validarIdCasoEnBondarea(String idCaso) {
+        if (idCaso == null || idCaso.trim().isEmpty()) {
+            logger.warn("ID de caso vacío o nulo - No se puede validar");
+            return false;
+        }
+        
+        String token = configuracionService.obtenerApiTokenBondarea();
+        if (token == null || token.isEmpty()) {
+            logger.warn("Token de Bondarea no configurado - No se puede validar el ID");
+            return false;
+        }
+        
+        String idStage = "B26F5NF6"; // ID Stage específico según requerimiento
+        logger.info("Validando ID de caso en Bondarea: idStage={}, idCaso={}", idStage, idCaso);
+        
+        // Preparar headers
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Accept", "application/json");
+        headers.set("X-API-Token", token);
+        headers.set("Authorization", "Bearer " + token);
+        headers.set("scope", "1258");
+        
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        
+        // Intentar con cada URL base
+        for (String baseUrl : BONDAREA_BASE_URLS) {
+            try {
+                String url = baseUrl + BONDAREA_API_PATH
+                    .replace("{idStage}", idStage)
+                    .replace("{idCaso}", idCaso);
+                
+                logger.debug("Validando existencia en URL: {}", url);
+                
+                // Realizar la petición GET
+                @SuppressWarnings("unchecked")
+                ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    entity,
+                    (Class<Map<String, Object>>) (Class<?>) Map.class
+                );
+                
+                if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                    logger.info("✅ ID de caso {} validado exitosamente en Bondarea (idStage: {})", idCaso, idStage);
+                    return true;
+                }
+                
+            } catch (HttpClientErrorException e) {
+                if (e.getStatusCode().value() == 404) {
+                    logger.warn("ID de caso {} no encontrado en Bondarea (404) - idStage: {}", idCaso, idStage);
+                    return false; // No encontrado, no intentar más URLs
+                } else if (e.getStatusCode().value() == 401 || e.getStatusCode().value() == 403) {
+                    logger.error("Error de autenticación al validar ID: {}", e.getStatusCode().value());
+                    // Continuar con siguiente URL base
+                    continue;
+                } else {
+                    logger.warn("Error HTTP {} al validar ID en {}: {}", e.getStatusCode().value(), baseUrl, e.getMessage());
+                    // Continuar con siguiente URL base
+                    continue;
+                }
+            } catch (RestClientException e) {
+                logger.warn("Error de conexión al validar ID en {}: {}", baseUrl, e.getMessage());
+                // Continuar con siguiente URL base
+                continue;
+            } catch (Exception e) {
+                logger.error("Error inesperado al validar ID en {}: {}", baseUrl, e.getMessage(), e);
+                // Continuar con siguiente URL base
+                continue;
+            }
+        }
+        
+        logger.warn("❌ No se pudo validar el ID de caso {} en Bondarea después de intentar todas las URLs", idCaso);
+        return false;
     }
     
     /**

@@ -25,7 +25,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import com.formulario.model.ResultadoDTO;
-import com.formulario.model.PersonaApiDTO;
 import jakarta.servlet.http.HttpServletRequest;
 
 @Controller
@@ -55,17 +54,23 @@ public class FormularioController {
         return "index";
     }
     
-    // Endpoint para recibir datos de persona desde la API de Bondarea
+    // Endpoint para recibir ID de caso y obtener datos de persona desde Bondarea
     @PostMapping("/api/persona/crear")
     @CrossOrigin(origins = "*")
     public ResponseEntity<?> crearPersonaDesdeApi(
-            @RequestBody PersonaApiDTO personaApi,
+            @RequestBody Map<String, String> requestBody,
             @RequestHeader(value = "X-API-Token", required = false) String apiToken,
             @RequestHeader(value = "Authorization", required = false) String authorization,
             HttpServletRequest request,
             RedirectAttributes redirectAttributes) {
         try {
-            logger.info("Recibiendo datos de persona desde API: {}", personaApi.getEmail());
+            // Obtener idCaso del request
+            String idCaso = requestBody.get("idCaso");
+            if (idCaso == null || idCaso.trim().isEmpty()) {
+                idCaso = requestBody.get("id"); // Intentar con alias
+            }
+            
+            logger.info("Recibiendo solicitud para crear persona con ID de caso: {}", idCaso);
             
             // Validar token de API
             String token = apiToken;
@@ -88,15 +93,56 @@ public class FormularioController {
                     .body(Map.of("error", "Las inscripciones están cerradas actualmente"));
             }
             
+            // Validar que el ID del caso es obligatorio
+            if (idCaso == null || idCaso.trim().isEmpty()) {
+                logger.warn("ID de caso no proporcionado - Campo requerido");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "El ID de caso es requerido", 
+                                 "mensaje", "Debe proporcionar el campo 'id' o 'idCaso' en el request"));
+            }
+            
+            // Obtener datos de la persona desde Bondarea
+            String idStage = "B26F5NF6"; // ID Stage específico según requerimiento
+            logger.info("Obteniendo datos de persona desde Bondarea: idStage={}, idCaso={}", idStage, idCaso);
+            
+            Map<String, Object> datosBondarea = bondareaService.obtenerSolicitudFinanciamiento(idStage, idCaso);
+            
+            if (datosBondarea == null || datosBondarea.isEmpty()) {
+                logger.warn("No se pudieron obtener datos de Bondarea para idCaso: {}", idCaso);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "No se encontraron datos en Bondarea para el ID de caso proporcionado", 
+                                 "idCaso", idCaso,
+                                 "mensaje", "El ID debe existir en Bondarea usando GET /monitoring/B26F5NF6/{id}"));
+            }
+
+           datosBondarea = (Map<String, Object>) datosBondarea.get("data");
+            logger.info("✅ Datos obtenidos exitosamente desde Bondarea para idCaso: {}", idCaso);
+            // Mapear datos de Bondarea a Persona
+            Persona persona = mapearPersonaDesdeBondarea(datosBondarea);
+            
+            // Obtener email para verificar si la persona ya existe
+            String email = persona.getEmail();
+            
+            // Verificar que el email sea válido (ya debería estar validado en mapearPersonaDesdeBondarea)
+            if (email == null || email.trim().isEmpty() || !esEmailValido(email)) {
+                logger.warn("Email inválido obtenido de Bondarea, usando email generado: {}", email);
+                email = "sin-email-" + System.currentTimeMillis() + "@example.com";
+                persona.setEmail(email);
+            }
+            
             // Verificar si el email ya existe
-            if (formularioService.existeEmail(personaApi.getEmail())) {
-                Persona personaExistente = formularioService.buscarPersonaPorEmail(personaApi.getEmail());
+            if (formularioService.existeEmail(email)) {
+                Persona personaExistente = formularioService.buscarPersonaPorEmail(email);
+                logger.info("Persona ya existe con email: {}, ID: {}", email, personaExistente.getId());
+                
                 // Si ya existe, verificar si tiene examen
                 if (formularioService.existeExamenParaPersona(personaExistente)) {
                     return ResponseEntity.status(HttpStatus.CONFLICT)
                         .body(Map.of("error", "Ya existe un examen para esta persona", 
-                                     "personaId", personaExistente.getId()));
+                                     "personaId", personaExistente.getId(),
+                                     "email", email));
                 }
+                
                 // Si no tiene examen, crear uno nuevo
                 Examen examen = new Examen(personaExistente);
                 examen = formularioService.guardarExamen(examen);
@@ -117,9 +163,6 @@ public class FormularioController {
                                "redirectUrl", examenUrl));
             }
             
-            // Mapear PersonaApiDTO a Persona
-            Persona persona = mapearPersonaDesdeApi(personaApi);
-            
             // Guardar la persona
             Persona personaGuardada = formularioService.guardarPersona(persona);
             
@@ -127,8 +170,8 @@ public class FormularioController {
             Examen examen = new Examen(personaGuardada);
             examen = formularioService.guardarExamen(examen);
             
-            logger.info("Persona y examen creados exitosamente - Persona ID: {}, Examen ID: {}", 
-                       personaGuardada.getId(), examen.getId());
+            logger.info("Persona y examen creados exitosamente - Persona ID: {}, Examen ID: {}, Email: {}", 
+                       personaGuardada.getId(), examen.getId(), personaGuardada.getEmail());
             
             // Construir URL del examen
             String examenUrl = construirUrlExamen(request, examen.getId());
@@ -152,40 +195,51 @@ public class FormularioController {
         }
     }
     
-    // Método auxiliar para mapear PersonaApiDTO a Persona
-    private Persona mapearPersonaDesdeApi(PersonaApiDTO personaApi) {
+    // Método auxiliar para mapear datos de Bondarea a Persona
+    private Persona mapearPersonaDesdeBondarea(Map<String, Object> datosBondarea) {
         Persona persona = new Persona();
         
-        // Mapear campos básicos recibidos de la API
-        // Validar que los campos requeridos no estén vacíos
-        String nombre = personaApi.getNombre();
-        String apellido = personaApi.getApellido();
-        String email = personaApi.getEmail();
-        
+        logger.info("Datos de Bondarea: {}", datosBondarea);
+        // Mapear campos desde Bondarea
+        // custom_B26FNN8U = Nombre
+        String nombre = obtenerValorString(datosBondarea, "custom_B26FNN8U");
         if (nombre == null || nombre.trim().isEmpty()) {
             nombre = "No especificado";
         }
+        persona.setNombre(nombre);
+        
+        // custom_B26FNN83 = Apellido
+        String apellido = obtenerValorString(datosBondarea, "custom_B26FNN83");
         if (apellido == null || apellido.trim().isEmpty()) {
             apellido = "No especificado";
         }
-        if (email == null || email.trim().isEmpty()) {
-            email = "sin-email-" + System.currentTimeMillis() + "@example.com";
-        }
-        
-        persona.setNombre(nombre);
         persona.setApellido(apellido);
+        
+        // custom_B26FNN87 o custom_B26FNN8P = Email
+        String email = obtenerValorString(datosBondarea, "custom_B26FNHKS");
+        if (email == null || email.trim().isEmpty() || !esEmailValido(email)) {
+            email = obtenerValorString(datosBondarea, "custom_B26FNHKS");
+        }
+        // Validar y normalizar el email
+        if (email == null || email.trim().isEmpty() || !esEmailValido(email)) {
+            // Generar email válido único
+            email = "sin-email-" + System.currentTimeMillis() + "@example.com";
+        } else {
+            // Limpiar y normalizar el email
+            email = email.trim().toLowerCase();
+        }
         persona.setEmail(email);
         
-        // El Documento (DNI) se puede usar para generar el CUIL si es necesario
-        // Por ahora, si viene Documento, lo usamos como CUIL (ajustar según necesidad)
-        if (personaApi.getDocumento() != null && !personaApi.getDocumento().isEmpty()) {
+        // custom_B26FNHKS = Documento (DNI)
+        String documento = obtenerValorString(datosBondarea, "custom_B26FNN8P");
+        if (documento != null && !documento.trim().isEmpty()) {
             // Si el documento tiene 11 dígitos, es CUIL; si tiene menos, es DNI
-            String documento = personaApi.getDocumento().replaceAll("[^0-9]", "");
+            documento = documento.replaceAll("[^0-9]", "");
             if (documento.length() == 11) {
                 persona.setCuil(documento);
             } else if (documento.length() == 8) {
-                // DNI de 8 dígitos - generar CUIL básico (esto es un ejemplo, ajustar según lógica real)
-                persona.setCuil(documento + "000"); // Placeholder - ajustar según lógica de CUIL
+                // DNI de 8 dígitos - generar CUIL básico
+                persona.setCuil(documento + "000");
             } else {
                 persona.setCuil(documento);
             }
@@ -197,7 +251,6 @@ public class FormularioController {
         // Asegurar que el CUIL tenga exactamente 11 dígitos
         String cuil = persona.getCuil().replaceAll("[^0-9]", "");
         if (cuil.length() != 11) {
-            // Rellenar con ceros a la izquierda o truncar
             if (cuil.length() < 11) {
                 cuil = String.format("%011d", Long.parseLong(cuil.isEmpty() ? "0" : cuil));
             } else {
@@ -207,10 +260,10 @@ public class FormularioController {
         }
         
         // Campos requeridos por el modelo pero que no vienen de la API - valores por defecto válidos
-        persona.setTelefono("0000000000"); // 10 dígitos requeridos
-        persona.setFechaNacimiento("1990-01-01"); // Fecha válida requerida (no puede ser null ni vacío)
-        persona.setGenero("No especificado"); // No puede ser vacío
-        persona.setDireccion("No especificada"); // No puede ser vacío
+        persona.setTelefono("0000000000");
+        persona.setFechaNacimiento("1990-01-01");
+        persona.setGenero("No especificado");
+        persona.setDireccion("No especificada");
         persona.setConocimientosProgramacion("Ninguno");
         persona.setInternetHogar("No");
         persona.setTrabajaActualmente("No");
@@ -227,6 +280,25 @@ public class FormularioController {
         }
         
         return persona;
+    }
+    
+    // Método auxiliar para obtener valores String de un Map de forma segura
+    private String obtenerValorString(Map<String, Object> map, String key) {
+        Object value = map.get(key);
+        if (value == null) {
+            return null;
+        }
+        return value.toString().trim();
+    }
+    
+    // Método auxiliar para validar formato de email
+    private boolean esEmailValido(String email) {
+        if (email == null || email.trim().isEmpty()) {
+            return false;
+        }
+        // Validación básica de formato de email
+        String emailRegex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
+        return email.matches(emailRegex);
     }
     
     // Paso 1: Formulario de datos personales

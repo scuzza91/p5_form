@@ -11,6 +11,12 @@ public class PersonaApiDTO {
     @JsonProperty("idStage")
     private String idStage;
     
+    @JsonProperty("id")
+    private String id; // ID del caso en Bondarea
+    
+    @JsonProperty("idCaso")
+    private String idCaso; // ID del caso en Bondarea (alias)
+    
     @JsonProperty("custom_B26FNN8U")
     private String custom_B26FNN8U; // Nombre
     
@@ -36,6 +42,22 @@ public class PersonaApiDTO {
     
     public void setIdStage(String idStage) {
         this.idStage = idStage;
+    }
+    
+    public String getId() {
+        return id != null ? id : idCaso;
+    }
+    
+    public void setId(String id) {
+        this.id = id;
+    }
+    
+    public String getIdCaso() {
+        return idCaso != null ? idCaso : id;
+    }
+    
+    public void setIdCaso(String idCaso) {
+        this.idCaso = idCaso;
     }
     
     public String getCustom_B26FNN8U() {
