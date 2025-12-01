@@ -44,6 +44,9 @@ public class FormularioController {
     @Autowired
     private ConfiguracionService configuracionService;
     
+    @Autowired
+    private BondareaService bondareaService;
+    
     // Página principal - Ahora redirige directamente al examen
     @GetMapping("/")
     public String index(Model model) {
@@ -412,39 +415,66 @@ public class FormularioController {
     }
     
     // Endpoint de debug para verificar el estado del examen
+    // Acepta tanto ID numérico (examen local) como String (idStage de Bondarea)
     @GetMapping("/debug/examen/{examenId}")
     @ResponseBody
-    public Map<String, Object> debugExamen(@PathVariable Long examenId) {
+    public Map<String, Object> debugExamen(@PathVariable String examenId) {
         Map<String, Object> debug = new HashMap<>();
         
         try {
-            Optional<Examen> examenOpt = formularioService.buscarExamenPorId(examenId);
-            if (examenOpt.isPresent()) {
-                Examen examen = examenOpt.get();
-                debug.put("examenId", examen.getId());
-                debug.put("personaId", examen.getPersona() != null ? examen.getPersona().getId() : null);
-                debug.put("personaNombre", examen.getPersona() != null ? 
-                    examen.getPersona().getNombre() + " " + examen.getPersona().getApellido() : null);
-                debug.put("fechaInicio", examen.getFechaInicio());
-                debug.put("fechaFin", examen.getFechaFin());
-                debug.put("programacionBasica", examen.getProgramacionBasica());
-                debug.put("estructurasDatos", examen.getEstructurasDatos());
-                debug.put("algoritmos", examen.getAlgoritmos());
-                debug.put("baseDatos", examen.getBaseDatos());
-                debug.put("promedio", examen.getPromedio());
-                debug.put("aprobado", examen.isAprobado());
-                debug.put("totalPreguntas", examen.getTotalPreguntas());
-                debug.put("respuestasCorrectas", examen.getRespuestasCorrectas());
-                debug.put("respuestasCount", examen.getRespuestas() != null ? examen.getRespuestas().size() : 0);
+            // Primero intentar buscar como ID numérico en la base de datos local
+            Long examenIdLong = null;
+            try {
+                examenIdLong = Long.parseLong(examenId);
+                Optional<Examen> examenOpt = formularioService.buscarExamenPorId(examenIdLong);
+                if (examenOpt.isPresent()) {
+                    Examen examen = examenOpt.get();
+                    debug.put("examenId", examen.getId());
+                    debug.put("personaId", examen.getPersona() != null ? examen.getPersona().getId() : null);
+                    debug.put("personaNombre", examen.getPersona() != null ? 
+                        examen.getPersona().getNombre() + " " + examen.getPersona().getApellido() : null);
+                    debug.put("fechaInicio", examen.getFechaInicio());
+                    debug.put("fechaFin", examen.getFechaFin());
+                    debug.put("programacionBasica", examen.getProgramacionBasica());
+                    debug.put("estructurasDatos", examen.getEstructurasDatos());
+                    debug.put("algoritmos", examen.getAlgoritmos());
+                    debug.put("baseDatos", examen.getBaseDatos());
+                    debug.put("promedio", examen.getPromedio());
+                    debug.put("aprobado", examen.isAprobado());
+                    debug.put("totalPreguntas", examen.getTotalPreguntas());
+                    debug.put("respuestasCorrectas", examen.getRespuestasCorrectas());
+                    debug.put("respuestasCount", examen.getRespuestas() != null ? examen.getRespuestas().size() : 0);
+                    debug.put("status", "OK");
+                    debug.put("source", "local");
+                    return debug;
+                }
+            } catch (NumberFormatException e) {
+                // No es un número, probablemente es un idStage de Bondarea
+                logger.debug("ID no es numérico, intentando como idStage de Bondarea: {}", examenId);
+            }
+            
+            // Si no se encontró localmente, intentar obtener desde Bondarea
+            logger.info("Examen no encontrado localmente, consultando API de Bondarea para ID: {}", examenId);
+            Map<String, Object> datosBondarea = bondareaService.obtenerDatosExamenDesdeBondarea(examenId);
+            
+            if (datosBondarea != null && !datosBondarea.isEmpty()) {
+                debug.putAll(datosBondarea);
                 debug.put("status", "OK");
+                debug.put("message", "Datos obtenidos desde Bondarea");
+                logger.info("Datos obtenidos exitosamente desde Bondarea para ID: {}", examenId);
+                return debug;
             } else {
                 debug.put("status", "NOT_FOUND");
-                debug.put("message", "Examen no encontrado");
+                debug.put("message", "Examen no encontrado ni localmente ni en Bondarea");
+                debug.put("idBuscado", examenId);
+                logger.warn("Examen no encontrado ni localmente ni en Bondarea para ID: {}", examenId);
             }
+            
         } catch (Exception e) {
+            logger.error("Error al buscar examen con ID: {}", examenId, e);
             debug.put("status", "ERROR");
             debug.put("message", e.getMessage());
-            debug.put("stackTrace", e.getStackTrace());
+            debug.put("error", e.getClass().getSimpleName());
         }
         
         return debug;
