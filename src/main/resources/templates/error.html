@@ -16,19 +16,32 @@
                         success: '#10B981',
                         warning: '#F59E0B',
                         danger: '#EF4444'
+                    },
+                    fontFamily: {
+                        sans: ['sans-serif']
                     }
                 }
             }
         }
     </script>
+    <style>
+        * {
+            font-family: sans-serif !important;
+        }
+    </style>
 </head>
 <body class="bg-gradient-to-br from-red-50 via-pink-50 to-orange-50 min-h-screen">
     <div class="container mx-auto px-4 py-8">
         <div class="max-w-2xl mx-auto">
             <!-- Header -->
             <div class="text-center mb-8">
-                <div class="bg-red-100 rounded-full w-24 h-24 mx-auto mb-6 flex items-center justify-center">
-                    <i class="fas fa-exclamation-triangle text-4xl text-red-600"></i>
+                <div class="flex items-center justify-center mb-6">
+                    <div class="w-16 h-16 rounded-lg flex items-center justify-center mr-4">
+                        <img src="/1.png" alt="Logo argentina<strong>tech</strong>" class="w-full h-full object-contain">
+                    </div>
+                    <div class="bg-red-100 rounded-full w-24 h-24 flex items-center justify-center">
+                        <i class="fas fa-exclamation-triangle text-4xl text-red-600"></i>
+                    </div>
                 </div>
                 <h1 class="text-4xl font-bold text-gray-800 mb-4">
                     Ha ocurrido un error

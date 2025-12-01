@@ -1,6 +1,6 @@
 # 🐳 Guía de Despliegue con Docker - EC2 Ubuntu 24.04
 
-Esta guía te ayudará a desplegar el sistema de evaluación Piso Cinco en una instancia EC2 de Amazon usando Docker y Docker Compose.
+Esta guía te ayudará a desplegar el sistema de evaluación argentina<strong>tech</strong> en una instancia EC2 de Amazon usando Docker y Docker Compose.
 
 ## 📋 Prerrequisitos
 

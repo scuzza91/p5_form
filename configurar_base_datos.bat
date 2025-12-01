@@ -1,7 +1,7 @@
 @echo off
 echo ========================================
 echo   Configuracion de Base de Datos
-echo   Sistema Piso Cinco
+echo   Sistema argentina<strong>tech</strong>
 echo ========================================
 echo.
 

@@ -16,7 +16,7 @@ services:
       # Scripts de inicialización (opcional)
       - ./database:/docker-entrypoint-initdb.d:ro
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "${POSTGRES_PORT:-5434}:50000"
     networks:
       - p5_form_network
     healthcheck:

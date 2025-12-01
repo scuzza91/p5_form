@@ -1,5 +1,5 @@
 -- ========================================
--- SCRIPT DE INSTALACIÓN COMPLETA - SISTEMA PISO CINCO
+-- SCRIPT DE INSTALACIÓN COMPLETA - SISTEMA ARGENTINATECH
 -- ========================================
 -- Este script ejecuta todos los scripts necesarios para configurar
 -- completamente la base de datos del sistema de evaluación

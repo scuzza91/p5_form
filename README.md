@@ -1,4 +1,4 @@
-# Sistema de Evaluación y Administración de Candidatos - Piso Cinco
+# Sistema de Evaluación y Administración de Candidatos - argentina<strong>tech</strong>
 
 ## 📋 Descripción del Proyecto
 
@@ -258,10 +258,10 @@ Para soporte técnico o consultas sobre el sistema:
 
 ## 📄 Licencia
 
-Este proyecto está desarrollado para Piso Cinco. Todos los derechos reservados.
+Este proyecto está desarrollado para argentina<strong>tech</strong>. Todos los derechos reservados.
 
 ---
 
 **Versión**: 1.0.0  
 **Última actualización**: Diciembre 2024  
-**Desarrollado por**: Equipo de Desarrollo Piso Cinco 
+**Desarrollado por**: Equipo de Desarrollo argentina<strong>tech</strong> 

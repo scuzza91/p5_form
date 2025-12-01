@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Formulario de Inscripción - Piso Cinco</title>
+    <title>Formulario de Inscripción - argentina<strong>tech</strong></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script>
@@ -17,11 +17,19 @@
                             600: '#2563eb',
                             700: '#1d4ed8',
                         }
+                    },
+                    fontFamily: {
+                        sans: ['sans-serif']
                     }
                 }
             }
         }
     </script>
+    <style>
+        * {
+            font-family: sans-serif !important;
+        }
+    </style>
 </head>
 <body class="bg-white min-h-screen font-sans flex flex-col">
     <!-- Header -->
@@ -30,10 +38,10 @@
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4">
                     <div class="w-12 h-12 rounded-lg flex items-center justify-center">
-                        <img src="/1.png" alt="Logo Piso Cinco" class="w-full h-full object-contain">
+                        <img src="/1.png" alt="Logo argentina<strong>tech</strong>" class="w-full h-full object-contain">
                     </div>
                     <div>
-                        <h1 class="text-2xl font-bold text-gray-800">Piso Cinco</h1>
+                        <h1 class="text-2xl font-bold text-gray-800">argentina<strong>tech</strong></h1>
                         <p class="text-gray-600 text-sm">Sistema de Inscripción</p>
                     </div>
                 </div>
@@ -55,64 +63,91 @@
             
             <!-- Main Card -->
             <div class="max-w-4xl mx-auto">
-                <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8 md:p-12 transform hover:scale-105 transition-all duration-300">
-                    <!-- Steps Overview -->
-                    <div class="grid md:grid-cols-1 gap-8 mb-12">
-                        <div class="text-center group">
-                            <div class="w-24 h-24 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                                <i class="fas fa-clipboard-check text-3xl text-white"></i>
+                <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+                    <!-- Header Section -->
+                    <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 md:p-8">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1">
+                                <h2 class="text-2xl md:text-3xl font-bold mb-2">Examen de Conocimientos</h2>
+                                <p class="text-blue-100 text-sm md:text-base">Evaluación en 4 áreas técnicas</p>
                             </div>
-                            <h5 class="text-2xl font-bold text-gray-800 mb-3">Examen de Conocimientos</h5>
-                            <p class="text-gray-600 text-lg mb-4">Evaluación en 4 áreas técnicas</p>
-                            <div class="bg-purple-50 rounded-lg p-4 border-l-4 border-purple-500">
-                                <p class="text-purple-800 text-sm font-medium">
-                                    <i class="fas fa-stopwatch mr-2"></i>
-                                    Tiempo límite: 60 minutos
-                                </p>
-                                <p class="text-purple-700 text-xs mt-1">
-                                    <i class="fas fa-list-check mr-1"></i>
-                                    32 preguntas múltiple choice - 4 áreas técnicas
-                                </p>
-                                <p class="text-purple-700 text-xs mt-1">
-                                    <i class="fas fa-database mr-1"></i>
-                                    Los datos personales se cargan automáticamente desde la API
-                                </p>
+                            <div class="hidden md:block">
+                                <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-clipboard-check text-3xl text-white"></i>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Status Indicator -->
-                    <div class="flex justify-center mb-8">
-                        <div class="flex items-center space-x-2">
-                            <span th:if="${inscripcionesAbiertas}" class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-green-100 text-green-800 border-2 border-green-200 shadow-sm">
+
+                    <!-- Content Section -->
+                    <div class="p-6 md:p-8">
+                        <!-- Status Indicator -->
+                        <div class="flex justify-center mb-6">
+                            <span th:if="${inscripcionesAbiertas}" class="inline-flex items-center px-6 py-3 rounded-full text-base font-medium bg-green-100 text-green-800 border-2 border-green-300 shadow-sm">
                                 <i class="fas fa-unlock mr-2"></i>
                                 Inscripciones Abiertas
                             </span>
-                            <span th:unless="${inscripcionesAbiertas}" class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-red-100 text-red-800 border-2 border-red-200 shadow-sm">
+                            <span th:unless="${inscripcionesAbiertas}" class="inline-flex items-center px-6 py-3 rounded-full text-base font-medium bg-red-100 text-red-800 border-2 border-red-300 shadow-sm">
                                 <i class="fas fa-lock mr-2"></i>
                                 Inscripciones Cerradas
                             </span>
                         </div>
-                    </div>
-                    
-                    <!-- Action Buttons -->
-                    <div class="flex justify-center">
-                        <div th:if="${inscripcionesAbiertas}" class="text-center">
-                            <p class="text-gray-600 mb-4">
-                                <i class="fas fa-info-circle mr-2"></i>
-                                Los datos personales se recibirán automáticamente desde la API de Bondarea
-                            </p>
-                            <p class="text-sm text-gray-500 mb-4">
-                                Para iniciar el examen, los datos deben ser enviados mediante POST a <code class="bg-gray-100 px-2 py-1 rounded">/api/persona/crear</code>
-                            </p>
-                        </div>
-                        <div th:unless="${inscripcionesAbiertas}" class="inline-flex items-center justify-center px-10 py-5 bg-gray-400 text-white font-bold text-lg rounded-full cursor-not-allowed shadow-xl">
-                            <i class="fas fa-lock mr-4"></i>
-                            Inscripciones Cerradas
-                        </div>
-                    </div>
-                    
 
+                        <!-- Exam Details -->
+                        <div class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-6 mb-6 border border-purple-200">
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <div class="flex items-center">
+                                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
+                                        <i class="fas fa-stopwatch text-purple-600 text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-600 font-medium">Tiempo límite</p>
+                                        <p class="text-lg font-bold text-gray-800">60 minutos</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center">
+                                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+                                        <i class="fas fa-list-check text-blue-600 text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-600 font-medium">Total de preguntas</p>
+                                        <p class="text-lg font-bold text-gray-800">32 preguntas</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-4 pt-4 border-t border-purple-200">
+                                <p class="text-sm text-gray-700 text-center">
+                                    <i class="fas fa-layer-group mr-2 text-purple-600"></i>
+                                    <strong>4 áreas técnicas:</strong> Programación, Lógica, Matemática y Creatividad
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <!-- Information Section -->
+                        <div th:if="${inscripcionesAbiertas}" class="space-y-4">
+                            <div class="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4">
+                                <div class="flex items-start">
+                                    <i class="fas fa-info-circle text-blue-600 mt-1 mr-3"></i>
+                                    <div class="flex-1">
+                                        <p class="text-sm font-medium text-blue-900 mb-2">
+                                            Los datos personales se recibirán automáticamente desde la API de Bondarea
+                                        </p>
+                                        <p class="text-xs text-blue-700">
+                                            Para iniciar el examen, los datos deben ser enviados mediante POST a 
+                                            <code class="bg-blue-100 text-blue-800 px-2 py-1 rounded font-mono text-xs">/api/persona/crear</code>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div th:unless="${inscripcionesAbiertas}" class="text-center py-6">
+                            <div class="inline-flex items-center justify-center px-8 py-4 bg-gray-100 text-gray-600 font-semibold rounded-lg border-2 border-gray-300">
+                                <i class="fas fa-lock mr-3 text-xl"></i>
+                                <span class="text-lg">Las inscripciones están cerradas temporalmente</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -125,7 +160,7 @@
         <div class="container mx-auto px-4 py-4">
             <div class="text-center">
                 <p class="text-gray-600 text-sm">
-                    © 2024 Piso Cinco. Todos los derechos reservados. | 
+                    © 2024 argentina<strong>tech</strong>. Todos los derechos reservados. | 
                     <a href="#" class="hover:text-gray-800 transition-colors duration-300">Política de Privacidad</a> | 
                     <a href="#" class="hover:text-gray-800 transition-colors duration-300">Términos de Servicio</a>
                 </p>
