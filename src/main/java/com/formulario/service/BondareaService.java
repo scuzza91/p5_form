@@ -25,17 +25,20 @@ public class BondareaService {
     
     private final RestTemplate restTemplate;
     
-    // URL base de la API de Bondarea - Se puede configurar desde la base de datos
-    // Por defecto, intenta formatos comunes de endpoints REST
-    private static final String[] BONDAREA_API_URL_PATTERNS = {
-        "https://www.bondarea.com/api/solicitud-financiamiento/{idStage}",
-        "https://www.bondarea.com/api/stage/{idStage}",
-        "https://www.bondarea.com/api/stages/{idStage}",
-        "https://argentinatech.bondarea.com/api/solicitud-financiamiento/{idStage}",
-        "https://argentinatech.bondarea.com/api/stage/{idStage}",
-        "https://api.bondarea.com/solicitud-financiamiento/{idStage}",
-        "https://api.bondarea.com/stage/{idStage}"
+    // URL base de la API de Bondarea
+    private static final String[] BONDAREA_BASE_URLS = {
+        "https://www.bondarea.com",
+        "https://argentinatech.bondarea.com"
     };
+    
+    // idStages conocidos para intentar cuando solo tenemos el ID del caso
+    private static final String[] ID_STAGES_CONOCIDOS = {
+        "B26F5NF6",  // Del ejemplo de Postman
+        "B26F5HRR"   // Del código existente
+    };
+    
+    // Formato correcto de la URL según la documentación: /monitoring/{idStage}/{idCaso}
+    private static final String BONDAREA_API_PATH = "/monitoring/{idStage}/{idCaso}";
     
     public BondareaService() {
         this.restTemplate = new RestTemplate();
@@ -43,11 +46,12 @@ public class BondareaService {
     
     /**
      * Obtiene datos de una solicitud de financiamiento desde Bondarea
-     * Intenta múltiples patrones de URL hasta encontrar uno que funcione
-     * @param idStage ID de la solicitud en Bondarea
+     * Usa el formato correcto: /monitoring/{idStage}/{idCaso}
+     * @param idStage ID del stage en Bondarea (ej: B26F5NF6)
+     * @param idCaso ID del caso en Bondarea (ej: 128276)
      * @return Map con los datos obtenidos de Bondarea, o null si hay error
      */
-    public Map<String, Object> obtenerSolicitudFinanciamiento(String idStage) {
+    public Map<String, Object> obtenerSolicitudFinanciamiento(String idStage, String idCaso) {
         String token = configuracionService.obtenerApiTokenBondarea();
         
         if (token == null || token.isEmpty()) {
@@ -55,28 +59,31 @@ public class BondareaService {
             return null;
         }
         
-        logger.info("Token de Bondarea encontrado, iniciando consulta para idStage: {}", idStage);
+        logger.info("Token de Bondarea encontrado, consultando: idStage={}, idCaso={}", idStage, idCaso);
         
-        // Preparar headers
+        // Preparar headers según la documentación de Postman
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Accept", "application/json");
         headers.set("X-API-Token", token);
         headers.set("Authorization", "Bearer " + token);
-        headers.set("Accept", "application/json");
+        headers.set("scope", "1258"); // Header visto en el ejemplo de Postman
         
         HttpEntity<String> entity = new HttpEntity<>(headers);
         
-        logger.info("Consultando API de Bondarea para idStage: {} - Intentando {} patrones de URL", idStage, BONDAREA_API_URL_PATTERNS.length);
-        
         String ultimoError = null;
         int intentos = 0;
+        int totalIntentos = BONDAREA_BASE_URLS.length;
         
-        // Intentar con cada patrón de URL hasta encontrar uno que funcione
-        for (String urlPattern : BONDAREA_API_URL_PATTERNS) {
+        // Intentar con cada URL base hasta encontrar una que funcione
+        for (String baseUrl : BONDAREA_BASE_URLS) {
             intentos++;
             try {
-                String url = urlPattern.replace("{idStage}", idStage);
-                logger.info("[Intento {}/{}] Intentando URL: {}", intentos, BONDAREA_API_URL_PATTERNS.length, url);
+                String url = baseUrl + BONDAREA_API_PATH
+                    .replace("{idStage}", idStage)
+                    .replace("{idCaso}", idCaso);
+                
+                logger.info("[Intento {}/{}] Consultando URL: {}", intentos, totalIntentos, url);
                 
                 // Realizar la petición GET
                 @SuppressWarnings("unchecked")
@@ -91,7 +98,8 @@ public class BondareaService {
                     response.getStatusCode(), response.getBody() != null);
                 
                 if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                    logger.info("✅ Datos obtenidos exitosamente de Bondarea desde URL: {} para idStage: {}", url, idStage);
+                    logger.info("✅ Datos obtenidos exitosamente de Bondarea desde URL: {} para idStage: {}, idCaso: {}", 
+                        url, idStage, idCaso);
                     return response.getBody();
                 } else {
                     logger.warn("Respuesta no exitosa o vacía - Status: {}, Body: {}", 
@@ -100,87 +108,92 @@ public class BondareaService {
                 
             } catch (HttpClientErrorException e) {
                 // Manejar errores HTTP específicos
-                String errorMsg = String.format("HTTP %d: %s", e.getStatusCode().value(), e.getMessage());
-                logger.warn("[Intento {}/{}] Error HTTP al consultar URL {}: {}", 
-                    intentos, BONDAREA_API_URL_PATTERNS.length, urlPattern, errorMsg);
+                String errorMsg = String.format("HTTP %d: %s", e.getStatusCode().value(), 
+                    e.getResponseBodyAsString() != null ? e.getResponseBodyAsString() : e.getMessage());
+                logger.warn("[Intento {}/{}] Error HTTP al consultar {}: {}", 
+                    intentos, totalIntentos, baseUrl, errorMsg);
                 ultimoError = errorMsg;
                 
                 if (e.getStatusCode().value() == 404) {
-                    logger.debug("URL no encontrada (404), intentando siguiente patrón");
+                    logger.debug("URL no encontrada (404), intentando siguiente URL base");
                     continue;
                 } else if (e.getStatusCode().value() == 401 || e.getStatusCode().value() == 403) {
                     logger.error("Error de autenticación ({}): Verificar que el token sea correcto", e.getStatusCode().value());
                     ultimoError = "Error de autenticación: " + errorMsg;
-                    // Continuar intentando otras URLs por si el problema es la URL, no el token
                     continue;
                 }
             } catch (RestClientException e) {
                 String errorMsg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
-                logger.warn("[Intento {}/{}] Error al consultar URL {}: {}", 
-                    intentos, BONDAREA_API_URL_PATTERNS.length, urlPattern, errorMsg);
+                logger.warn("[Intento {}/{}] Error al consultar {}: {}", 
+                    intentos, totalIntentos, baseUrl, errorMsg);
                 ultimoError = errorMsg;
                 
-                // Si es timeout o conexión rechazada, puede ser que la URL no exista
                 if (errorMsg.contains("timeout") || errorMsg.contains("Connection refused") || 
                     errorMsg.contains("UnknownHostException")) {
-                    logger.debug("Problema de conexión, intentando siguiente patrón");
+                    logger.debug("Problema de conexión, intentando siguiente URL base");
                     continue;
                 }
             } catch (Exception e) {
                 String errorMsg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
-                logger.error("[Intento {}/{}] Error inesperado con URL {}: {}", 
-                    intentos, BONDAREA_API_URL_PATTERNS.length, urlPattern, errorMsg, e);
+                logger.error("[Intento {}/{}] Error inesperado con {}: {}", 
+                    intentos, totalIntentos, baseUrl, errorMsg, e);
                 ultimoError = errorMsg;
             }
         }
         
-        logger.error("❌ No se pudo obtener datos de Bondarea para idStage: {} después de intentar {} patrones. Último error: {}", 
-            idStage, BONDAREA_API_URL_PATTERNS.length, ultimoError);
+        logger.error("❌ No se pudo obtener datos de Bondarea para idStage: {}, idCaso: {} después de intentar {} URLs. Último error: {}", 
+            idStage, idCaso, totalIntentos, ultimoError);
         return null;
     }
     
     /**
      * Obtiene datos de examen desde Bondarea usando el ID proporcionado
-     * Intenta diferentes formatos de ID (numérico como Long, o String como idStage)
-     * @param id ID del examen o idStage de Bondarea
+     * Si solo se proporciona el ID del caso, intenta con los idStages conocidos
+     * @param id ID del caso en Bondarea (ej: 128379, 128276)
      * @return Map con los datos obtenidos, o null si hay error
      */
     public Map<String, Object> obtenerDatosExamenDesdeBondarea(Object id) {
         try {
-            // Intentar como idStage (String)
-            String idStage = id.toString();
-            logger.info("=== Iniciando consulta a Bondarea con ID: {} ===", idStage);
+            String idCaso = id.toString();
+            logger.info("=== Iniciando consulta a Bondarea con ID de caso: {} ===", idCaso);
             
-            Map<String, Object> datosBondarea = obtenerSolicitudFinanciamiento(idStage);
-            
-            if (datosBondarea != null && !datosBondarea.isEmpty()) {
-                logger.info("Datos recibidos de Bondarea, transformando respuesta...");
+            // Intentar con cada idStage conocido hasta encontrar uno que funcione
+            for (String idStage : ID_STAGES_CONOCIDOS) {
+                logger.info("Intentando con idStage: {} para idCaso: {}", idStage, idCaso);
                 
-                // Transformar los datos de Bondarea al formato esperado
-                Map<String, Object> resultado = new HashMap<>();
-                resultado.put("source", "bondarea");
-                resultado.put("idStage", idStage);
-                resultado.put("datos", datosBondarea);
-                resultado.put("status", "OK");
-                resultado.put("message", "Datos obtenidos desde Bondarea");
+                Map<String, Object> datosBondarea = obtenerSolicitudFinanciamiento(idStage, idCaso);
                 
-                // Mapear campos comunes si están disponibles
-                if (datosBondarea.containsKey("custom_B26FNN8U")) {
-                    resultado.put("personaNombre", datosBondarea.get("custom_B26FNN8U"));
+                if (datosBondarea != null && !datosBondarea.isEmpty()) {
+                    logger.info("✅ Datos recibidos de Bondarea con idStage: {}, idCaso: {}", idStage, idCaso);
+                    
+                    // Transformar los datos de Bondarea al formato esperado
+                    Map<String, Object> resultado = new HashMap<>();
+                    resultado.put("source", "bondarea");
+                    resultado.put("idStage", idStage);
+                    resultado.put("idCaso", idCaso);
+                    resultado.put("datos", datosBondarea);
+                    resultado.put("status", "OK");
+                    resultado.put("message", "Datos obtenidos desde Bondarea");
+                    
+                    // Mapear campos comunes si están disponibles
+                    if (datosBondarea.containsKey("custom_B26FNN8U")) {
+                        resultado.put("personaNombre", datosBondarea.get("custom_B26FNN8U"));
+                    }
+                    if (datosBondarea.containsKey("custom_B26FNN83")) {
+                        resultado.put("personaApellido", datosBondarea.get("custom_B26FNN83"));
+                    }
+                    if (datosBondarea.containsKey("custom_B26FNN8P")) {
+                        resultado.put("personaEmail", datosBondarea.get("custom_B26FNN8P"));
+                    }
+                    
+                    logger.info("✅ Datos transformados exitosamente para idStage: {}, idCaso: {}", idStage, idCaso);
+                    return resultado;
+                } else {
+                    logger.debug("No se obtuvieron datos con idStage: {}, intentando siguiente...", idStage);
                 }
-                if (datosBondarea.containsKey("custom_B26FNN83")) {
-                    resultado.put("personaApellido", datosBondarea.get("custom_B26FNN83"));
-                }
-                if (datosBondarea.containsKey("custom_B26FNN8P")) {
-                    resultado.put("personaEmail", datosBondarea.get("custom_B26FNN8P"));
-                }
-                
-                logger.info("✅ Datos transformados exitosamente para ID: {}", idStage);
-                return resultado;
-            } else {
-                logger.warn("⚠️ No se recibieron datos de Bondarea para ID: {} (respuesta null o vacía)", idStage);
             }
             
+            logger.warn("⚠️ No se recibieron datos de Bondarea para idCaso: {} después de intentar todos los idStages conocidos", idCaso);
             return null;
             
         } catch (Exception e) {
