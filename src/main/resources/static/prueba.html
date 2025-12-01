@@ -3,8 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enviar POST</title>
+    <title>Prueba API - GET y POST</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            margin: 10px 5px;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #resultado {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .error {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        .success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+    </style>
     <script>
+        // Función para obtener parámetros de la URL
+        function obtenerParametroURL(nombre) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(nombre);
+        }
+
+        // Función para hacer GET y obtener datos del examen
+        function obtenerDatos() {
+            const id = obtenerParametroURL('id');
+            const resultadoDiv = document.getElementById('resultado');
+            
+            if (!id) {
+                resultadoDiv.className = 'error';
+                resultadoDiv.textContent = 'Error: No se proporcionó un ID en la URL. Ejemplo: prueba.html?id=128379';
+                return;
+            }
+
+            resultadoDiv.className = '';
+            resultadoDiv.textContent = 'Cargando datos del examen ID: ' + id + '...';
+
+            // Hacer GET request al endpoint de debug del examen
+            fetch(`/debug/examen/${id}`)
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                            throw new Error(`HTTP ${response.status}: ${text}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Datos obtenidos:', data);
+                    resultadoDiv.className = 'success';
+                    resultadoDiv.textContent = 'Datos del examen:\n\n' + JSON.stringify(data, null, 2);
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                    resultadoDiv.className = 'error';
+                    resultadoDiv.textContent = 'Error al obtener los datos: ' + error.message;
+                });
+        }
+
         function enviarPOST() {
             const data = {
                 "idStage": "B26F5HRR",
@@ -14,6 +92,10 @@
                 "custom_B26FNN87": "",
                 "custom_B26FNN8P": "fscuzzalopez@gmail.com"
             };
+
+            const resultadoDiv = document.getElementById('resultado');
+            resultadoDiv.className = '';
+            resultadoDiv.textContent = 'Enviando datos...';
 
             fetch('/api/persona/crear', {
                 method: 'POST',
@@ -26,18 +108,41 @@
             .then(response => response.json())
             .then(data => {
                 console.log('Éxito:', data);
-                alert('Datos enviados con éxito: ' + JSON.stringify(data));
+                resultadoDiv.className = 'success';
+                resultadoDiv.textContent = 'Datos enviados con éxito:\n\n' + JSON.stringify(data, null, 2);
             })
             .catch((error) => {
                 console.error('Error:', error);
-                alert('Error al enviar los datos: ' + error);
+                resultadoDiv.className = 'error';
+                resultadoDiv.textContent = 'Error al enviar los datos: ' + error;
             });
         }
+
+        // Cargar datos automáticamente si hay un ID en la URL
+        window.onload = function() {
+            const id = obtenerParametroURL('id');
+            if (id) {
+                obtenerDatos();
+            }
+        };
     </script>
 </head>
 <body>
-    <h1>Enviar Datos POST</h1>
+    <h1>Prueba API - GET y POST</h1>
+    <p>ID de la URL: <strong id="idMostrado">-</strong></p>
+    <button onclick="obtenerDatos()">Obtener Datos (GET)</button>
     <button onclick="enviarPOST()">Enviar POST</button>
+    <div id="resultado"></div>
+    
+    <script>
+        // Mostrar el ID si existe
+        const id = obtenerParametroURL('id');
+        if (id) {
+            document.getElementById('idMostrado').textContent = id;
+        } else {
+            document.getElementById('idMostrado').textContent = 'No proporcionado';
+        }
+    </script>
 </body>
 </html>
 
