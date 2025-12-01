@@ -7,6 +7,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -50,27 +51,32 @@ public class BondareaService {
         String token = configuracionService.obtenerApiTokenBondarea();
         
         if (token == null || token.isEmpty()) {
-            logger.warn("Token de Bondarea no configurado");
+            logger.warn("Token de Bondarea no configurado - No se puede consultar la API");
             return null;
         }
+        
+        logger.info("Token de Bondarea encontrado, iniciando consulta para idStage: {}", idStage);
         
         // Preparar headers
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("X-API-Token", token);
         headers.set("Authorization", "Bearer " + token);
-        // También intentar con otros headers comunes
         headers.set("Accept", "application/json");
         
         HttpEntity<String> entity = new HttpEntity<>(headers);
         
-        logger.info("Consultando API de Bondarea para idStage: {}", idStage);
+        logger.info("Consultando API de Bondarea para idStage: {} - Intentando {} patrones de URL", idStage, BONDAREA_API_URL_PATTERNS.length);
+        
+        String ultimoError = null;
+        int intentos = 0;
         
         // Intentar con cada patrón de URL hasta encontrar uno que funcione
         for (String urlPattern : BONDAREA_API_URL_PATTERNS) {
+            intentos++;
             try {
                 String url = urlPattern.replace("{idStage}", idStage);
-                logger.debug("Intentando URL: {}", url);
+                logger.info("[Intento {}/{}] Intentando URL: {}", intentos, BONDAREA_API_URL_PATTERNS.length, url);
                 
                 // Realizar la petición GET
                 @SuppressWarnings("unchecked")
@@ -81,25 +87,55 @@ public class BondareaService {
                     (Class<Map<String, Object>>) (Class<?>) Map.class
                 );
                 
+                logger.info("Respuesta recibida - Status: {}, Body presente: {}", 
+                    response.getStatusCode(), response.getBody() != null);
+                
                 if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                    logger.info("Datos obtenidos exitosamente de Bondarea desde URL: {} para idStage: {}", url, idStage);
+                    logger.info("✅ Datos obtenidos exitosamente de Bondarea desde URL: {} para idStage: {}", url, idStage);
                     return response.getBody();
+                } else {
+                    logger.warn("Respuesta no exitosa o vacía - Status: {}, Body: {}", 
+                        response.getStatusCode(), response.getBody());
                 }
                 
-            } catch (RestClientException e) {
-                // Si es 404, continuar con el siguiente patrón
-                if (e.getMessage() != null && e.getMessage().contains("404")) {
+            } catch (HttpClientErrorException e) {
+                // Manejar errores HTTP específicos
+                String errorMsg = String.format("HTTP %d: %s", e.getStatusCode().value(), e.getMessage());
+                logger.warn("[Intento {}/{}] Error HTTP al consultar URL {}: {}", 
+                    intentos, BONDAREA_API_URL_PATTERNS.length, urlPattern, errorMsg);
+                ultimoError = errorMsg;
+                
+                if (e.getStatusCode().value() == 404) {
                     logger.debug("URL no encontrada (404), intentando siguiente patrón");
                     continue;
+                } else if (e.getStatusCode().value() == 401 || e.getStatusCode().value() == 403) {
+                    logger.error("Error de autenticación ({}): Verificar que el token sea correcto", e.getStatusCode().value());
+                    ultimoError = "Error de autenticación: " + errorMsg;
+                    // Continuar intentando otras URLs por si el problema es la URL, no el token
+                    continue;
                 }
-                // Para otros errores, loguear pero continuar
-                logger.debug("Error al consultar URL: {} - {}", urlPattern, e.getMessage());
+            } catch (RestClientException e) {
+                String errorMsg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+                logger.warn("[Intento {}/{}] Error al consultar URL {}: {}", 
+                    intentos, BONDAREA_API_URL_PATTERNS.length, urlPattern, errorMsg);
+                ultimoError = errorMsg;
+                
+                // Si es timeout o conexión rechazada, puede ser que la URL no exista
+                if (errorMsg.contains("timeout") || errorMsg.contains("Connection refused") || 
+                    errorMsg.contains("UnknownHostException")) {
+                    logger.debug("Problema de conexión, intentando siguiente patrón");
+                    continue;
+                }
             } catch (Exception e) {
-                logger.debug("Error inesperado con URL: {} - {}", urlPattern, e.getMessage());
+                String errorMsg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+                logger.error("[Intento {}/{}] Error inesperado con URL {}: {}", 
+                    intentos, BONDAREA_API_URL_PATTERNS.length, urlPattern, errorMsg, e);
+                ultimoError = errorMsg;
             }
         }
         
-        logger.warn("No se pudo obtener datos de Bondarea para idStage: {} después de intentar todos los patrones", idStage);
+        logger.error("❌ No se pudo obtener datos de Bondarea para idStage: {} después de intentar {} patrones. Último error: {}", 
+            idStage, BONDAREA_API_URL_PATTERNS.length, ultimoError);
         return null;
     }
     
@@ -113,11 +149,13 @@ public class BondareaService {
         try {
             // Intentar como idStage (String)
             String idStage = id.toString();
-            logger.info("Intentando obtener datos de Bondarea con ID: {}", idStage);
+            logger.info("=== Iniciando consulta a Bondarea con ID: {} ===", idStage);
             
             Map<String, Object> datosBondarea = obtenerSolicitudFinanciamiento(idStage);
             
             if (datosBondarea != null && !datosBondarea.isEmpty()) {
+                logger.info("Datos recibidos de Bondarea, transformando respuesta...");
+                
                 // Transformar los datos de Bondarea al formato esperado
                 Map<String, Object> resultado = new HashMap<>();
                 resultado.put("source", "bondarea");
@@ -137,13 +175,16 @@ public class BondareaService {
                     resultado.put("personaEmail", datosBondarea.get("custom_B26FNN8P"));
                 }
                 
+                logger.info("✅ Datos transformados exitosamente para ID: {}", idStage);
                 return resultado;
+            } else {
+                logger.warn("⚠️ No se recibieron datos de Bondarea para ID: {} (respuesta null o vacía)", idStage);
             }
             
             return null;
             
         } catch (Exception e) {
-            logger.error("Error al obtener datos de examen desde Bondarea para ID: {}", id, e);
+            logger.error("❌ Error al obtener datos de examen desde Bondarea para ID: {}", id, e);
             return null;
         }
     }

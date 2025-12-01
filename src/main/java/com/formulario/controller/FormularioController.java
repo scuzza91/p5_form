@@ -454,20 +454,35 @@ public class FormularioController {
             }
             
             // Si no se encontró localmente, intentar obtener desde Bondarea
-            logger.info("Examen no encontrado localmente, consultando API de Bondarea para ID: {}", examenId);
+            logger.info("Examen no encontrado localmente (ID: {}), consultando API de Bondarea...", examenId);
+            
+            // Verificar si el token está configurado
+            String token = configuracionService.obtenerApiTokenBondarea();
+            if (token == null || token.isEmpty()) {
+                logger.warn("Token de Bondarea no configurado - No se puede consultar la API");
+                debug.put("status", "NOT_FOUND");
+                debug.put("message", "Examen no encontrado localmente. Token de Bondarea no configurado para consultar la API.");
+                debug.put("idBuscado", examenId);
+                debug.put("sugerencia", "Configurar el token de API de Bondarea en /configuracion");
+                return debug;
+            }
+            
             Map<String, Object> datosBondarea = bondareaService.obtenerDatosExamenDesdeBondarea(examenId);
             
             if (datosBondarea != null && !datosBondarea.isEmpty()) {
                 debug.putAll(datosBondarea);
                 debug.put("status", "OK");
                 debug.put("message", "Datos obtenidos desde Bondarea");
-                logger.info("Datos obtenidos exitosamente desde Bondarea para ID: {}", examenId);
+                logger.info("✅ Datos obtenidos exitosamente desde Bondarea para ID: {}", examenId);
                 return debug;
             } else {
                 debug.put("status", "NOT_FOUND");
                 debug.put("message", "Examen no encontrado ni localmente ni en Bondarea");
                 debug.put("idBuscado", examenId);
-                logger.warn("Examen no encontrado ni localmente ni en Bondarea para ID: {}", examenId);
+                debug.put("tokenConfigurado", token != null && !token.isEmpty());
+                debug.put("sugerencia", "Verificar: 1) Token configurado correctamente, 2) URL de API correcta, 3) ID válido en Bondarea. Revisar logs para más detalles.");
+                logger.warn("❌ Examen no encontrado ni localmente ni en Bondarea para ID: {}. Token configurado: {}", 
+                    examenId, token != null && !token.isEmpty());
             }
             
         } catch (Exception e) {
