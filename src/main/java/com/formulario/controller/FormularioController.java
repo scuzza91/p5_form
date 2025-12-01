@@ -100,9 +100,21 @@ public class FormularioController {
                 // Si no tiene examen, crear uno nuevo
                 Examen examen = new Examen(personaExistente);
                 examen = formularioService.guardarExamen(examen);
-                return ResponseEntity.ok(Map.of("examenId", examen.getId(), 
-                                               "personaId", personaExistente.getId(),
-                                               "mensaje", "Persona existente, examen creado"));
+                
+                // Construir URL del examen
+                String examenUrl = construirUrlExamen(request, examen.getId());
+                
+                // Preparar respuesta con header Location para redirección
+                HttpHeaders headers = new HttpHeaders();
+                headers.setLocation(java.net.URI.create(examenUrl));
+                
+                return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(Map.of("examenId", examen.getId(), 
+                               "personaId", personaExistente.getId(),
+                               "mensaje", "Persona existente, examen creado",
+                               "examenUrl", examenUrl,
+                               "redirectUrl", examenUrl));
             }
             
             // Mapear PersonaApiDTO a Persona
@@ -118,9 +130,20 @@ public class FormularioController {
             logger.info("Persona y examen creados exitosamente - Persona ID: {}, Examen ID: {}", 
                        personaGuardada.getId(), examen.getId());
             
-            return ResponseEntity.ok(Map.of("examenId", examen.getId(), 
-                                           "personaId", personaGuardada.getId(),
-                                           "mensaje", "Persona y examen creados exitosamente"));
+            // Construir URL del examen
+            String examenUrl = construirUrlExamen(request, examen.getId());
+            
+            // Preparar respuesta con header Location para redirección
+            HttpHeaders headers = new HttpHeaders();
+            headers.setLocation(java.net.URI.create(examenUrl));
+            
+            return ResponseEntity.ok()
+                .headers(headers)
+                .body(Map.of("examenId", examen.getId(), 
+                           "personaId", personaGuardada.getId(),
+                           "mensaje", "Persona y examen creados exitosamente",
+                           "examenUrl", examenUrl,
+                           "redirectUrl", examenUrl));
             
         } catch (Exception e) {
             logger.error("Error al crear persona desde API", e);
@@ -650,6 +673,34 @@ public class FormularioController {
             logger.error("Error al generar Excel de inscripciones", e);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+    
+    // Método auxiliar para construir la URL completa del examen
+    private String construirUrlExamen(HttpServletRequest request, Long examenId) {
+        String scheme = request.getScheme(); // http o https
+        String serverName = request.getServerName(); // dominio o IP
+        int serverPort = request.getServerPort(); // puerto
+        String contextPath = request.getContextPath(); // contexto de la aplicación (puede estar vacío)
+        
+        // Construir la URL base
+        StringBuilder url = new StringBuilder();
+        url.append(scheme).append("://").append(serverName);
+        
+        // Agregar puerto solo si no es el estándar (80 para http, 443 para https)
+        if ((scheme.equals("http") && serverPort != 80) || 
+            (scheme.equals("https") && serverPort != 443)) {
+            url.append(":").append(serverPort);
+        }
+        
+        // Agregar contexto si existe
+        if (contextPath != null && !contextPath.isEmpty()) {
+            url.append(contextPath);
+        }
+        
+        // Agregar ruta del examen
+        url.append("/examen/").append(examenId);
+        
+        return url.toString();
     }
     
     // Método auxiliar para obtener la IP del cliente

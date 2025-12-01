@@ -5,6 +5,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Max;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "posiciones_laborales")
@@ -64,6 +67,10 @@ public class PosicionLaboral {
     private Integer pesoProgramacion;
     
     private boolean activa = true;
+    
+    @ManyToMany(mappedBy = "posicionesLaborales", fetch = FetchType.LAZY)
+    @JsonIgnore
+    private Set<RecomendacionEstudios> recomendacionesEstudios = new HashSet<>();
     
     // Constructores
     public PosicionLaboral() {}
@@ -224,4 +231,12 @@ public class PosicionLaboral {
     
     public boolean isActiva() { return activa; }
     public void setActiva(boolean activa) { this.activa = activa; }
+    
+    public Set<RecomendacionEstudios> getRecomendacionesEstudios() {
+        return recomendacionesEstudios;
+    }
+    
+    public void setRecomendacionesEstudios(Set<RecomendacionEstudios> recomendacionesEstudios) {
+        this.recomendacionesEstudios = recomendacionesEstudios;
+    }
 } 

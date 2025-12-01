@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${modo == 'crear' ? 'Nueva Recomendación de Estudios' : 'Editar Recomendación de Estudios'}">Formulario - argentina<strong>tech</strong></title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * {
+            font-family: sans-serif !important;
+        }
+        i[class*="fa-"], i[class^="fas"], i[class^="far"], i[class^="fal"], i[class^="fab"], i[class^="fad"] {
+            font-family: "Font Awesome 6 Free", "Font Awesome 6 Pro", "Font Awesome 6 Brands" !important;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <a href="/admin/recomendaciones-estudios" class="text-gray-600 hover:text-blue-600 transition-colors duration-300">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Volver a Recomendaciones
+                    </a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="w-10 h-10 flex items-center justify-center">
+                        <img src="/1.png" alt="Logo argentina<strong>tech</strong>" class="w-8 h-8 object-contain">
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-gray-800">argentina<strong>tech</strong></h1>
+                        <p class="text-gray-600 text-sm" th:text="${modo == 'crear' ? 'Nueva Recomendación' : 'Editar Recomendación'}"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Mensajes -->
+        <div th:if="${error}" class="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+            <i class="fas fa-exclamation-triangle mr-2"></i>
+            <span th:text="${error}"></span>
+        </div>
+
+        <!-- Page Header -->
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">
+                <i class="fas fa-graduation-cap mr-3 text-blue-600"></i>
+                <span th:text="${modo == 'crear' ? 'Nueva Recomendación de Estudios' : 'Editar Recomendación de Estudios'}"></span>
+            </h2>
+            <p class="text-gray-600">Complete el formulario para <span th:text="${modo == 'crear' ? 'crear' : 'actualizar'}"></span> una recomendación de estudios</p>
+        </div>
+
+        <!-- Form -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+            <form th:action="${modo == 'crear' ? '/admin/recomendaciones-estudios/crear' : '/admin/recomendaciones-estudios/actualizar/' + recomendacion.id}" 
+                  method="post" 
+                  th:object="${recomendacion}">
+                
+                <!-- Nombre Institución -->
+                <div class="mb-6">
+                    <label for="nombreInstitucion" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-university mr-2 text-blue-600"></i>
+                        Nombre de la Institución <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" 
+                           id="nombreInstitucion" 
+                           name="nombreInstitucion"
+                           th:value="${recomendacion.nombreInstitucion}"
+                           required
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+
+                <!-- Nombre Oferta -->
+                <div class="mb-6">
+                    <label for="nombreOferta" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-book mr-2 text-blue-600"></i>
+                        Nombre de la Oferta <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" 
+                           id="nombreOferta" 
+                           name="nombreOferta"
+                           th:value="${recomendacion.nombreOferta}"
+                           required
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+
+                <!-- Duración -->
+                <div class="mb-6">
+                    <label for="duracion" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-clock mr-2 text-blue-600"></i>
+                        Duración
+                    </label>
+                    <input type="text" 
+                           id="duracion" 
+                           name="duracion"
+                           th:value="${recomendacion.duracion}"
+                           placeholder="Ej: 6 meses, 2 años, etc."
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+
+                <!-- Imagen Institución -->
+                <div class="mb-6">
+                    <label for="imagenInstitucion" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-image mr-2 text-blue-600"></i>
+                        URL de la Imagen de la Institución
+                    </label>
+                    <input type="url" 
+                           id="imagenInstitucion" 
+                           name="imagenInstitucion"
+                           th:value="${recomendacion.imagenInstitucion}"
+                           placeholder="https://ejemplo.com/imagen.jpg"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <p class="mt-1 text-sm text-gray-500">Ingrese la URL completa de la imagen</p>
+                </div>
+
+                <!-- Descripción -->
+                <div class="mb-6">
+                    <label for="descripcion" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-align-left mr-2 text-blue-600"></i>
+                        Descripción
+                    </label>
+                    <textarea id="descripcion" 
+                              name="descripcion"
+                              rows="4"
+                              th:text="${recomendacion.descripcion}"
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                </div>
+
+                <!-- Costo -->
+                <div class="mb-6">
+                    <label for="costo" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-dollar-sign mr-2 text-blue-600"></i>
+                        Costo <span class="text-red-500">*</span>
+                    </label>
+                    <input type="number" 
+                           id="costo" 
+                           name="costo"
+                           th:value="${recomendacion.costo}"
+                           step="0.01"
+                           min="0"
+                           required
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+
+                <!-- Posiciones Laborales -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-briefcase mr-2 text-blue-600"></i>
+                        Posiciones Laborales Vinculadas
+                    </label>
+                    <div class="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto">
+                        <div th:each="posicion : ${posiciones}" class="mb-2">
+                            <label class="flex items-center">
+                                <input type="checkbox" 
+                                       name="posicionesIds" 
+                                       th:value="${posicion.id}"
+                                       th:checked="${recomendacion.posicionesLaboralesIds != null && recomendacion.posicionesLaboralesIds.contains(posicion.id)}"
+                                       class="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                <span class="text-sm text-gray-700">
+                                    <span th:text="${posicion.titulo}" class="font-medium"></span>
+                                    <span th:if="${posicion.categoria}" class="text-gray-500"> - <span th:text="${posicion.categoria}"></span></span>
+                                </span>
+                            </label>
+                        </div>
+                        <p th:if="${#lists.isEmpty(posiciones)}" class="text-sm text-gray-500 italic">
+                            No hay posiciones laborales disponibles
+                        </p>
+                    </div>
+                    <p class="mt-1 text-sm text-gray-500">Seleccione las posiciones laborales con las que se vinculará esta recomendación de estudios</p>
+                </div>
+
+                <!-- Estado Activo -->
+                <div class="mb-6">
+                    <label class="flex items-center">
+                        <input type="checkbox" 
+                               name="activa" 
+                               th:checked="${recomendacion.activa}"
+                               class="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                        <span class="text-sm font-medium text-gray-700">
+                            Recomendación activa
+                        </span>
+                    </label>
+                    <p class="mt-1 text-sm text-gray-500">Las recomendaciones inactivas no se mostrarán a los candidatos</p>
+                </div>
+
+                <!-- Buttons -->
+                <div class="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
+                    <a href="/admin/recomendaciones-estudios" 
+                       class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-300">
+                        Cancelar
+                    </a>
+                    <button type="submit" 
+                            class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors duration-300">
+                        <i class="fas fa-save mr-2"></i>
+                        <span th:text="${modo == 'crear' ? 'Crear Recomendación' : 'Guardar Cambios'}"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 mt-12">
+        <div class="container mx-auto px-4 py-6">
+            <div class="text-center text-gray-600 text-sm">
+                <p>© 2024 argentina<strong>tech</strong>. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
+
