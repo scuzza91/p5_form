@@ -20,22 +20,22 @@
         <div class="max-w-4xl mx-auto">
             <!-- Header -->
             <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden mb-6">
-                <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6">
+                <div class="bg-sky-200 text-black p-6">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center space-x-4">
-                            <div class="w-12 h-12 rounded-lg flex items-center justify-center bg-white/20">
+                            <div class="w-12 h-12 rounded-lg flex items-center justify-center bg-sky-300">
                                 <img src="/1.png" alt="Logo argentina<strong>tech</strong>" class="w-full h-full object-contain">
                             </div>
                             <div>
                                 <h1 class="text-2xl font-bold mb-2">
                                     <i class="fas fa-clipboard-check mr-3"></i>Examen de Conocimientos
                                 </h1>
-                                <p class="text-blue-100">32 preguntas múltiple choice - 4 áreas de conocimiento</p>
+                                <p class="text-black">32 preguntas múltiple choice - 4 áreas de conocimiento</p>
                             </div>
                         </div>
                         <div class="text-right">
                             <div class="text-3xl font-bold" id="timer">60:00</div>
-                            <div class="text-sm text-blue-100">Tiempo restante</div>
+                            <div class="text-sm text-black">Tiempo restante</div>
                         </div>
                     </div>
                 </div>
@@ -49,20 +49,20 @@
                         </span>
                     </div>
                     <div class="w-full bg-gray-200 rounded-full h-3">
-                        <div class="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-500" 
+                        <div class="bg-sky-300 h-3 rounded-full transition-all duration-500" 
                              id="progressBar" style="width: 3.125%"></div>
                     </div>
                 </div>
             </div>
 
             <!-- Datos Personales - Recuadro Superior -->
-            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-2xl shadow-xl p-6 mb-6">
+            <div class="bg-sky-200 border-2 border-sky-300 rounded-2xl shadow-xl p-6 mb-6">
                 <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-xl font-bold text-gray-800">
-                        <i class="fas fa-id-card mr-2 text-blue-600"></i>Datos Personales
+                    <h2 class="text-xl font-bold text-black">
+                        <i class="fas fa-id-card mr-2 text-black"></i>Datos Personales
                     </h2>
-                    <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
-                        <i class="fas fa-user text-white text-lg"></i>
+                    <div class="w-12 h-12 bg-sky-300 rounded-full flex items-center justify-center">
+                        <i class="fas fa-user text-black text-lg"></i>
                     </div>
                 </div>
                 
@@ -70,37 +70,37 @@
                     <!-- Nombre -->
                     <div class="bg-white rounded-lg p-4 shadow-sm">
                         <div class="flex items-center mb-2">
-                            <i class="fas fa-user-tag text-blue-500 mr-2"></i>
-                            <span class="text-sm font-semibold text-gray-600">Nombre</span>
+                            <i class="fas fa-user-tag text-black mr-2"></i>
+                            <span class="text-sm font-semibold text-gray-700">Nombre</span>
                         </div>
-                        <p class="text-gray-800 font-medium" th:text="${persona.nombre}">Nombre</p>
+                        <p class="text-black font-medium" th:text="${persona.nombre}">Nombre</p>
                     </div>
                     
                     <!-- Apellido -->
                     <div class="bg-white rounded-lg p-4 shadow-sm">
                         <div class="flex items-center mb-2">
-                            <i class="fas fa-user-tag text-blue-500 mr-2"></i>
-                            <span class="text-sm font-semibold text-gray-600">Apellido</span>
+                            <i class="fas fa-user-tag text-black mr-2"></i>
+                            <span class="text-sm font-semibold text-gray-700">Apellido</span>
                         </div>
-                        <p class="text-gray-800 font-medium" th:text="${persona.apellido}">Apellido</p>
+                        <p class="text-black font-medium" th:text="${persona.apellido}">Apellido</p>
                     </div>
                     
                     <!-- Documento (DNI/CUIL) -->
                     <div class="bg-white rounded-lg p-4 shadow-sm">
                         <div class="flex items-center mb-2">
-                            <i class="fas fa-id-badge text-blue-500 mr-2"></i>
-                            <span class="text-sm font-semibold text-gray-600">Documento</span>
+                            <i class="fas fa-id-badge text-black mr-2"></i>
+                            <span class="text-sm font-semibold text-gray-700">Documento</span>
                         </div>
-                        <p class="text-gray-800 font-medium" th:text="${persona.cuil}">12345678901</p>
+                        <p class="text-black font-medium" th:text="${persona.cuil}">12345678901</p>
                     </div>
                     
                     <!-- Email -->
                     <div class="bg-white rounded-lg p-4 shadow-sm">
                         <div class="flex items-center mb-2">
-                            <i class="fas fa-envelope text-blue-500 mr-2"></i>
-                            <span class="text-sm font-semibold text-gray-600">Email</span>
+                            <i class="fas fa-envelope text-black mr-2"></i>
+                            <span class="text-sm font-semibold text-gray-700">Email</span>
                         </div>
-                        <p class="text-gray-800 font-medium" th:text="${persona.email}">email@ejemplo.com</p>
+                        <p class="text-black font-medium" th:text="${persona.email}">email@ejemplo.com</p>
                     </div>
                 </div>
             </div>
@@ -122,9 +122,9 @@
                         </button>
                         
                         <div class="flex space-x-2">
-                            <button type="button" id="nextBtn" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
-                                Siguiente<i class="fas fa-arrow-right ml-2"></i>
-                            </button>
+                        <button type="button" id="nextBtn" class="px-6 py-3 bg-sky-300 text-black rounded-lg hover:bg-sky-400 transition-colors duration-200">
+                            Siguiente<i class="fas fa-arrow-right ml-2"></i>
+                        </button>
                         </div>
                     </div>
                     

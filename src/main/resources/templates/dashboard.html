@@ -34,7 +34,7 @@
         }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen font-sans">
+<body class="bg-sky-200 min-h-screen font-sans">
     <!-- Header -->
     <header class="bg-white shadow-sm border-b border-gray-200">
         <div class="container mx-auto px-4 py-4">
@@ -78,19 +78,19 @@
         </div>
 
         <!-- Welcome Section -->
-        <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white mb-8">
+        <div class="bg-gradient-to-r from-sky-300 to-sky-400 rounded-2xl p-8 text-black mb-8">
             <div class="flex items-center justify-between">
                 <div>
                     <h2 class="text-3xl font-bold mb-2">
                         <i class="fas fa-tachometer-alt mr-3"></i>
                         Bienvenido al Dashboard
                     </h2>
-                    <p class="text-blue-100 text-lg">
+                    <p class="text-black text-lg">
                         Gestiona el sistema de inscripciones y administra los usuarios
                     </p>
                 </div>
                 <div class="hidden md:block">
-                    <i class="fas fa-chart-line text-6xl text-white/20"></i>
+                    <i class="fas fa-chart-line text-6xl text-black/20"></i>
                 </div>
             </div>
         </div>
@@ -103,8 +103,8 @@
                         <p class="text-gray-600 text-sm font-medium">Total Inscripciones</p>
                         <p class="text-3xl font-bold text-gray-800" th:text="${estadisticas.totalInscripciones}">0</p>
                     </div>
-                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-users text-blue-600 text-xl"></i>
+                    <div class="w-12 h-12 bg-sky-200 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-users text-sky-600 text-xl"></i>
                     </div>
                 </div>
             </div>
@@ -127,8 +127,8 @@
                         <p class="text-gray-600 text-sm font-medium">Usuarios Activos</p>
                         <p class="text-3xl font-bold text-gray-800">1</p>
                     </div>
-                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-user-shield text-purple-600 text-xl"></i>
+                    <div class="w-12 h-12 bg-sky-200 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-user-shield text-sky-600 text-xl"></i>
                     </div>
                 </div>
             </div>
@@ -146,26 +146,6 @@
             </div>
         </div>
 
-        <!-- Botón destacado para Recomendaciones de Estudios -->
-        <div class="mb-8">
-            <a href="/admin/recomendaciones-estudios" class="block bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 rounded-xl shadow-lg p-6 text-white transition-all duration-300 transform hover:scale-105">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-4">
-                        <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center">
-                            <i class="fas fa-graduation-cap text-3xl text-white"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-2xl font-bold mb-1">Administrar Recomendaciones de Estudios</h3>
-                            <p class="text-indigo-100">Gestiona las recomendaciones de estudios y vincúlalas con posiciones laborales</p>
-                        </div>
-                    </div>
-                    <div class="hidden md:flex items-center space-x-2">
-                        <span class="text-lg font-medium">Ir a Gestión</span>
-                        <i class="fas fa-arrow-right text-xl"></i>
-                    </div>
-                </div>
-            </a>
-        </div>
 
         <!-- Quick Actions -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
@@ -173,21 +153,21 @@
             <div class="bg-white rounded-xl shadow-sm border border-gray-200">
                 <div class="p-6 border-b border-gray-200">
                     <h3 class="text-xl font-semibold text-gray-800">
-                        <i class="fas fa-users-cog mr-2 text-blue-600"></i>
+                        <i class="fas fa-users-cog mr-2 text-sky-600"></i>
                         Gestión de Inscripciones
                     </h3>
                 </div>
                 <div class="p-6">
                     <div class="space-y-4">
-                        <a href="/inscripciones" class="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-blue-50 transition-colors duration-300 group">
-                            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-4 group-hover:bg-blue-200 transition-colors duration-300">
-                                <i class="fas fa-list text-blue-600"></i>
+                        <a href="/inscripciones" class="flex items-center p-4 bg-sky-50 rounded-lg hover:bg-sky-100 transition-colors duration-300 group">
+                            <div class="w-10 h-10 bg-sky-200 rounded-lg flex items-center justify-center mr-4 group-hover:bg-sky-300 transition-colors duration-300">
+                                <i class="fas fa-list text-sky-600"></i>
                             </div>
                             <div>
                                 <h4 class="font-medium text-gray-800">Ver Todas las Inscripciones</h4>
                                 <p class="text-sm text-gray-600">Consulta y gestiona todos los registros</p>
                             </div>
-                            <i class="fas fa-chevron-right ml-auto text-gray-400 group-hover:text-blue-600 transition-colors duration-300"></i>
+                            <i class="fas fa-chevron-right ml-auto text-gray-400 group-hover:text-sky-600 transition-colors duration-300"></i>
                         </a>
 
                         <a href="/" class="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-green-50 transition-colors duration-300 group">
@@ -208,21 +188,21 @@
             <div class="bg-white rounded-xl shadow-sm border border-gray-200">
                 <div class="p-6 border-b border-gray-200">
                     <h3 class="text-xl font-semibold text-gray-800">
-                        <i class="fas fa-user-shield mr-2 text-purple-600"></i>
+                        <i class="fas fa-user-shield mr-2 text-sky-600"></i>
                         Gestión de Usuarios
                     </h3>
                 </div>
                 <div class="p-6">
                     <div class="space-y-4">
-                        <a href="/registro" class="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-purple-50 transition-colors duration-300 group">
-                            <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-4 group-hover:bg-purple-200 transition-colors duration-300">
-                                <i class="fas fa-user-plus text-purple-600"></i>
+                        <a href="/registro" class="flex items-center p-4 bg-sky-50 rounded-lg hover:bg-sky-100 transition-colors duration-300 group">
+                            <div class="w-10 h-10 bg-sky-200 rounded-lg flex items-center justify-center mr-4 group-hover:bg-sky-300 transition-colors duration-300">
+                                <i class="fas fa-user-plus text-sky-600"></i>
                             </div>
                             <div>
                                 <h4 class="font-medium text-gray-800">Crear Nuevo Usuario</h4>
                                 <p class="text-sm text-gray-600">Registrar un nuevo usuario del sistema</p>
                             </div>
-                            <i class="fas fa-chevron-right ml-auto text-gray-400 group-hover:text-purple-600 transition-colors duration-300"></i>
+                            <i class="fas fa-chevron-right ml-auto text-gray-400 group-hover:text-sky-600 transition-colors duration-300"></i>
                         </a>
 
                         <a href="/configuracion" class="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-orange-50 transition-colors duration-300 group">
@@ -246,21 +226,45 @@
             <div class="bg-white rounded-xl shadow-sm border border-gray-200">
                 <div class="p-6 border-b border-gray-200">
                     <h3 class="text-xl font-semibold text-gray-800">
-                        <i class="fas fa-graduation-cap mr-2 text-indigo-600"></i>
+                        <i class="fas fa-graduation-cap mr-2 text-sky-600"></i>
                         Recomendaciones de Estudios
                     </h3>
                 </div>
                 <div class="p-6">
                     <div class="space-y-4">
-                        <a href="/admin/recomendaciones-estudios" class="flex items-center p-4 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors duration-300 group border-2 border-indigo-200">
-                            <div class="w-12 h-12 bg-indigo-500 rounded-lg flex items-center justify-center mr-4 group-hover:bg-indigo-600 transition-colors duration-300">
+                        <a href="/admin/recomendaciones-estudios" class="flex items-center p-4 bg-sky-50 rounded-lg hover:bg-sky-100 transition-colors duration-300 group border-2 border-sky-300">
+                            <div class="w-12 h-12 bg-sky-400 rounded-lg flex items-center justify-center mr-4 group-hover:bg-sky-500 transition-colors duration-300">
                                 <i class="fas fa-graduation-cap text-white text-lg"></i>
                             </div>
                             <div class="flex-1">
                                 <h4 class="font-semibold text-gray-800 text-lg">Administrar Recomendaciones</h4>
                                 <p class="text-sm text-gray-600">Gestiona recomendaciones de estudios y vincúlalas con posiciones laborales</p>
                             </div>
-                            <i class="fas fa-chevron-right ml-4 text-indigo-600 text-xl group-hover:translate-x-1 transition-transform duration-300"></i>
+                            <i class="fas fa-chevron-right ml-4 text-sky-600 text-xl group-hover:translate-x-1 transition-transform duration-300"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Roles Profesionales -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                <div class="p-6 border-b border-gray-200">
+                    <h3 class="text-xl font-semibold text-gray-800">
+                        <i class="fas fa-user-tie mr-2 text-sky-600"></i>
+                        Roles Profesionales
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-4">
+                        <a href="/admin/roles-profesionales" class="flex items-center p-4 bg-sky-50 rounded-lg hover:bg-sky-100 transition-colors duration-300 group border-2 border-sky-300">
+                            <div class="w-12 h-12 bg-sky-400 rounded-lg flex items-center justify-center mr-4 group-hover:bg-sky-500 transition-colors duration-300">
+                                <i class="fas fa-user-tie text-white text-lg"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="font-semibold text-gray-800 text-lg">Administrar Roles</h4>
+                                <p class="text-sm text-gray-600">Gestiona roles profesionales, requisitos y puntuaciones mínimas</p>
+                            </div>
+                            <i class="fas fa-chevron-right ml-4 text-sky-600 text-xl group-hover:translate-x-1 transition-transform duration-300"></i>
                         </a>
                     </div>
                 </div>

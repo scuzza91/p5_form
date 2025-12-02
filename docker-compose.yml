@@ -50,6 +50,8 @@ services:
       # API_TOKEN_BONDAREA: ${API_TOKEN_BONDAREA:-}
     ports:
       - "${SERVER_PORT:-8083}:8083"
+    volumes:
+      - uploads_data:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -70,5 +72,7 @@ networks:
 
 volumes:
   postgres_data:
+    driver: local
+  uploads_data:
     driver: local
 

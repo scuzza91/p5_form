@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${modo == 'crear' ? 'Nuevo Rol Profesional' : 'Editar Rol Profesional'}">Formulario - argentina<strong>tech</strong></title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * {
+            font-family: sans-serif !important;
+        }
+        i[class*="fa-"], i[class^="fas"], i[class^="far"], i[class^="fal"], i[class^="fab"], i[class^="fad"] {
+            font-family: "Font Awesome 6 Free", "Font Awesome 6 Pro", "Font Awesome 6 Brands" !important;
+        }
+    </style>
+</head>
+<body class="bg-sky-200 min-h-screen font-sans">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <a href="/admin/roles-profesionales" class="text-gray-600 hover:text-sky-600 transition-colors duration-300">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Volver a Roles
+                    </a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="w-10 h-10 flex items-center justify-center">
+                        <img src="/1.png" alt="Logo argentina<strong>tech</strong>" class="w-8 h-8 object-contain">
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-gray-800">argentina<strong>tech</strong></h1>
+                        <p class="text-gray-600 text-sm" th:text="${modo == 'crear' ? 'Nuevo Rol' : 'Editar Rol'}"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Mensajes -->
+        <div th:if="${error}" class="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+            <i class="fas fa-exclamation-triangle mr-2"></i>
+            <span th:text="${error}"></span>
+        </div>
+
+        <!-- Page Header -->
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">
+                <i class="fas fa-user-tie mr-3 text-sky-600"></i>
+                <span th:text="${modo == 'crear' ? 'Nuevo Rol Profesional' : 'Editar Rol Profesional'}"></span>
+            </h2>
+            <p class="text-gray-600">Complete el formulario para <span th:text="${modo == 'crear' ? 'crear' : 'actualizar'}"></span> un rol profesional</p>
+        </div>
+
+        <!-- Form -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+            <form th:action="${modo == 'crear' ? '/admin/roles-profesionales/crear' : '/admin/roles-profesionales/actualizar/' + rol.id}" 
+                  method="post" 
+                  th:object="${rol}">
+                
+                <!-- Información Básica -->
+                <div class="mb-8">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
+                        <i class="fas fa-info-circle mr-2 text-sky-600"></i>
+                        Información Básica
+                    </h3>
+                    
+                    <!-- Título -->
+                    <div class="mb-6">
+                        <label for="titulo" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-heading mr-2 text-sky-600"></i>
+                            Título del Rol <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" 
+                               id="titulo" 
+                               name="titulo"
+                               th:value="${rol.titulo}"
+                               required
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                        <p th:if="${#fields.hasErrors('titulo')}" class="mt-1 text-sm text-red-600" th:errors="*{titulo}"></p>
+                    </div>
+
+                    <!-- Descripción -->
+                    <div class="mb-6">
+                        <label for="descripcion" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-align-left mr-2 text-sky-600"></i>
+                            Descripción
+                        </label>
+                        <textarea id="descripcion" 
+                                  name="descripcion"
+                                  rows="4"
+                                  th:text="${rol.descripcion}"
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500"></textarea>
+                    </div>
+                </div>
+
+                <!-- Clasificación -->
+                <div class="mb-8">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
+                        <i class="fas fa-tags mr-2 text-sky-600"></i>
+                        Clasificación
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Categoría -->
+                        <div class="mb-6">
+                            <label for="categoria" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-folder mr-2 text-sky-600"></i>
+                                Categoría <span class="text-red-500">*</span>
+                            </label>
+                            <select id="categoria" 
+                                    name="categoria"
+                                    required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                                <option value="">Seleccione una categoría</option>
+                                <option value="Desarrollo" th:selected="${rol.categoria == 'Desarrollo'}">Desarrollo</option>
+                                <option value="Análisis" th:selected="${rol.categoria == 'Análisis'}">Análisis</option>
+                                <option value="Gestión" th:selected="${rol.categoria == 'Gestión'}">Gestión</option>
+                                <option value="Infraestructura" th:selected="${rol.categoria == 'Infraestructura'}">Infraestructura</option>
+                                <option value="Diseño" th:selected="${rol.categoria == 'Diseño'}">Diseño</option>
+                            </select>
+                        </div>
+
+                        <!-- Nivel -->
+                        <div class="mb-6">
+                            <label for="nivel" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-layer-group mr-2 text-sky-600"></i>
+                                Nivel <span class="text-red-500">*</span>
+                            </label>
+                            <select id="nivel" 
+                                    name="nivel"
+                                    required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                                <option value="">Seleccione un nivel</option>
+                                <option value="Junior" th:selected="${rol.nivel == 'Junior'}">Junior</option>
+                                <option value="Semi-Senior" th:selected="${rol.nivel == 'Semi-Senior'}">Semi-Senior</option>
+                                <option value="Senior" th:selected="${rol.nivel == 'Senior'}">Senior</option>
+                                <option value="Lead" th:selected="${rol.nivel == 'Lead'}">Lead</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detalles del Rol -->
+                <div class="mb-8">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
+                        <i class="fas fa-clipboard-list mr-2 text-sky-600"></i>
+                        Detalles del Rol
+                    </h3>
+                    
+                    <!-- Responsabilidades -->
+                    <div class="mb-6">
+                        <label for="responsabilidades" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-tasks mr-2 text-sky-600"></i>
+                            Responsabilidades
+                        </label>
+                        <textarea id="responsabilidades" 
+                                  name="responsabilidades"
+                                  rows="4"
+                                  th:text="${rol.responsabilidades}"
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500"></textarea>
+                    </div>
+
+                    <!-- Habilidades Requeridas -->
+                    <div class="mb-6">
+                        <label for="habilidadesRequeridas" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-lightbulb mr-2 text-sky-600"></i>
+                            Habilidades Requeridas
+                        </label>
+                        <textarea id="habilidadesRequeridas" 
+                                  name="habilidadesRequeridas"
+                                  rows="4"
+                                  th:text="${rol.habilidadesRequeridas}"
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500"></textarea>
+                    </div>
+
+                    <!-- Tecnologías Recomendadas -->
+                    <div class="mb-6">
+                        <label for="tecnologiasRecomendadas" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-code mr-2 text-sky-600"></i>
+                            Tecnologías Recomendadas
+                        </label>
+                        <textarea id="tecnologiasRecomendadas" 
+                                  name="tecnologiasRecomendadas"
+                                  rows="4"
+                                  th:text="${rol.tecnologiasRecomendadas}"
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500"></textarea>
+                    </div>
+
+                    <!-- Ruta de Carrera -->
+                    <div class="mb-6">
+                        <label for="rutaCarrera" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-route mr-2 text-sky-600"></i>
+                            Ruta de Carrera
+                        </label>
+                        <textarea id="rutaCarrera" 
+                                  name="rutaCarrera"
+                                  rows="4"
+                                  th:text="${rol.rutaCarrera}"
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500"></textarea>
+                    </div>
+                </div>
+
+                <!-- Requisitos Mínimos de Puntuación -->
+                <div class="mb-8">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
+                        <i class="fas fa-chart-line mr-2 text-sky-600"></i>
+                        Requisitos Mínimos de Puntuación (0-100)
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- Mínimo Lógica -->
+                        <div class="mb-6">
+                            <label for="minLogica" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-brain mr-2 text-sky-600"></i>
+                                Mínimo Lógica
+                            </label>
+                            <input type="number" 
+                                   id="minLogica" 
+                                   name="minLogica"
+                                   th:value="${rol.minLogica}"
+                                   min="0" max="100"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                        </div>
+
+                        <!-- Mínimo Matemática -->
+                        <div class="mb-6">
+                            <label for="minMatematica" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-calculator mr-2 text-sky-600"></i>
+                                Mínimo Matemática
+                            </label>
+                            <input type="number" 
+                                   id="minMatematica" 
+                                   name="minMatematica"
+                                   th:value="${rol.minMatematica}"
+                                   min="0" max="100"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                        </div>
+
+                        <!-- Mínimo Creatividad -->
+                        <div class="mb-6">
+                            <label for="minCreatividad" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-palette mr-2 text-sky-600"></i>
+                                Mínimo Creatividad
+                            </label>
+                            <input type="number" 
+                                   id="minCreatividad" 
+                                   name="minCreatividad"
+                                   th:value="${rol.minCreatividad}"
+                                   min="0" max="100"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                        </div>
+
+                        <!-- Mínimo Programación -->
+                        <div class="mb-6">
+                            <label for="minProgramacion" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-code mr-2 text-sky-600"></i>
+                                Mínimo Programación
+                            </label>
+                            <input type="number" 
+                                   id="minProgramacion" 
+                                   name="minProgramacion"
+                                   th:value="${rol.minProgramacion}"
+                                   min="0" max="100"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                        </div>
+
+                        <!-- Mínimo Promedio -->
+                        <div class="mb-6">
+                            <label for="minPromedio" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-star mr-2 text-sky-600"></i>
+                                Mínimo Promedio General
+                            </label>
+                            <input type="number" 
+                                   id="minPromedio" 
+                                   name="minPromedio"
+                                   th:value="${rol.minPromedio}"
+                                   min="0" max="100"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pesos para Cálculo de Compatibilidad -->
+                <div class="mb-8">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
+                        <i class="fas fa-balance-scale mr-2 text-sky-600"></i>
+                        Pesos para Cálculo de Compatibilidad (0-100)
+                    </h3>
+                    <p class="text-sm text-gray-600 mb-4">Los pesos determinan qué tan importante es cada área para este rol. La suma total recomendada es 100.</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Peso Lógica -->
+                        <div class="mb-6">
+                            <label for="pesoLogica" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-brain mr-2 text-sky-600"></i>
+                                Peso Lógica
+                            </label>
+                            <input type="number" 
+                                   id="pesoLogica" 
+                                   name="pesoLogica"
+                                   th:value="${rol.pesoLogica}"
+                                   min="0" max="100"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                        </div>
+
+                        <!-- Peso Matemática -->
+                        <div class="mb-6">
+                            <label for="pesoMatematica" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-calculator mr-2 text-sky-600"></i>
+                                Peso Matemática
+                            </label>
+                            <input type="number" 
+                                   id="pesoMatematica" 
+                                   name="pesoMatematica"
+                                   th:value="${rol.pesoMatematica}"
+                                   min="0" max="100"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                        </div>
+
+                        <!-- Peso Creatividad -->
+                        <div class="mb-6">
+                            <label for="pesoCreatividad" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-palette mr-2 text-sky-600"></i>
+                                Peso Creatividad
+                            </label>
+                            <input type="number" 
+                                   id="pesoCreatividad" 
+                                   name="pesoCreatividad"
+                                   th:value="${rol.pesoCreatividad}"
+                                   min="0" max="100"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                        </div>
+
+                        <!-- Peso Programación -->
+                        <div class="mb-6">
+                            <label for="pesoProgramacion" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-code mr-2 text-sky-600"></i>
+                                Peso Programación
+                            </label>
+                            <input type="number" 
+                                   id="pesoProgramacion" 
+                                   name="pesoProgramacion"
+                                   th:value="${rol.pesoProgramacion}"
+                                   min="0" max="100"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Estado -->
+                <div class="mb-6">
+                    <label class="flex items-center">
+                        <input type="checkbox" 
+                               name="activo" 
+                               value="true"
+                               th:checked="${rol.activo}"
+                               class="rounded border-gray-300 text-sky-600 shadow-sm focus:border-sky-300 focus:ring focus:ring-sky-200 focus:ring-opacity-50">
+                        <span class="ml-2 text-sm font-medium text-gray-700">
+                            <i class="fas fa-check-circle mr-2 text-sky-600"></i>
+                            Rol Activo
+                        </span>
+                    </label>
+                    <p class="mt-1 text-xs text-gray-500">Los roles inactivos no aparecerán en las recomendaciones</p>
+                </div>
+
+                <!-- Botones -->
+                <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                    <a href="/admin/roles-profesionales" 
+                       class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-300">
+                        Cancelar
+                    </a>
+                    <button type="submit" 
+                            class="px-6 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors duration-300">
+                        <i class="fas fa-save mr-2"></i>
+                        <span th:text="${modo == 'crear' ? 'Crear Rol' : 'Actualizar Rol'}"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 mt-12">
+        <div class="container mx-auto px-4 py-6">
+            <div class="text-center text-gray-600 text-sm">
+                <p>© 2024 argentina<strong>tech</strong>. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
+

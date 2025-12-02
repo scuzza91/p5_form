@@ -25,6 +25,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import com.formulario.model.ResultadoDTO;
+import com.formulario.model.RecomendacionRolDTO;
+import com.formulario.model.RecomendacionEstudiosDTO;
 import jakarta.servlet.http.HttpServletRequest;
 
 @Controller
@@ -45,6 +47,12 @@ public class FormularioController {
     
     @Autowired
     private BondareaService bondareaService;
+    
+    @Autowired
+    private RolProfesionalService rolProfesionalService;
+    
+    @Autowired
+    private RecomendacionEstudiosService recomendacionEstudiosService;
     
     // Página principal - Ahora redirige directamente al examen
     @GetMapping("/")
@@ -408,6 +416,33 @@ public class FormularioController {
                        resultado.getExamenId(), resultado.getNombre(), resultado.getApellido());
             
             model.addAttribute("resultado", resultado);
+            
+            // Cargar recomendaciones directamente en la pantalla de resultado
+            try {
+                List<RecomendacionRolDTO> recomendaciones = rolProfesionalService.generarRecomendacionesRoles(personaId);
+                Map<String, Object> estadisticas = rolProfesionalService.obtenerEstadisticasRecomendacionesRoles(personaId);
+                
+                model.addAttribute("recomendaciones", recomendaciones);
+                model.addAttribute("estadisticas", estadisticas);
+                model.addAttribute("personaId", personaId);
+                
+                logger.info("Recomendaciones cargadas: {} roles para persona ID: {}", recomendaciones.size(), personaId);
+                
+                // Cargar recomendaciones de estudios
+                try {
+                    List<RecomendacionEstudiosDTO> recomendacionesEstudios = recomendacionEstudiosService.obtenerTodas();
+                    model.addAttribute("recomendacionesEstudios", recomendacionesEstudios);
+                    logger.info("Recomendaciones de estudios cargadas: {} para persona ID: {}", recomendacionesEstudios.size(), personaId);
+                } catch (Exception e) {
+                    logger.warn("Error al cargar recomendaciones de estudios para persona ID: {} - {}", personaId, e.getMessage());
+                    model.addAttribute("recomendacionesEstudios", new ArrayList<>());
+                }
+            } catch (Exception e) {
+                logger.warn("Error al cargar recomendaciones para persona ID: {} - {}", personaId, e.getMessage());
+                model.addAttribute("recomendaciones", new ArrayList<>());
+                model.addAttribute("recomendacionesEstudios", new ArrayList<>());
+            }
+            
             logger.info("Resultado cargado exitosamente para persona ID: {}", personaId);
             logger.info("=== FIN MOSTRAR RESULTADO ===");
             

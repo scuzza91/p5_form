@@ -4,12 +4,14 @@ import com.formulario.model.RecomendacionEstudiosDTO;
 import com.formulario.model.PosicionLaboral;
 import com.formulario.model.Usuario;
 import com.formulario.service.RecomendacionEstudiosService;
+import com.formulario.service.FileUploadService;
 import com.formulario.repository.PosicionLaboralRepository;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
@@ -23,6 +25,9 @@ public class AdminRecomendacionEstudiosController {
     
     @Autowired
     private PosicionLaboralRepository posicionLaboralRepository;
+    
+    @Autowired
+    private FileUploadService fileUploadService;
     
     /**
      * Verifica que el usuario sea administrador
@@ -135,6 +140,7 @@ public class AdminRecomendacionEstudiosController {
             @ModelAttribute RecomendacionEstudiosDTO dto,
             @RequestParam(required = false) List<Long> posicionesIds,
             @RequestParam(required = false) Boolean activa,
+            @RequestParam(required = false) MultipartFile imagenFile,
             HttpSession session,
             RedirectAttributes redirectAttributes) {
         
@@ -150,6 +156,19 @@ public class AdminRecomendacionEstudiosController {
             if (posicionesIds != null && !posicionesIds.isEmpty()) {
                 dto.setPosicionesLaboralesIds(posicionesIds);
             }
+            
+            // Procesar imagen subida
+            if (imagenFile != null && !imagenFile.isEmpty()) {
+                if (fileUploadService.esImagenValida(imagenFile)) {
+                    String imagenPath = fileUploadService.guardarImagen(imagenFile, "instituciones");
+                    dto.setImagenInstitucion(imagenPath);
+                } else {
+                    redirectAttributes.addFlashAttribute("error", "El archivo debe ser una imagen válida (JPG, PNG, GIF, WEBP)");
+                    return "redirect:/admin/recomendaciones-estudios/nueva";
+                }
+            }
+            // Si no se subió imagen pero hay URL, mantener la URL
+            // Si no hay ni imagen ni URL, dejar null
             
             recomendacionEstudiosService.crear(dto);
             redirectAttributes.addFlashAttribute("mensaje", "Recomendación de estudios creada exitosamente.");
@@ -170,6 +189,8 @@ public class AdminRecomendacionEstudiosController {
             @ModelAttribute RecomendacionEstudiosDTO dto,
             @RequestParam(required = false) List<Long> posicionesIds,
             @RequestParam(required = false) Boolean activa,
+            @RequestParam(required = false) MultipartFile imagenFile,
+            @RequestParam(required = false) Boolean eliminarImagen,
             HttpSession session,
             RedirectAttributes redirectAttributes) {
         
@@ -184,6 +205,34 @@ public class AdminRecomendacionEstudiosController {
             
             if (posicionesIds != null && !posicionesIds.isEmpty()) {
                 dto.setPosicionesLaboralesIds(posicionesIds);
+            }
+            
+            // Obtener la recomendación actual para verificar si tiene imagen
+            var recomendacionActual = recomendacionEstudiosService.obtenerPorId(id);
+            String imagenAnterior = recomendacionActual.map(RecomendacionEstudiosDTO::getImagenInstitucion).orElse(null);
+            
+            // Si se marca eliminar imagen, eliminar la imagen anterior
+            if (eliminarImagen != null && eliminarImagen && imagenAnterior != null) {
+                fileUploadService.eliminarImagen(imagenAnterior);
+                dto.setImagenInstitucion(null);
+            }
+            // Si se sube una nueva imagen, guardarla y eliminar la anterior si existe
+            else if (imagenFile != null && !imagenFile.isEmpty()) {
+                if (fileUploadService.esImagenValida(imagenFile)) {
+                    // Eliminar imagen anterior si existe
+                    if (imagenAnterior != null && !imagenAnterior.startsWith("http")) {
+                        fileUploadService.eliminarImagen(imagenAnterior);
+                    }
+                    String imagenPath = fileUploadService.guardarImagen(imagenFile, "instituciones");
+                    dto.setImagenInstitucion(imagenPath);
+                } else {
+                    redirectAttributes.addFlashAttribute("error", "El archivo debe ser una imagen válida (JPG, PNG, GIF, WEBP)");
+                    return "redirect:/admin/recomendaciones-estudios/editar/" + id;
+                }
+            }
+            // Si no se sube nueva imagen y no se elimina, mantener la existente
+            else if (imagenAnterior != null && dto.getImagenInstitucion() == null) {
+                dto.setImagenInstitucion(imagenAnterior);
             }
             
             var actualizada = recomendacionEstudiosService.actualizar(id, dto);

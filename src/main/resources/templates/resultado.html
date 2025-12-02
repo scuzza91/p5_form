@@ -15,110 +15,57 @@
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-700 min-h-screen font-sans">
+<body class="bg-sky-200 min-h-screen font-sans">
     <div class="container mx-auto px-4 py-8">
         <div class="max-w-6xl mx-auto">
             <!-- Result Container -->
             <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden">
                 <!-- Header -->
-                <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-8 text-center">
+                <div class="bg-yellow-300 text-black p-8 text-center">
                     <h2 class="text-3xl font-bold mb-2">
                         <i class="fas fa-chart-line mr-3"></i>Resultado de la Evaluación
                     </h2>
-                    <p class="text-lg opacity-90">Resumen completo del candidato</p>
+                    <p class="text-lg text-black">Resumen completo del candidato</p>
                 </div>
                 
                 <!-- Body -->
                 <div class="p-8">
-                    <!-- Candidate Information -->
-                    <div class="bg-gradient-to-r from-gray-50 to-blue-50 border border-gray-200 rounded-xl p-6 mb-8">
-                        <div class="flex items-center mb-4">
-                            <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mr-4">
-                                <i class="fas fa-user text-white text-lg"></i>
-                            </div>
-                            <h4 class="text-2xl font-bold text-gray-800">Información Personal</h4>
-                        </div>
-                        
-                        <div class="grid md:grid-cols-2 gap-6">
-                            <div class="space-y-3">
-                                <div class="flex items-center">
-                                    <span class="font-semibold text-gray-700 w-32">Nombre:</span>
-                                    <span class="text-gray-800" th:text="${resultado.nombre != null ? resultado.nombre : 'N/A'} + ' ' + ${resultado.apellido != null ? resultado.apellido : 'N/A'}"></span>
-                                </div>
-                                <div class="flex items-center">
-                                    <span class="font-semibold text-gray-700 w-32">Email:</span>
-                                    <span class="text-gray-800" th:text="${resultado.email != null ? resultado.email : 'N/A'}"></span>
-                                </div>
-                                <div class="flex items-center">
-                                    <span class="font-semibold text-gray-700 w-32">Teléfono:</span>
-                                    <span class="text-gray-800" th:text="${resultado.telefono != null ? resultado.telefono : 'N/A'}"></span>
-                                </div>
-                            </div>
-                            <div class="space-y-3">
-                                <div class="flex items-center">
-                                    <span class="font-semibold text-gray-700 w-32">Fecha Nac.:</span>
-                                    <span class="text-gray-800" th:text="${resultado.fechaNacimiento != null ? resultado.fechaNacimiento : 'N/A'}"></span>
-                                </div>
-                                <div class="flex items-center">
-                                    <span class="font-semibold text-gray-700 w-32">Dirección:</span>
-                                    <span class="text-gray-800" th:text="${resultado.direccion != null ? resultado.direccion : 'N/A'}"></span>
-                                </div>
-                                <div class="flex items-center">
-                                    <span class="font-semibold text-gray-700 w-32">CUIL:</span>
-                                    <span class="text-gray-800" th:text="${resultado.cuil != null ? resultado.cuil : 'N/A'}"></span>
-                                </div>
-                                <div class="flex items-center">
-                                    <span class="font-semibold text-gray-700 w-32">Ubicación:</span>
-                                    <span class="text-gray-800" th:text="${resultado.localidadNombre != null ? resultado.localidadNombre : 'N/A'} + ', ' + ${resultado.provinciaNombre != null ? resultado.provinciaNombre : 'N/A'}"></span>
-                                </div>
-                                <div class="flex items-center">
-                                    <span class="font-semibold text-gray-700 w-32">Programación:</span>
-                                    <span class="text-gray-800" th:text="${resultado.conocimientosProgramacion != null ? resultado.conocimientosProgramacion : 'N/A'}"></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
                     <!-- Final Score -->
-                    <div class="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white rounded-2xl p-8 text-center mb-8 transform hover:scale-105 transition-all duration-300">
+                    <div class="bg-sky-200 text-black rounded-2xl p-8 text-center mb-8 transform hover:scale-105 transition-all duration-300">
                         <div class="text-6xl font-bold mb-2" th:text="${resultado.promedio != null ? #numbers.formatDecimal(resultado.promedio, 1, 1) : '0.0'}">85.0</div>
-                        <p class="text-xl mb-4 opacity-90">Puntuación Promedio</p>
-                        <div th:class="${resultado.aprobado != null and resultado.aprobado ? 'inline-block bg-green-500 text-white px-6 py-3 rounded-full text-lg font-semibold shadow-lg' : 'inline-block bg-red-500 text-white px-6 py-3 rounded-full text-lg font-semibold shadow-lg'}"
-                             th:text="${resultado.aprobado != null and resultado.aprobado ? 'APROBADO' : 'REPROBADO'}">
-                            APROBADO
-                        </div>
+                        <p class="text-xl text-black">Puntuación Promedio</p>
                     </div>
                     
                     <!-- Area Scores -->
                     <div class="mb-8">
                         <h4 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                            <i class="fas fa-list-alt mr-3 text-blue-600"></i>Detalle por Áreas
+                            <i class="fas fa-list-alt mr-3 text-black"></i>Detalle por Áreas
                         </h4>
                         
                         <div class="grid md:grid-cols-2 gap-6">
                             <!-- Lógica -->
-                            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 rounded-lg p-6 hover:shadow-lg transition-all duration-300">
+                            <div class="bg-sky-200 border-l-4 border-sky-400 rounded-lg p-6 hover:shadow-lg transition-all duration-300">
                                 <div class="flex justify-between items-center">
                                     <div>
                                         <h6 class="text-lg font-semibold text-gray-800 flex items-center">
-                                            <i class="fas fa-brain mr-2 text-blue-600"></i>Lógica
+                                            <i class="fas fa-brain mr-2 text-black"></i>Lógica
                                         </h6>
                                         <p class="text-sm text-gray-600">Razonamiento lógico y resolución de problemas</p>
                                     </div>
-                                    <div class="text-3xl font-bold text-blue-600" th:text="${resultado.logica != null ? resultado.logica : 0}">85</div>
+                                    <div class="text-3xl font-bold text-black" th:text="${resultado.logica != null ? resultado.logica : 0}">85</div>
                                 </div>
                             </div>
                             
                             <!-- Matemática -->
-                            <div class="bg-gradient-to-r from-purple-50 to-pink-50 border-l-4 border-purple-500 rounded-lg p-6 hover:shadow-lg transition-all duration-300">
+                            <div class="bg-sky-200 border-l-4 border-sky-400 rounded-lg p-6 hover:shadow-lg transition-all duration-300">
                                 <div class="flex justify-between items-center">
                                     <div>
                                         <h6 class="text-lg font-semibold text-gray-800 flex items-center">
-                                            <i class="fas fa-calculator mr-2 text-purple-600"></i>Matemática
+                                            <i class="fas fa-calculator mr-2 text-black"></i>Matemática
                                         </h6>
                                         <p class="text-sm text-gray-600">Análisis matemático y estadístico</p>
                                     </div>
-                                    <div class="text-3xl font-bold text-purple-600" th:text="${resultado.matematica != null ? resultado.matematica : 0}">78</div>
+                                    <div class="text-3xl font-bold text-black" th:text="${resultado.matematica != null ? resultado.matematica : 0}">78</div>
                                 </div>
                             </div>
                             
@@ -153,10 +100,183 @@
                     <!-- Comments -->
                     <div th:if="${resultado.comentarios != null and !#strings.isEmpty(resultado.comentarios)}" class="mb-8">
                         <h5 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                            <i class="fas fa-comment mr-2 text-blue-600"></i>Comentarios Adicionales
+                            <i class="fas fa-comment mr-2 text-black"></i>Comentarios Adicionales
                         </h5>
-                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                            <span class="text-blue-800" th:text="${resultado.comentarios}"></span>
+                        <div class="bg-sky-200 border border-sky-300 rounded-lg p-4">
+                            <span class="text-black" th:text="${resultado.comentarios}"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Recomendaciones de Roles Profesionales -->
+                    <div th:if="${recomendaciones != null and !recomendaciones.empty}" class="mb-8">
+                        <h4 class="text-2xl font-bold text-black mb-6 flex items-center">
+                            <i class="fas fa-user-tie mr-3 text-black"></i>Recomendaciones de Roles Profesionales
+                        </h4>
+                        <p class="text-gray-700 mb-6">Basado en tus resultados del examen</p>
+                        
+                        <div class="space-y-6">
+                            <div th:each="recomendacion : ${recomendaciones}" class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+                                
+                                <!-- Header del rol -->
+                                <div class="bg-sky-200 text-black p-6">
+                                    <div class="flex justify-between items-start">
+                                        <div class="flex-1">
+                                            <h3 class="text-2xl font-bold mb-2" th:text="${recomendacion.titulo}">Título del Rol</h3>
+                                            <div class="flex flex-wrap gap-2">
+                                                <span class="bg-sky-300 px-3 py-1 rounded-full text-sm font-medium text-black" 
+                                                      th:text="${recomendacion.categoria}">Categoría</span>
+                                                <span class="bg-sky-300 px-3 py-1 rounded-full text-sm font-medium text-black" 
+                                                      th:text="${recomendacion.nivel}">Nivel</span>
+                                                <span class="bg-sky-300 px-3 py-1 rounded-full text-sm font-medium text-black">
+                                                    <i class="fas fa-route mr-1"></i>Rol Profesional
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Contenido -->
+                                <div class="p-6">
+                                    <div class="grid md:grid-cols-2 gap-6">
+                                        <!-- Información del rol -->
+                                        <div>
+                                            <h4 class="text-lg font-semibold text-black mb-3">
+                                                <i class="fas fa-info-circle text-black mr-2"></i>Descripción
+                                            </h4>
+                                            <p class="text-gray-700 mb-4" th:text="${recomendacion.descripcion}">Descripción del rol...</p>
+                                            
+                                            <div class="space-y-3">
+                                                <div>
+                                                    <h5 class="font-medium text-black mb-2">
+                                                        <i class="fas fa-tasks text-black mr-2"></i>Responsabilidades
+                                                    </h5>
+                                                    <p class="text-sm text-gray-700" th:text="${recomendacion.responsabilidades}">Responsabilidades del rol...</p>
+                                                </div>
+                                                <div>
+                                                    <h5 class="font-medium text-black mb-2">
+                                                        <i class="fas fa-lightbulb text-black mr-2"></i>Habilidades Requeridas
+                                                    </h5>
+                                                    <p class="text-sm text-gray-700" th:text="${recomendacion.habilidadesRequeridas}">Habilidades necesarias...</p>
+                                                </div>
+                                                <div>
+                                                    <h5 class="font-medium text-black mb-2">
+                                                        <i class="fas fa-code text-black mr-2"></i>Tecnologías Recomendadas
+                                                    </h5>
+                                                    <p class="text-sm text-gray-700" th:text="${recomendacion.tecnologiasRecomendadas}">Tecnologías sugeridas...</p>
+                                                </div>
+                                                <div>
+                                                    <h5 class="font-medium text-black mb-2">
+                                                        <i class="fas fa-route text-black mr-2"></i>Ruta de Carrera
+                                                    </h5>
+                                                    <p class="text-sm text-gray-700" th:text="${recomendacion.rutaCarrera}">Progresión profesional...</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Comparación de puntuaciones -->
+                                        <div>
+                                            <h4 class="text-lg font-semibold text-black mb-3">
+                                                <i class="fas fa-chart-bar text-black mr-2"></i>Comparación de Habilidades
+                                            </h4>
+                                            <div class="space-y-3">
+                                                <!-- Lógica -->
+                                                <div>
+                                                    <div class="flex justify-between text-sm mb-1">
+                                                        <span class="font-medium text-black">Lógica</span>
+                                                        <span class="text-black" th:text="${recomendacion.logica} + '% vs ' + ${recomendacion.minLogica} + '%'">85% vs 70%</span>
+                                                    </div>
+                                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                                        <div class="bg-sky-300 h-2 rounded-full" 
+                                                             th:style="'width: ' + ${recomendacion.logica} + '%'"></div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Matemática -->
+                                                <div>
+                                                    <div class="flex justify-between text-sm mb-1">
+                                                        <span class="font-medium text-black">Matemática</span>
+                                                        <span class="text-black" th:text="${recomendacion.matematica} + '% vs ' + ${recomendacion.minMatematica} + '%'">75% vs 60%</span>
+                                                    </div>
+                                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                                        <div class="bg-sky-300 h-2 rounded-full" 
+                                                             th:style="'width: ' + ${recomendacion.matematica} + '%'"></div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Creatividad -->
+                                                <div>
+                                                    <div class="flex justify-between text-sm mb-1">
+                                                        <span class="font-medium text-black">Creatividad</span>
+                                                        <span class="text-black" th:text="${recomendacion.creatividad} + '% vs ' + ${recomendacion.minCreatividad} + '%'">80% vs 50%</span>
+                                                    </div>
+                                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                                        <div class="bg-sky-300 h-2 rounded-full" 
+                                                             th:style="'width: ' + ${recomendacion.creatividad} + '%'"></div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Programación -->
+                                                <div>
+                                                    <div class="flex justify-between text-sm mb-1">
+                                                        <span class="font-medium text-black">Programación</span>
+                                                        <span class="text-black" th:text="${recomendacion.programacion} + '% vs ' + ${recomendacion.minProgramacion} + '%'">90% vs 75%</span>
+                                                    </div>
+                                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                                        <div class="bg-sky-300 h-2 rounded-full" 
+                                                             th:style="'width: ' + ${recomendacion.programacion} + '%'"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Recomendaciones de Estudios -->
+                                    <div th:if="${recomendacionesEstudios != null and !recomendacionesEstudios.empty}" class="mt-6 pt-6 border-t border-sky-300">
+                                        <h4 class="text-lg font-semibold text-black mb-4 flex items-center">
+                                            <i class="fas fa-graduation-cap text-black mr-2"></i>Recomendaciones de Estudios
+                                        </h4>
+                                        <div class="grid md:grid-cols-2 gap-4">
+                                            <div th:each="estudio : ${recomendacionesEstudios}" class="bg-white rounded-lg p-4 border border-sky-300 hover:shadow-md transition-shadow duration-200">
+                                                <div class="flex items-start justify-between mb-2">
+                                                    <div class="flex-1">
+                                                        <h5 class="font-semibold text-black mb-1" th:text="${estudio.nombreOferta}">Nombre de la Oferta</h5>
+                                                        <p class="text-sm text-gray-600 mb-2" th:text="${estudio.nombreInstitucion}">Institución</p>
+                                                    </div>
+                                                    <div th:if="${estudio.imagenInstitucion != null and !estudio.imagenInstitucion.isEmpty()}" class="ml-3 flex-shrink-0">
+                                                        <img th:src="${estudio.imagenInstitucion}" 
+                                                             th:alt="${estudio.nombreInstitucion}" 
+                                                             class="w-16 h-16 object-cover rounded-lg border-2 border-sky-300"
+                                                             onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                                                             loading="lazy">
+                                                        <div class="w-16 h-16 bg-sky-200 rounded-lg border-2 border-sky-300 flex items-center justify-center" style="display: none;">
+                                                            <i class="fas fa-image text-gray-400 text-xl"></i>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <p class="text-sm text-gray-700 mb-3" th:text="${estudio.descripcion}">Descripción del estudio...</p>
+                                                <div class="flex items-center justify-between mt-4">
+                                                    <span th:if="${estudio.duracion != null and !estudio.duracion.isEmpty()}" class="text-lg font-semibold text-black">
+                                                        <i class="fas fa-clock mr-2"></i><span th:text="${estudio.duracion}">Duración</span>
+                                                    </span>
+                                                    <span th:if="${estudio.costo != null}" class="text-xl font-bold text-black">
+                                                        <i class="fas fa-dollar-sign mr-1"></i>
+                                                        <span th:text="${#numbers.formatDecimal(estudio.costo, 0, 'POINT', 2, 'COMMA')}">Costo</span>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Sin recomendaciones -->
+                    <div th:if="${recomendaciones != null and recomendaciones.empty}" class="mb-8 text-center py-12">
+                        <div class="bg-white rounded-xl shadow-lg p-8">
+                            <i class="fas fa-search text-6xl text-gray-300 mb-4"></i>
+                            <h3 class="text-2xl font-semibold text-gray-700 mb-2">No se encontraron recomendaciones</h3>
+                            <p class="text-gray-500 mb-6">No hay roles profesionales que coincidan con tu perfil actual.</p>
                         </div>
                     </div>
                     
@@ -164,10 +284,6 @@
                     <div class="flex flex-col sm:flex-row justify-center gap-4 pt-6 border-t border-gray-200">
                         <a href="/" class="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-all duration-200">
                             <i class="fas fa-home mr-2"></i>Inicio
-                        </a>
-                        <a th:href="@{/recomendaciones/{personaId}(personaId=${resultado.personaId})}" 
-                           class="inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg">
-                            <i class="fas fa-briefcase mr-2"></i>Ver Recomendaciones de Trabajo
                         </a>
                     </div>
                     
@@ -178,7 +294,7 @@
                         </h5>
                         <div class="flex justify-center">
                             <a th:href="@{/pdf/resultado-completo/{personaId}(personaId=${resultado.personaId})}" 
-                               class="inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white font-medium rounded-lg hover:from-red-700 hover:to-red-800 transition-all duration-200 shadow-lg">
+                               class="inline-flex items-center justify-center px-6 py-3 bg-red-500 text-black font-medium rounded-lg hover:bg-red-600 transition-all duration-200 shadow-lg">
                                 <i class="fas fa-file-pdf mr-2"></i>Descargar PDF con Resultado y Recomendaciones
                             </a>
                         </div>
