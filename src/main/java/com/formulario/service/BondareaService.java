@@ -11,6 +11,8 @@ import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.HashMap;
 import java.util.Map;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.formulario.model.Examen;
 
 /**
  * Servicio para interactuar con la API de Bondarea
@@ -281,6 +283,157 @@ public class BondareaService {
             logger.error("❌ Error al obtener datos de examen desde Bondarea para ID: {}", id, e);
             return null;
         }
+    }
+    
+    /**
+     * Actualiza un caso en Bondarea con los resultados del examen
+     * @param idCaso ID del caso en Bondarea (ej: "128379")
+     * @param examen Examen con los resultados a enviar
+     * @param nombreInstitucion Nombre de la institución recomendada (opcional)
+     * @param comentarios Comentarios adicionales (opcional)
+     * @return true si la actualización fue exitosa, false en caso contrario
+     */
+    public boolean actualizarCasoEnBondarea(String idCaso, Examen examen, String nombreInstitucion, String comentarios) {
+        if (idCaso == null || idCaso.trim().isEmpty()) {
+            logger.warn("ID de caso vacío o nulo - No se puede actualizar en Bondarea");
+            return false;
+        }
+        
+        if (examen == null) {
+            logger.warn("Examen es null - No se puede actualizar en Bondarea");
+            return false;
+        }
+        
+        String token = configuracionService.obtenerApiTokenBondarea();
+        if (token == null || token.isEmpty()) {
+            logger.warn("Token de Bondarea no configurado - No se puede actualizar el caso");
+            return false;
+        }
+        
+        String idStage = "B26F5NF6"; // ID Stage específico según el curl
+        logger.info("Actualizando caso en Bondarea: idStage={}, idCaso={}", idStage, idCaso);
+        
+        // Preparar headers
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Accept", "application/json");
+        headers.set("Authorization", "Bearer " + token);
+        headers.set("X-API-Token", token);
+        headers.set("scope", "1258");
+        
+        // Construir el body con los datos del examen
+        Map<String, Object> requestBody = new HashMap<>();
+        
+        // Mapear campos del examen a los custom fields de Bondarea
+        // custom_B26FNN17: Institución (desde RecomendacionEstudios)
+        if (nombreInstitucion != null && !nombreInstitucion.trim().isEmpty()) {
+            requestBody.put("custom_B26FNN17", nombreInstitucion);
+        }
+        
+        // custom_B26FNHFU: Lógica
+        if (examen.getLogica() != null) {
+            requestBody.put("custom_B26FNHFU", examen.getLogica());
+        }
+        
+        // custom_B26FNHF3: Matemática
+        if (examen.getMatematica() != null) {
+            requestBody.put("custom_B26FNHF3", examen.getMatematica());
+        }
+        
+        // custom_B26FNHF7: Creatividad
+        if (examen.getCreatividad() != null) {
+            requestBody.put("custom_B26FNHF7", examen.getCreatividad());
+        }
+        
+        // custom_B26FNHFP: Programación
+        if (examen.getProgramacion() != null) {
+            requestBody.put("custom_B26FNHFP", examen.getProgramacion());
+        }
+        
+        // custom_B26FNHFC: Respuestas correctas
+        if (examen.getRespuestasCorrectas() != null) {
+            requestBody.put("custom_B26FNHFC", examen.getRespuestasCorrectas());
+        }
+        
+        // custom_B26FNN13: Comentarios
+        if (comentarios != null && !comentarios.trim().isEmpty()) {
+            requestBody.put("custom_B26FNN13", comentarios);
+        } else if (examen.getComentarios() != null && !examen.getComentarios().trim().isEmpty()) {
+            requestBody.put("custom_B26FNN13", examen.getComentarios());
+        }
+        
+        // Convertir el body a JSON
+        ObjectMapper objectMapper = new ObjectMapper();
+        String jsonBody;
+        try {
+            jsonBody = objectMapper.writeValueAsString(requestBody);
+            logger.debug("Body de actualización: {}", jsonBody);
+        } catch (Exception e) {
+            logger.error("Error al convertir body a JSON: {}", e.getMessage(), e);
+            return false;
+        }
+        
+        HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
+        
+        // Intentar con cada URL base
+        String ultimoError = null;
+        for (String baseUrl : BONDAREA_BASE_URLS) {
+            try {
+                // Construir URL: /api/v2/monitoring/{idStage}/{idCaso}
+                String url = baseUrl + BONDAREA_API_PATH
+                    .replace("{idStage}", idStage)
+                    .replace("{idCaso}", idCaso);
+                
+                logger.info("Actualizando caso en URL: {}", url);
+                
+                // Realizar la petición PUT
+                @SuppressWarnings("unchecked")
+                ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.PUT,
+                    entity,
+                    (Class<Map<String, Object>>) (Class<?>) Map.class
+                );
+                
+                if (response.getStatusCode().is2xxSuccessful()) {
+                    logger.info("✅ Caso actualizado exitosamente en Bondarea: idStage={}, idCaso={}", idStage, idCaso);
+                    return true;
+                } else {
+                    logger.warn("Respuesta no exitosa - Status: {}", response.getStatusCode());
+                    ultimoError = "Status: " + response.getStatusCode();
+                }
+                
+            } catch (HttpClientErrorException e) {
+                String errorMsg = String.format("HTTP %d: %s", e.getStatusCode().value(), 
+                    e.getResponseBodyAsString() != null ? e.getResponseBodyAsString() : e.getMessage());
+                logger.error("Error HTTP al actualizar caso en {}: {}", baseUrl, errorMsg);
+                ultimoError = errorMsg;
+                
+                if (e.getStatusCode().value() == 401 || e.getStatusCode().value() == 403) {
+                    logger.error("Error de autenticación: Verificar que el token sea correcto");
+                    // No continuar con otras URLs si es error de autenticación
+                    break;
+                } else if (e.getStatusCode().value() == 404) {
+                    logger.warn("Caso no encontrado (404) en {}", baseUrl);
+                    // Continuar con siguiente URL base
+                    continue;
+                }
+            } catch (RestClientException e) {
+                String errorMsg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+                logger.warn("Error de conexión al actualizar caso en {}: {}", baseUrl, errorMsg);
+                ultimoError = errorMsg;
+                // Continuar con siguiente URL base
+                continue;
+            } catch (Exception e) {
+                String errorMsg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+                logger.error("Error inesperado al actualizar caso en {}: {}", baseUrl, errorMsg, e);
+                ultimoError = errorMsg;
+            }
+        }
+        
+        logger.error("❌ No se pudo actualizar el caso {} en Bondarea después de intentar todas las URLs. Último error: {}", 
+            idCaso, ultimoError);
+        return false;
     }
 }
 

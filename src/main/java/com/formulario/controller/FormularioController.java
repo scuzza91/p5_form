@@ -126,7 +126,7 @@ public class FormularioController {
            datosBondarea = (Map<String, Object>) datosBondarea.get("data");
             logger.info("✅ Datos obtenidos exitosamente desde Bondarea para idCaso: {}", idCaso);
             // Mapear datos de Bondarea a Persona
-            Persona persona = mapearPersonaDesdeBondarea(datosBondarea);
+            Persona persona = mapearPersonaDesdeBondarea(datosBondarea, idCaso);
             
             // Obtener email para verificar si la persona ya existe
             String email = persona.getEmail();
@@ -142,6 +142,13 @@ public class FormularioController {
             if (formularioService.existeEmail(email)) {
                 Persona personaExistente = formularioService.buscarPersonaPorEmail(email);
                 logger.info("Persona ya existe con email: {}, ID: {}", email, personaExistente.getId());
+                
+                // Actualizar idCaso si no lo tiene
+                if (personaExistente.getIdCasoBondarea() == null || personaExistente.getIdCasoBondarea().trim().isEmpty()) {
+                    personaExistente.setIdCasoBondarea(idCaso);
+                    formularioService.guardarPersona(personaExistente);
+                    logger.info("ID de caso de Bondarea actualizado en persona existente: {}", idCaso);
+                }
                 
                 // Si ya existe, verificar si tiene examen
                 if (formularioService.existeExamenParaPersona(personaExistente)) {
@@ -204,10 +211,16 @@ public class FormularioController {
     }
     
     // Método auxiliar para mapear datos de Bondarea a Persona
-    private Persona mapearPersonaDesdeBondarea(Map<String, Object> datosBondarea) {
+    private Persona mapearPersonaDesdeBondarea(Map<String, Object> datosBondarea, String idCaso) {
         Persona persona = new Persona();
         
         logger.info("Datos de Bondarea: {}", datosBondarea);
+        
+        // Guardar el idCaso de Bondarea
+        if (idCaso != null && !idCaso.trim().isEmpty()) {
+            persona.setIdCasoBondarea(idCaso);
+            logger.info("ID de caso de Bondarea guardado: {}", idCaso);
+        }
         // Mapear campos desde Bondarea
         // custom_B26FNN8U = Nombre
         String nombre = obtenerValorString(datosBondarea, "custom_B26FNN8U");
@@ -534,6 +547,48 @@ public class FormularioController {
             Examen examen = examenService.procesarRespuestas(examenId, respuestasFinales);
             
             logger.info("Examen procesado exitosamente para persona: {}", examen.getPersona().getId());
+            
+            // Actualizar caso en Bondarea si la persona tiene idCaso
+            String idCaso = examen.getPersona().getIdCasoBondarea();
+            if (idCaso != null && !idCaso.trim().isEmpty()) {
+                try {
+                    logger.info("Intentando actualizar caso en Bondarea: idCaso={}", idCaso);
+                    
+                    // Obtener nombre de institución de las recomendaciones de estudios (primera recomendación activa)
+                    String nombreInstitucion = null;
+                    try {
+                        List<RecomendacionEstudiosDTO> recomendacionesEstudios = recomendacionEstudiosService.obtenerTodas();
+                        if (!recomendacionesEstudios.isEmpty()) {
+                            nombreInstitucion = recomendacionesEstudios.get(0).getNombreInstitucion();
+                            logger.info("Nombre de institución obtenido: {}", nombreInstitucion);
+                        }
+                    } catch (Exception e) {
+                        logger.warn("No se pudo obtener nombre de institución de recomendaciones: {}", e.getMessage());
+                    }
+                    
+                    // Construir comentarios con información del examen
+                    String comentarios = String.format("Examen completado - Promedio: %.1f%%, Lógica: %d%%, Matemática: %d%%, Creatividad: %d%%, Programación: %d%%",
+                        examen.getPromedio(),
+                        examen.getLogica() != null ? examen.getLogica() : 0,
+                        examen.getMatematica() != null ? examen.getMatematica() : 0,
+                        examen.getCreatividad() != null ? examen.getCreatividad() : 0,
+                        examen.getProgramacion() != null ? examen.getProgramacion() : 0);
+                    
+                    // Llamar al método de actualización en Bondarea
+                    boolean actualizado = bondareaService.actualizarCasoEnBondarea(idCaso, examen, nombreInstitucion, comentarios);
+                    if (actualizado) {
+                        logger.info("✅ Caso actualizado exitosamente en Bondarea para idCaso: {}", idCaso);
+                    } else {
+                        logger.warn("⚠️ No se pudo actualizar el caso en Bondarea para idCaso: {}", idCaso);
+                    }
+                } catch (Exception e) {
+                    logger.error("Error al actualizar caso en Bondarea para idCaso: {} - {}", idCaso, e.getMessage(), e);
+                    // No interrumpir el flujo si falla la actualización en Bondarea
+                }
+            } else {
+                logger.info("Persona no tiene idCaso de Bondarea, omitiendo actualización");
+            }
+            
             redirectAttributes.addFlashAttribute("mensaje", "Examen completado correctamente");
             return "redirect:/resultado/" + examen.getPersona().getId();
             

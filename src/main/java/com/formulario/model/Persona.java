@@ -59,6 +59,10 @@ public class Persona {
     @Pattern(regexp = "^[0-9]{11}$", message = "El CUIL debe tener exactamente 11 dígitos")
     private String cuil;
     
+    // ID del caso en Bondarea (opcional, solo para personas creadas desde Bondarea)
+    @Column(name = "id_caso_bondarea")
+    private String idCasoBondarea;
+    
     // Constructores
     public Persona() {}
     
@@ -201,5 +205,13 @@ public class Persona {
     
     public void setCuil(String cuil) {
         this.cuil = cuil;
+    }
+    
+    public String getIdCasoBondarea() {
+        return idCasoBondarea;
+    }
+    
+    public void setIdCasoBondarea(String idCasoBondarea) {
+        this.idCasoBondarea = idCasoBondarea;
     }
 } 
