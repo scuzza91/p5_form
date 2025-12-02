@@ -324,6 +324,9 @@ public class BondareaService {
         // Construir el body con los datos del examen
         Map<String, Object> requestBody = new HashMap<>();
         
+        // Campo obligatorio: id_etapa (idStage)
+        requestBody.put("id_etapa", idStage);
+        
         // Mapear campos del examen a los custom fields de Bondarea
         // custom_B26FNN17: Institución (desde RecomendacionEstudios)
         if (nombreInstitucion != null && !nombreInstitucion.trim().isEmpty()) {
