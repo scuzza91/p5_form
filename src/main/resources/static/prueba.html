@@ -3,141 +3,289 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prueba API - GET y POST</title>
+    <title>Prueba Endpoint API - Crear Persona</title>
     <style>
         body {
-            font-family: sans-serif;
+            font-family: Arial, sans-serif;
             max-width: 800px;
             margin: 50px auto;
             padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        input[type="text"]:required {
+            border-left: 3px solid #ff9800;
         }
         button {
             background-color: #4CAF50;
             color: white;
-            padding: 10px 20px;
+            padding: 12px 24px;
             border: none;
-            cursor: pointer;
-            margin: 10px 5px;
             border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
         }
         button:hover {
             background-color: #45a049;
         }
-        #resultado {
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .result {
             margin-top: 20px;
             padding: 15px;
-            background-color: #f5f5f5;
             border-radius: 4px;
+            display: none;
+        }
+        .result.success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .result.error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .result.info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
             white-space: pre-wrap;
             word-wrap: break-word;
         }
-        .error {
-            background-color: #ffebee;
-            color: #c62828;
+        .url-link {
+            color: #0066cc;
+            text-decoration: none;
+            font-weight: bold;
         }
-        .success {
-            background-color: #e8f5e9;
-            color: #2e7d32;
+        .url-link:hover {
+            text-decoration: underline;
+        }
+        .help-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .required {
+            color: #ff9800;
         }
     </style>
     <script>
-        // Función para obtener parámetros de la URL
-        function obtenerParametroURL(nombre) {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get(nombre);
-        }
+        function enviarPOST() {
+            // Obtener valores del formulario
+            const apiUrl = document.getElementById('apiUrl').value.trim();
+            const apiToken = document.getElementById('apiToken').value.trim();
+            const idCaso = document.getElementById('idCaso').value.trim();
 
-        // Función para hacer GET y obtener datos del examen
-        function obtenerDatos() {
-            const id = obtenerParametroURL('id');
-            const resultadoDiv = document.getElementById('resultado');
-            
-            if (!id) {
-                resultadoDiv.className = 'error';
-                resultadoDiv.textContent = 'Error: No se proporcionó un ID en la URL. Ejemplo: prueba.html?id=128379';
+            // Validar campos obligatorios
+            if (!idCaso) {
+                mostrarError({error: 'El campo ID de Caso es obligatorio'}, 400);
+                return;
+            }
+            if (!apiToken) {
+                mostrarError({error: 'El token de API es obligatorio'}, 400);
+                return;
+            }
+            if (!apiUrl) {
+                mostrarError({error: 'La URL del endpoint es obligatoria'}, 400);
                 return;
             }
 
-            resultadoDiv.className = '';
-            resultadoDiv.textContent = 'Cargando datos del examen ID: ' + id + '...';
-
-            // Hacer GET request al endpoint de debug del examen
-            fetch(`/debug/examen/${id}`)
-                .then(response => {
-                    if (!response.ok) {
-                        return response.text().then(text => {
-                            throw new Error(`HTTP ${response.status}: ${text}`);
-                        });
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('Datos obtenidos:', data);
-                    resultadoDiv.className = 'success';
-                    resultadoDiv.textContent = 'Datos del examen:\n\n' + JSON.stringify(data, null, 2);
-                })
-                .catch((error) => {
-                    console.error('Error:', error);
-                    resultadoDiv.className = 'error';
-                    resultadoDiv.textContent = 'Error al obtener los datos: ' + error.message;
-                });
-        }
-
-        function enviarPOST() {
+            // Construir objeto de datos - Solo se envía idCaso, los demás datos se obtienen de Bondarea
             const data = {
-                "idCaso": "128379"
+                "idCaso": idCaso  // Campo obligatorio - Los datos de la persona se obtienen desde Bondarea
             };
 
-            const resultadoDiv = document.getElementById('resultado');
-            resultadoDiv.className = '';
-            resultadoDiv.textContent = 'Enviando datos...';
+            // Preparar headers
+            const headers = {
+                'Content-Type': 'application/json',
+                'X-API-Token': apiToken
+            };
 
-            fetch('/api/persona/crear', {
+            // Mostrar loading
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.innerHTML = '<p>⏳ Enviando petición...</p>';
+
+            // Deshabilitar botón
+            const btn = document.querySelector('button');
+            btn.disabled = true;
+            btn.textContent = 'Enviando...';
+
+            // Realizar petición
+            fetch(apiUrl, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-API-Token': '41855ad220d5c0f4fb39ea6b2ed8d56e'
-                },
+                headers: headers,
                 body: JSON.stringify(data),
             })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Éxito:', data);
-                resultadoDiv.className = 'success';
-                resultadoDiv.textContent = 'Datos enviados con éxito:\n\n' + JSON.stringify(data, null, 2);
+            .then(response => {
+                // Obtener el código HTTP
+                const httpCode = response.status;
+                
+                // Intentar parsear JSON
+                return response.json().then(data => {
+                    return { status: httpCode, data: data };
+                }).catch(() => {
+                    return { status: httpCode, data: { error: 'Error al parsear respuesta' } };
+                });
+            })
+            .then(result => {
+                if (result.status === 200 || result.status === 201) {
+                    mostrarExito(result.data, result.status);
+                } else {
+                    mostrarError(result.data, result.status);
+                }
             })
             .catch((error) => {
                 console.error('Error:', error);
-                resultadoDiv.className = 'error';
-                resultadoDiv.textContent = 'Error al enviar los datos: ' + error;
+                mostrarError({
+                    error: 'Error de conexión',
+                    mensaje: error.message || 'No se pudo conectar al servidor'
+                }, 0);
+            })
+            .finally(() => {
+                // Rehabilitar botón
+                btn.disabled = false;
+                btn.textContent = 'Enviar POST';
             });
         }
 
-        // Cargar datos automáticamente si hay un ID en la URL
-        window.onload = function() {
-            const id = obtenerParametroURL('id');
-            if (id) {
-                obtenerDatos();
+        function mostrarExito(data, statusCode) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = 'result success';
+            
+            let html = `<h3>✅ Éxito (HTTP ${statusCode})</h3>`;
+            html += '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            
+            // Si hay URL del examen, mostrarla
+            if (data.examenUrl || data.examenId) {
+                const examenUrl = data.examenUrl || `http://${window.location.hostname}:8083/examen/${data.examenId}`;
+                html += `<p><strong>🔗 Accede al examen:</strong> <a href="${examenUrl}" target="_blank" class="url-link">${examenUrl}</a></p>`;
             }
+            
+            if (data.personaId) {
+                html += `<p><strong>Persona ID:</strong> ${data.personaId}</p>`;
+            }
+            if (data.examenId) {
+                html += `<p><strong>Examen ID:</strong> ${data.examenId}</p>`;
+            }
+            
+            resultDiv.innerHTML = html;
+            resultDiv.style.display = 'block';
+        }
+
+        function mostrarError(data, statusCode) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = 'result error';
+            
+            let html = `<h3>❌ Error`;
+            if (statusCode) {
+                html += ` (HTTP ${statusCode})`;
+            }
+            html += `</h3>`;
+            
+            html += '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            
+            // Mensajes de ayuda según el error
+            if (statusCode === 400) {
+                html += '<p class="help-text">💡 Verifica que todos los campos obligatorios estén completos.</p>';
+            } else if (statusCode === 401) {
+                html += '<p class="help-text">💡 El token de API es inválido o no está configurado. Verifica el token en /configuracion</p>';
+            } else if (statusCode === 403) {
+                html += '<p class="help-text">💡 Las inscripciones están cerradas actualmente.</p>';
+            } else if (statusCode === 404) {
+                html += '<p class="help-text">💡 El ID de caso no existe en Bondarea. Verifica que el ID sea correcto usando GET /monitoring/B26F5NF6/{id}</p>';
+            } else if (statusCode === 409) {
+                html += '<p class="help-text">💡 Ya existe un examen para esta persona.</p>';
+            }
+            
+            resultDiv.innerHTML = html;
+            resultDiv.style.display = 'block';
+        }
+
+        // Cargar valores por defecto
+        window.onload = function() {
+            // El campo idCaso ya tiene un valor por defecto en el HTML
+            // Si quieres cargar un valor desde localStorage o cookie, puedes hacerlo aquí
+            const savedIdCaso = localStorage.getItem('idCaso');
+            if (savedIdCaso) {
+                document.getElementById('idCaso').value = savedIdCaso;
+            }
+            
+            // Guardar idCaso cuando cambie
+            document.getElementById('idCaso').addEventListener('change', function() {
+                localStorage.setItem('idCaso', this.value);
+            });
         };
     </script>
 </head>
 <body>
-    <h1>Prueba API - GET y POST</h1>
-    <p>ID de la URL: <strong id="idMostrado">-</strong></p>
-    <button onclick="obtenerDatos()">Obtener Datos (GET)</button>
-    <button onclick="enviarPOST()">Enviar POST</button>
-    <div id="resultado"></div>
-    
-    <script>
-        // Mostrar el ID si existe
-        const id = obtenerParametroURL('id');
-        if (id) {
-            document.getElementById('idMostrado').textContent = id;
-        } else {
-            document.getElementById('idMostrado').textContent = 'No proporcionado';
-        }
-    </script>
+    <div class="container">
+        <h1>🧪 Prueba Endpoint API - Crear Persona</h1>
+        
+        <div class="form-group">
+            <label for="apiUrl">URL del Endpoint <span class="required">*</span></label>
+            <input type="text" id="apiUrl" value="http://34.238.57.131:8083/api/persona/crear" required>
+            <div class="help-text">URL completa del endpoint POST /api/persona/crear</div>
+        </div>
+
+        <div class="form-group">
+            <label for="apiToken">Token de API <span class="required">*</span></label>
+            <input type="text" id="apiToken" placeholder="Ingresa el token de API" required>
+            <div class="help-text">Token configurado en /configuracion (header X-API-Token)</div>
+        </div>
+
+        <div class="form-group">
+            <label for="idCaso">ID de Caso (Bondarea) <span class="required">*</span></label>
+            <input type="text" id="idCaso" name="idCaso" placeholder="Ej: 128276" value="128276" required>
+            <div class="help-text">ID del caso en Bondarea. Se validará usando GET /monitoring/B26F5NF6/{id}</div>
+        </div>
+
+        <div class="help-text" style="background-color: #e3f2fd; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+            <strong>ℹ️ Nota:</strong> Solo necesitas proporcionar el <strong>ID de Caso</strong>. 
+            Los datos de la persona (nombre, apellido, email, documento) se obtendrán automáticamente desde Bondarea usando el endpoint <code>GET /api/v2/monitoring/B26F5NF6/{idCaso}</code>.
+        </div>
+
+        <button onclick="enviarPOST()">Enviar POST</button>
+
+        <div id="result" class="result"></div>
+    </div>
 </body>
 </html>
-
