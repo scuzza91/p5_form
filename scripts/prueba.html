@@ -242,7 +242,17 @@
 
         // Cargar valores por defecto
         window.onload = function() {
-            // No hay campos adicionales que cargar, solo idCaso es necesario
+            // El campo idCaso ya tiene un valor por defecto en el HTML
+            // Si quieres cargar un valor desde localStorage o cookie, puedes hacerlo aquí
+            const savedIdCaso = localStorage.getItem('idCaso');
+            if (savedIdCaso) {
+                document.getElementById('idCaso').value = savedIdCaso;
+            }
+            
+            // Guardar idCaso cuando cambie
+            document.getElementById('idCaso').addEventListener('change', function() {
+                localStorage.setItem('idCaso', this.value);
+            });
         };
     </script>
 </head>
@@ -264,7 +274,7 @@
 
         <div class="form-group">
             <label for="idCaso">ID de Caso (Bondarea) <span class="required">*</span></label>
-            <input type="text" id="idCaso" placeholder="Ej: 128276" required>
+            <input type="text" id="idCaso" name="idCaso" placeholder="Ej: 128276" value="128276" required>
             <div class="help-text">ID del caso en Bondarea. Se validará usando GET /monitoring/B26F5NF6/{id}</div>
         </div>
 
