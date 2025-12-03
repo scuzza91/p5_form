@@ -165,17 +165,13 @@ public class FormularioController {
                 // Construir URL del examen
                 String examenUrl = construirUrlExamen(request, examen.getId());
                 
-                // Preparar respuesta con header Location para redirección
+                // Preparar respuesta con header Location para redirección 302
                 HttpHeaders headers = new HttpHeaders();
                 headers.setLocation(java.net.URI.create(examenUrl));
                 
-                return ResponseEntity.ok()
+                return ResponseEntity.status(HttpStatus.FOUND)
                     .headers(headers)
-                    .body(Map.of("examenId", examen.getId(), 
-                               "personaId", personaExistente.getId(),
-                               "mensaje", "Persona existente, examen creado",
-                               "examenUrl", examenUrl,
-                               "redirectUrl", examenUrl));
+                    .build();
             }
             
             // Guardar la persona
@@ -191,17 +187,13 @@ public class FormularioController {
             // Construir URL del examen
             String examenUrl = construirUrlExamen(request, examen.getId());
             
-            // Preparar respuesta con header Location para redirección
+            // Preparar respuesta con header Location para redirección 302
             HttpHeaders headers = new HttpHeaders();
             headers.setLocation(java.net.URI.create(examenUrl));
             
-            return ResponseEntity.ok()
+            return ResponseEntity.status(HttpStatus.FOUND)
                 .headers(headers)
-                .body(Map.of("examenId", examen.getId(), 
-                           "personaId", personaGuardada.getId(),
-                           "mensaje", "Persona y examen creados exitosamente",
-                           "examenUrl", examenUrl,
-                           "redirectUrl", examenUrl));
+                .build();
             
         } catch (Exception e) {
             logger.error("Error al crear persona desde API", e);
