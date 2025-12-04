@@ -281,31 +281,35 @@ public class FormularioController {
                 
                 // Construir URL del examen
                 String examenUrl = construirUrlExamen(request, examen.getId());
+                logger.info("URL del examen construida (persona existente): {}", examenUrl);
                 
-                // Si se solicita explícitamente JSON (header Accept o X-Response-Type), devolver JSON
+                // Verificar si el cliente solicita redirección explícitamente
                 String acceptHeader = request.getHeader("Accept");
                 String responseType = request.getHeader("X-Response-Type");
-                boolean solicitaJson = (acceptHeader != null && acceptHeader.contains("application/json")) 
-                                     || "json".equalsIgnoreCase(responseType);
+                boolean solicitaRedireccion = "redirect".equalsIgnoreCase(responseType) 
+                                           || (acceptHeader != null && acceptHeader.contains("text/html"));
                 
-                if (solicitaJson) {
-                    return ResponseEntity.ok(Map.of(
-                        "success", true,
-                        "mensaje", "Persona encontrada y examen creado",
-                        "personaId", personaExistente.getId(),
-                        "examenId", examen.getId(),
-                        "examenUrl", examenUrl,
-                        "email", email
-                    ));
+                // Por defecto, devolver JSON (mejor para APIs/webhooks)
+                if (solicitaRedireccion) {
+                    logger.info("Devolviendo redirección 302 a: {}", examenUrl);
+                    HttpHeaders headers = new HttpHeaders();
+                    headers.setLocation(java.net.URI.create(examenUrl));
+                    
+                    return ResponseEntity.status(HttpStatus.FOUND)
+                        .headers(headers)
+                        .build();
                 }
                 
-                // Por defecto, redirección 302 (comportamiento original para compatibilidad)
-                HttpHeaders headers = new HttpHeaders();
-                headers.setLocation(java.net.URI.create(examenUrl));
-                
-                return ResponseEntity.status(HttpStatus.FOUND)
-                    .headers(headers)
-                    .build();
+                // Por defecto, devolver JSON con la URL del examen
+                logger.info("Devolviendo respuesta JSON con examenUrl: {}", examenUrl);
+                return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "mensaje", "Persona encontrada y examen creado",
+                    "personaId", personaExistente.getId(),
+                    "examenId", examen.getId(),
+                    "examenUrl", examenUrl,
+                    "email", email
+                ));
             }
             
             // Guardar la persona
@@ -320,31 +324,39 @@ public class FormularioController {
             
             // Construir URL del examen
             String examenUrl = construirUrlExamen(request, examen.getId());
+            logger.info("URL del examen construida: {}", examenUrl);
             
-            // Si se solicita explícitamente JSON (header Accept o X-Response-Type), devolver JSON
+            // Verificar si el cliente solicita redirección explícitamente
             String acceptHeader = request.getHeader("Accept");
             String responseType = request.getHeader("X-Response-Type");
-            boolean solicitaJson = (acceptHeader != null && acceptHeader.contains("application/json")) 
-                                 || "json".equalsIgnoreCase(responseType);
+            boolean solicitaRedireccion = "redirect".equalsIgnoreCase(responseType) 
+                                       || (acceptHeader != null && acceptHeader.contains("text/html"));
             
-            if (solicitaJson) {
-                return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "mensaje", "Persona y examen creados exitosamente",
-                    "personaId", personaGuardada.getId(),
-                    "examenId", examen.getId(),
-                    "examenUrl", examenUrl,
-                    "email", personaGuardada.getEmail()
-                ));
+            logger.info("Accept header: {}, X-Response-Type: {}, Solicita redirección: {}", 
+                       acceptHeader, responseType, solicitaRedireccion);
+            
+            // Por defecto, devolver JSON (mejor para APIs/webhooks que no siguen redirecciones)
+            // Solo redirigir si se solicita explícitamente
+            if (solicitaRedireccion) {
+                logger.info("Devolviendo redirección 302 a: {}", examenUrl);
+                HttpHeaders headers = new HttpHeaders();
+                headers.setLocation(java.net.URI.create(examenUrl));
+                
+                return ResponseEntity.status(HttpStatus.FOUND)
+                    .headers(headers)
+                    .build();
             }
             
-            // Por defecto, redirección 302 (comportamiento original para compatibilidad)
-            HttpHeaders headers = new HttpHeaders();
-            headers.setLocation(java.net.URI.create(examenUrl));
-            
-            return ResponseEntity.status(HttpStatus.FOUND)
-                .headers(headers)
-                .build();
+            // Por defecto, devolver JSON con la URL del examen
+            logger.info("Devolviendo respuesta JSON con examenUrl: {}", examenUrl);
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "mensaje", "Persona y examen creados exitosamente",
+                "personaId", personaGuardada.getId(),
+                "examenId", examen.getId(),
+                "examenUrl", examenUrl,
+                "email", personaGuardada.getEmail()
+            ));
             
         } catch (Exception e) {
             logger.error("Error al crear persona desde API", e);
@@ -1098,20 +1110,30 @@ public class FormularioController {
     
     // Método auxiliar para construir la URL completa del examen
     private String construirUrlExamen(HttpServletRequest request, Long examenId) {
-        String scheme = request.getScheme(); // http o https
-        String serverName = request.getServerName(); // dominio o IP
-        int serverPort = request.getServerPort(); // puerto
+        // Intentar obtener el host desde headers (útil cuando hay proxy/load balancer)
+        String host = request.getHeader("Host");
+        if (host == null || host.isEmpty()) {
+            host = request.getServerName();
+            int serverPort = request.getServerPort();
+            if ((request.getScheme().equals("http") && serverPort != 80) || 
+                (request.getScheme().equals("https") && serverPort != 443)) {
+                host = host + ":" + serverPort;
+            }
+        }
+        
+        // Determinar el scheme (http o https)
+        String scheme = request.getScheme();
+        // Si hay un header X-Forwarded-Proto, usarlo (útil con proxy/load balancer)
+        String forwardedProto = request.getHeader("X-Forwarded-Proto");
+        if (forwardedProto != null && !forwardedProto.isEmpty()) {
+            scheme = forwardedProto;
+        }
+        
         String contextPath = request.getContextPath(); // contexto de la aplicación (puede estar vacío)
         
-        // Construir la URL base
+        // Construir la URL completa
         StringBuilder url = new StringBuilder();
-        url.append(scheme).append("://").append(serverName);
-        
-        // Agregar puerto solo si no es el estándar (80 para http, 443 para https)
-        if ((scheme.equals("http") && serverPort != 80) || 
-            (scheme.equals("https") && serverPort != 443)) {
-            url.append(":").append(serverPort);
-        }
+        url.append(scheme).append("://").append(host);
         
         // Agregar contexto si existe
         if (contextPath != null && !contextPath.isEmpty()) {
@@ -1121,7 +1143,11 @@ public class FormularioController {
         // Agregar ruta del examen
         url.append("/examen/").append(examenId);
         
-        return url.toString();
+        String finalUrl = url.toString();
+        logger.info("URL construida - Scheme: {}, Host: {}, ContextPath: {}, ExamenId: {}, URL final: {}", 
+                   scheme, host, contextPath, examenId, finalUrl);
+        
+        return finalUrl;
     }
     
     // Método auxiliar para obtener la IP del cliente
