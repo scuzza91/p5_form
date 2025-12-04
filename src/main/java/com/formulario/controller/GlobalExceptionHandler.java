@@ -59,40 +59,48 @@ public class GlobalExceptionHandler {
             HttpMessageNotReadableException ex,
             HttpServletRequest request) {
         
-        logger.error("=== ERROR 400 - JSON MAL FORMADO O VACÍO ===");
-        logger.error("Mensaje de error: {}", ex.getMessage());
-        logger.error("URI: {}", request.getRequestURI());
-        logger.error("Query String: {}", request.getQueryString());
+        logger.warn("=== JSON MAL FORMADO - Intentando continuar con query parameters ===");
+        logger.warn("Mensaje de error: {}", ex.getMessage());
+        logger.warn("URI: {}", request.getRequestURI());
+        logger.warn("Query String: {}", request.getQueryString());
+        
+        // Si hay query parameters con idCaso, sugerir usarlos
+        String idCasoParam = request.getParameter("idCaso");
+        String idParam = request.getParameter("id");
+        
+        if ((idCasoParam != null && !idCasoParam.trim().isEmpty()) || 
+            (idParam != null && !idParam.trim().isEmpty())) {
+            logger.info("Se encontró idCaso en query parameters - el endpoint debería funcionar sin body");
+            // Devolver un error más amigable que sugiera que el body no es necesario
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Bad Request");
+            errorResponse.put("status", 400);
+            errorResponse.put("message", "El JSON enviado está mal formado. Sin embargo, se detectó 'idCaso' en los query parameters.");
+            errorResponse.put("path", request.getRequestURI());
+            errorResponse.put("sugerencia", "El body JSON no es necesario si usas query parameters. Puedes hacer la petición sin body o con un body vacío {}.");
+            errorResponse.put("queryParams", Map.of(
+                "idCaso", idCasoParam != null ? idCasoParam : "no presente",
+                "id", idParam != null ? idParam : "no presente"
+            ));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        }
+        
+        // Si no hay query params, devolver error normal
+        logger.error("=== ERROR 400 - JSON MAL FORMADO Y SIN QUERY PARAMETERS ===");
         logger.error("Content-Type: {}", request.getContentType());
         logger.error("Content-Length: {}", request.getContentLength());
         logger.error("Remote Address: {}", request.getRemoteAddr());
-        logger.error("Headers - User-Agent: {}", request.getHeader("User-Agent"));
-        logger.error("Headers - Origin: {}", request.getHeader("Origin"));
-        
-        // Intentar leer el body si es posible
-        try {
-            if (request.getContentLength() > 0) {
-                logger.error("El request tiene contenido pero no se pudo parsear como JSON");
-            } else {
-                logger.error("El request body está vacío o no tiene contenido");
-            }
-        } catch (Exception e) {
-            logger.error("Error al leer el contenido del request: {}", e.getMessage());
-        }
         
         Map<String, Object> errorResponse = new HashMap<>();
         errorResponse.put("error", "Bad Request");
         errorResponse.put("status", 400);
-        errorResponse.put("message", "El JSON enviado está mal formado o está vacío. Por favor, verifica el formato del request body.");
+        errorResponse.put("message", "El JSON enviado está mal formado o está vacío. Por favor, verifica el formato del request body o usa query parameters.");
         errorResponse.put("path", request.getRequestURI());
-        errorResponse.put("sugerencia", "Asegúrate de enviar un JSON válido. Si no necesitas enviar datos en el body, puedes enviar un objeto vacío {} o usar query parameters.");
+        errorResponse.put("sugerencia", "Usa query parameters: ?idCaso=123 o envía un JSON válido en el body: {\"idCaso\": \"123\"}");
         
-        // Si el error contiene información útil, agregarla
         String errorMessage = ex.getMessage();
         if (errorMessage != null && errorMessage.contains("Unexpected character")) {
             errorResponse.put("detalle", "El JSON contiene caracteres inesperados. Verifica que todas las comillas estén correctamente cerradas.");
-        } else if (errorMessage != null && errorMessage.contains("empty")) {
-            errorResponse.put("detalle", "El body está vacío. Puedes enviar {} o usar query parameters como ?idCaso=123");
         }
         
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);

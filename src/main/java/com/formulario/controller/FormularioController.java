@@ -98,7 +98,6 @@ public class FormularioController {
     @PostMapping("/api/persona/crear")
     @CrossOrigin(origins = "*")
     public ResponseEntity<?> crearPersonaDesdeApi(
-            @RequestBody(required = false) Map<String, Object> requestBody,
             @RequestHeader(value = "X-API-Token", required = false) String apiToken,
             @RequestHeader(value = "Authorization", required = false) String authorization,
             @RequestParam(value = "idCaso", required = false) String idCasoParam,
@@ -115,65 +114,17 @@ public class FormularioController {
             logger.info("Headers: X-API-Token={}, Authorization={}", apiToken != null ? "presente" : "ausente", 
                        authorization != null ? "presente" : "ausente");
             
-            // Log del body completo recibido para diagnóstico
-            if (requestBody != null) {
-                logger.info("Request Body completo: {}", requestBody);
-                logger.info("Request Body keys: {}", requestBody.keySet());
-            } else {
-                logger.info("Request Body es null o vacío - intentando obtener idCaso desde query parameters");
-            }
-            
-            // Obtener idCaso del request - intentar múltiples campos posibles
+            // Obtener idCaso del request - SOLO desde query parameters por ahora
+            // (El body se ignora si está mal formado para evitar errores de parseo)
             String idCaso = null;
             
-            // 1. Intentar desde parámetros de query string
+            // Intentar desde parámetros de query string
             if (idCasoParam != null && !idCasoParam.trim().isEmpty()) {
                 idCaso = idCasoParam.trim();
                 logger.info("ID de caso obtenido desde query parameter 'idCaso': {}", idCaso);
             } else if (idParam != null && !idParam.trim().isEmpty()) {
                 idCaso = idParam.trim();
                 logger.info("ID de caso obtenido desde query parameter 'id': {}", idCaso);
-            }
-            
-            // 2. Intentar desde el body (múltiples campos posibles)
-            if ((idCaso == null || idCaso.trim().isEmpty()) && requestBody != null) {
-                // Campos posibles que Bondarea podría enviar
-                String[] camposPosibles = {
-                    "idCaso", "id", "caseId", "case_id", "idCasoBondarea", 
-                    "id_caso", "case", "caseId", "idStage", "id_stage"
-                };
-                
-                for (String campo : camposPosibles) {
-                    Object valor = requestBody.get(campo);
-                    if (valor != null) {
-                        String valorStr = valor.toString().trim();
-                        if (!valorStr.isEmpty()) {
-                            idCaso = valorStr;
-                            logger.info("ID de caso obtenido desde campo '{}': {}", campo, idCaso);
-                            break;
-                        }
-                    }
-                }
-            }
-            
-            // 3. Si aún no se encontró, buscar en objetos anidados (data.id, data.idCaso, etc.)
-            if ((idCaso == null || idCaso.trim().isEmpty()) && requestBody != null) {
-                Object dataObj = requestBody.get("data");
-                if (dataObj instanceof Map) {
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> data = (Map<String, Object>) dataObj;
-                    Object valor = data.get("id");
-                    if (valor == null) {
-                        valor = data.get("idCaso");
-                    }
-                    if (valor == null) {
-                        valor = data.get("caseId");
-                    }
-                    if (valor != null) {
-                        idCaso = valor.toString().trim();
-                        logger.info("ID de caso obtenido desde data.id/data.idCaso: {}", idCaso);
-                    }
-                }
             }
             
             logger.info("ID de caso final obtenido: {}", idCaso);
@@ -202,24 +153,19 @@ public class FormularioController {
             // Validar que el ID del caso es obligatorio
             if (idCaso == null || idCaso.trim().isEmpty()) {
                 logger.warn("ID de caso no proporcionado - Campo requerido");
-                logger.warn("Campos recibidos en el request body: {}", requestBody != null ? requestBody.keySet() : "null");
                 logger.warn("Query parameters recibidos: idCaso={}, id={}", idCasoParam, idParam);
                 
                 // Construir mensaje de error más descriptivo
                 StringBuilder mensajeError = new StringBuilder();
                 mensajeError.append("El ID de caso es requerido. ");
-                mensajeError.append("Debe proporcionar el campo 'id', 'idCaso', 'caseId' o 'case_id' en el request body o como query parameter. ");
-                if (requestBody != null && !requestBody.isEmpty()) {
-                    mensajeError.append("Campos recibidos: ").append(requestBody.keySet());
-                } else {
-                    mensajeError.append("No se recibió ningún campo en el request body.");
-                }
+                mensajeError.append("Debe proporcionar el parámetro 'id' o 'idCaso' como query parameter. ");
+                mensajeError.append("Ejemplo: /api/persona/crear?idCaso=123");
                 
                 Map<String, Object> errorResponse = new HashMap<>();
                 errorResponse.put("error", "El ID de caso es requerido");
                 errorResponse.put("mensaje", mensajeError.toString());
-                errorResponse.put("camposRecibidos", requestBody != null ? requestBody.keySet() : java.util.Collections.emptySet());
-                errorResponse.put("camposEsperados", java.util.Arrays.asList("id", "idCaso", "caseId", "case_id", "idCasoBondarea"));
+                errorResponse.put("camposEsperados", java.util.Arrays.asList("idCaso (query param)", "id (query param)"));
+                errorResponse.put("ejemplo", "/api/persona/crear?idCaso=123");
                 
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
             }
