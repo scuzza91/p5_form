@@ -98,7 +98,7 @@ public class FormularioController {
     @PostMapping("/api/persona/crear")
     @CrossOrigin(origins = "*")
     public ResponseEntity<?> crearPersonaDesdeApi(
-            @RequestBody Map<String, Object> requestBody,
+            @RequestBody(required = false) Map<String, Object> requestBody,
             @RequestHeader(value = "X-API-Token", required = false) String apiToken,
             @RequestHeader(value = "Authorization", required = false) String authorization,
             @RequestParam(value = "idCaso", required = false) String idCasoParam,
@@ -116,8 +116,12 @@ public class FormularioController {
                        authorization != null ? "presente" : "ausente");
             
             // Log del body completo recibido para diagnóstico
-            logger.info("Request Body completo: {}", requestBody);
-            logger.info("Request Body keys: {}", requestBody.keySet());
+            if (requestBody != null) {
+                logger.info("Request Body completo: {}", requestBody);
+                logger.info("Request Body keys: {}", requestBody.keySet());
+            } else {
+                logger.info("Request Body es null o vacío - intentando obtener idCaso desde query parameters");
+            }
             
             // Obtener idCaso del request - intentar múltiples campos posibles
             String idCaso = null;
