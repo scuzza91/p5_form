@@ -70,7 +70,28 @@ public class FormularioController {
     @RequestMapping(value = "/api/persona/crear", method = RequestMethod.OPTIONS)
     @CrossOrigin(origins = "*")
     public ResponseEntity<?> optionsCrearPersona() {
+        logger.info("=== OPTIONS REQUEST RECIBIDO ===");
         return ResponseEntity.ok().build();
+    }
+    
+    // Endpoint GET para mostrar mensaje de error claro (solo POST está permitido)
+    @GetMapping("/api/persona/crear")
+    @CrossOrigin(origins = "*")
+    public ResponseEntity<?> getCrearPersona(HttpServletRequest request) {
+        logger.warn("=== INTENTO DE ACCESO CON GET (NO PERMITIDO) ===");
+        logger.warn("URI: {}", request.getRequestURI());
+        logger.warn("Query String: {}", request.getQueryString());
+        logger.warn("Remote Address: {}", request.getRemoteAddr());
+        logger.warn("User-Agent: {}", request.getHeader("User-Agent"));
+        
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
+            .body(Map.of(
+                "error", "Method Not Allowed",
+                "status", 405,
+                "message", "Este endpoint solo acepta peticiones POST. Por favor, usa POST en lugar de GET.",
+                "path", "/api/persona/crear",
+                "allowedMethods", new String[]{"POST", "OPTIONS"}
+            ));
     }
     
     // Endpoint para recibir ID de caso y obtener datos de persona desde Bondarea
