@@ -870,6 +870,61 @@ public class FormularioController {
         }
     }
     
+    // Endpoint para obtener la recomendación de estudios seleccionada por un usuario
+    @GetMapping("/api/examen/recomendacion-estudios/{examenId}")
+    @ResponseBody
+    @CrossOrigin(origins = "*")
+    public ResponseEntity<?> obtenerRecomendacionEstudios(@PathVariable Long examenId) {
+        try {
+            logger.info("Consultando recomendación de estudios para examen ID: {}", examenId);
+            
+            // Buscar el examen
+            Optional<Examen> examenOpt = formularioService.buscarExamenPorId(examenId);
+            if (examenOpt.isEmpty()) {
+                logger.warn("Examen no encontrado con ID: {}", examenId);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("success", false, "error", "Examen no encontrado"));
+            }
+            
+            Examen examen = examenOpt.get();
+            
+            // Verificar si tiene una recomendación de estudios seleccionada
+            if (examen.getRecomendacionEstudiosSeleccionada() == null) {
+                logger.info("El examen ID {} no tiene recomendación de estudios seleccionada", examenId);
+                return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "recomendacion", null,
+                    "message", "El usuario no ha seleccionado una recomendación de estudios"
+                ));
+            }
+            
+            // Convertir la recomendación a DTO
+            RecomendacionEstudios recomendacion = examen.getRecomendacionEstudiosSeleccionada();
+            
+            // Forzar la carga de las posiciones laborales (relación LAZY)
+            if (recomendacion.getPosicionesLaborales() != null) {
+                recomendacion.getPosicionesLaborales().size(); // Esto fuerza la carga
+            }
+            
+            RecomendacionEstudiosDTO recomendacionDTO = new RecomendacionEstudiosDTO(recomendacion);
+            
+            logger.info("Recomendación de estudios encontrada: ID {}, Nombre: {}, Posiciones: {}", 
+                       recomendacion.getId(), recomendacion.getNombreOferta(),
+                       recomendacion.getPosicionesLaborales() != null ? recomendacion.getPosicionesLaborales().size() : 0);
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "recomendacion", recomendacionDTO,
+                "message", "Recomendación de estudios obtenida exitosamente"
+            ));
+            
+        } catch (Exception e) {
+            logger.error("Error al obtener recomendación de estudios para examen ID: {}", examenId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("success", false, "error", "Error al obtener la recomendación: " + e.getMessage()));
+        }
+    }
+    
     // Endpoint de debug para verificar el estado del examen
     // Acepta tanto ID numérico (examen local) como String (idStage de Bondarea)
     @GetMapping("/debug/examen/{examenId}")

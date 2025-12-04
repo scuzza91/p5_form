@@ -389,6 +389,19 @@ public class BondareaService {
             requestBody.put("custom_B26FNN13", examen.getComentarios());
         }
         
+        // custom_B26FNHFR: Promedio del resultado del test
+        double promedio = examen.getPromedio();
+        requestBody.put("custom_B26FNHFR", promedio);
+        
+        // custom_B26FNHF6: Resultado (Aprobado o Reprobado)
+        String resultado = examen.isAprobado() ? "Aprobado" : "Reprobado";
+        requestBody.put("custom_B26FNHF6", resultado);
+        
+        // custom_B26FNHF8: Tiempo medio del test (en minutos)
+        if (examen.getTiempoTotalMinutos() != null) {
+            requestBody.put("custom_B26FNHF8", examen.getTiempoTotalMinutos());
+        }
+        
         // Convertir el body a JSON
         ObjectMapper objectMapper = new ObjectMapper();
         String jsonBody;
