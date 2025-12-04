@@ -29,6 +29,9 @@ public class Pregunta {
     
     private boolean activa = true;
     
+    @Column(name = "imagen_url", length = 500)
+    private String imagenUrl; // URL o ruta de la imagen asociada (opcional)
+    
     // Enum para las áreas de conocimiento
     public enum AreaConocimiento {
         LOGICA("Lógica"),
@@ -331,5 +334,13 @@ public class Pregunta {
     
     public void setActiva(boolean activa) {
         this.activa = activa;
+    }
+    
+    public String getImagenUrl() {
+        return imagenUrl;
+    }
+    
+    public void setImagenUrl(String imagenUrl) {
+        this.imagenUrl = imagenUrl;
     }
 } 

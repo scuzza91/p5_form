@@ -135,6 +135,7 @@
             // Preparar headers
             const headers = {
                 'Content-Type': 'application/json',
+                'Accept': 'application/json', // Solicitar respuesta JSON explícitamente
                 'X-API-Token': apiToken
             };
 
@@ -197,11 +198,17 @@
             // Si hay URL del examen, mostrarla
             if (data.examenUrl || data.examenId) {
                 const examenUrl = data.examenUrl || `http://${window.location.hostname}:8083/examen/${data.examenId}`;
-                html += `<p><strong>🔗 Accede al examen:</strong> <a href="${examenUrl}" target="_blank" class="url-link">${examenUrl}</a></p>`;
+                html += `<p><strong>🔗 Accede al examen:</strong></p>`;
+                html += `<p><a href="${examenUrl}" target="_blank" class="url-link" style="font-size: 16px; padding: 10px 20px; background: #4CAF50; color: white; text-decoration: none; border-radius: 4px; display: inline-block; margin: 10px 0;">Abrir Examen en Nueva Pestaña</a></p>`;
+                html += `<p><button onclick="window.location.href='${examenUrl}'" style="padding: 10px 20px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; margin: 5px 0;">Abrir Examen en Esta Ventana</button></p>`;
+                html += `<p><code style="background: #f0f0f0; padding: 5px; border-radius: 3px; display: block; margin: 10px 0;">${examenUrl}</code></p>`;
             }
             
             if (data.personaId) {
                 html += `<p><strong>Persona ID:</strong> ${data.personaId}</p>`;
+                // Agregar link a la página de resultado
+                const resultadoUrl = `http://${window.location.hostname}:8083/resultado/${data.personaId}`;
+                html += `<p><strong>🔗 Ver resultado:</strong> <a href="${resultadoUrl}" target="_blank" class="url-link">${resultadoUrl}</a></p>`;
             }
             if (data.examenId) {
                 html += `<p><strong>Examen ID:</strong> ${data.examenId}</p>`;
@@ -262,8 +269,8 @@
         
         <div class="form-group">
             <label for="apiUrl">URL del Endpoint <span class="required">*</span></label>
-            <input type="text" id="apiUrl" value="http://34.238.57.131:8083/api/persona/crear" required>
-            <div class="help-text">URL completa del endpoint POST /api/persona/crear</div>
+            <input type="text" id="apiUrl" value="http://localhost:8083/api/persona/crear" required>
+            <div class="help-text">URL completa del endpoint POST /api/persona/crear (usa localhost para pruebas locales)</div>
         </div>
 
         <div class="form-group">

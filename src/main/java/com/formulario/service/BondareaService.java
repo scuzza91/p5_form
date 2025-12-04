@@ -290,10 +290,14 @@ public class BondareaService {
      * @param idCaso ID del caso en Bondarea (ej: "128379")
      * @param examen Examen con los resultados a enviar
      * @param nombreInstitucion Nombre de la institución recomendada (opcional)
+     * @param nombreCurso Nombre del curso seleccionado (opcional)
+     * @param duracion Duración del curso (opcional)
+     * @param idCurso ID del curso seleccionado (opcional)
+     * @param monto Monto del curso (opcional)
      * @param comentarios Comentarios adicionales (opcional)
      * @return true si la actualización fue exitosa, false en caso contrario
      */
-    public boolean actualizarCasoEnBondarea(String idCaso, Examen examen, String nombreInstitucion, String comentarios) {
+    public boolean actualizarCasoEnBondarea(String idCaso, Examen examen, String nombreInstitucion, String nombreCurso, String duracion, Long idCurso, java.math.BigDecimal monto, String comentarios) {
         if (idCaso == null || idCaso.trim().isEmpty()) {
             logger.warn("ID de caso vacío o nulo - No se puede actualizar en Bondarea");
             return false;
@@ -328,9 +332,29 @@ public class BondareaService {
         requestBody.put("id_etapa", idStage);
         
         // Mapear campos del examen a los custom fields de Bondarea
-        // custom_B26FNN17: Institución (desde RecomendacionEstudios)
+        // custom_B26FNN17: Nombre de la institución (desde RecomendacionEstudios seleccionada)
         if (nombreInstitucion != null && !nombreInstitucion.trim().isEmpty()) {
             requestBody.put("custom_B26FNN17", nombreInstitucion);
+        }
+        
+        // custom_B26FNPKP: Nombre del curso
+        if (nombreCurso != null && !nombreCurso.trim().isEmpty()) {
+            requestBody.put("custom_B26FNPKP", nombreCurso);
+        }
+        
+        // custom_B26FNPK7: Duración
+        if (duracion != null && !duracion.trim().isEmpty()) {
+            requestBody.put("custom_B26FNPK7", duracion);
+        }
+        
+        // custom_B26FNPK3: ID del Curso
+        if (idCurso != null) {
+            requestBody.put("custom_B26FNPK3", idCurso);
+        }
+        
+        // custom_B26FNN1Z: Monto
+        if (monto != null) {
+            requestBody.put("custom_B26FNN1Z", monto);
         }
         
         // custom_B26FNHFU: Lógica

@@ -115,13 +115,19 @@
                         <p class="text-gray-700 mb-6">Basado en tus resultados del examen</p>
                         
                         <div class="space-y-6">
-                            <div th:each="recomendacion : ${recomendaciones}" class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+                            <div th:each="recomendacion : ${recomendaciones}" th:attr="data-rol-id=${recomendacion.titulo}" class="rol-card bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
                                 
                                 <!-- Header del rol -->
-                                <div class="bg-sky-200 text-black p-6">
+                                <div class="bg-sky-200 text-black p-6 cursor-pointer" onclick="toggleRolCard(this, event)">
                                     <div class="flex justify-between items-start">
                                         <div class="flex-1">
-                                            <h3 class="text-2xl font-bold mb-2" th:text="${recomendacion.titulo}">Título del Rol</h3>
+                                            <div class="flex items-center">
+                                                <h3 class="text-2xl font-bold mb-2 mr-3" th:text="${recomendacion.titulo}">Título del Rol</h3>
+                                                <button class="ml-auto p-2 hover:bg-sky-300 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-black" 
+                                                        onclick="event.stopPropagation(); toggleRolCard(this.closest('.rol-card').querySelector('.bg-sky-200'), event)">
+                                                    <i class="fas fa-chevron-down rol-icon text-xl transition-transform duration-300"></i>
+                                                </button>
+                                            </div>
                                             <div class="flex flex-wrap gap-2">
                                                 <span class="bg-sky-300 px-3 py-1 rounded-full text-sm font-medium text-black" 
                                                       th:text="${recomendacion.categoria}">Categoría</span>
@@ -135,8 +141,8 @@
                                     </div>
                                 </div>
 
-                                <!-- Contenido -->
-                                <div class="p-6">
+                                <!-- Contenido (colapsable) -->
+                                <div class="rol-content p-6" style="display: block;">
                                     <div class="grid md:grid-cols-2 gap-6">
                                         <!-- Información del rol -->
                                         <div>
@@ -235,12 +241,39 @@
                                         <h4 class="text-lg font-semibold text-black mb-4 flex items-center">
                                             <i class="fas fa-graduation-cap text-black mr-2"></i>Recomendaciones de Estudios
                                         </h4>
+                                        <div th:if="${recomendacionSeleccionadaId != null}" class="mb-4 p-3 bg-green-100 border border-green-400 rounded-lg">
+                                            <p class="text-sm text-green-800">
+                                                <i class="fas fa-info-circle mr-2"></i>
+                                                Ya has seleccionado una recomendación. Haz clic en "Continuar" para confirmar.
+                                            </p>
+                                        </div>
+                                        <div th:if="${recomendacionSeleccionadaId == null}" class="mb-4">
+                                            <p class="text-sm text-gray-600">
+                                                <i class="fas fa-info-circle mr-2"></i>
+                                                Selecciona una recomendación marcando el checkbox. Solo puedes seleccionar una recomendación. Puedes cambiar de opinión antes de hacer clic en "Continuar".
+                                            </p>
+                                        </div>
                                         <div class="grid md:grid-cols-2 gap-4">
-                                            <div th:each="estudio : ${recomendacionesEstudios}" class="bg-white rounded-lg p-4 border border-sky-300 hover:shadow-md transition-shadow duration-200">
+                                            <div th:each="estudio : ${recomendacionesEstudios}" 
+                                                 th:data-estudio-id="${estudio.id}"
+                                                 th:data-estudio-seleccionado="${recomendacionSeleccionadaId != null and recomendacionSeleccionadaId == estudio.id}"
+                                                 th:class="'estudio-card bg-white rounded-lg p-4 border-2 transition-all duration-200 ' + ((recomendacionSeleccionadaId != null and recomendacionSeleccionadaId == estudio.id) ? 'border-green-500 bg-green-50' : 'border-sky-300') + ' ' + ((recomendacionSeleccionadaId != null) ? 'opacity-75' : 'cursor-pointer hover:border-sky-500 hover:shadow-lg')"
+                                                 th:attr="onclick=${recomendacionSeleccionadaId == null} ? 'toggleEstudio(this, ' + ${estudio.id} + ')' : null">
                                                 <div class="flex items-start justify-between mb-2">
                                                     <div class="flex-1">
-                                                        <h5 class="font-semibold text-black mb-1" th:text="${estudio.nombreOferta}">Nombre de la Oferta</h5>
-                                                        <p class="text-sm text-gray-600 mb-2" th:text="${estudio.nombreInstitucion}">Institución</p>
+                                                        <div class="flex items-center mb-2">
+                                                            <input type="radio" 
+                                                                   th:id="'estudio-' + ${estudio.id}"
+                                                                   th:name="estudioSeleccionado"
+                                                                   th:value="${estudio.id}"
+                                                                   th:checked="${recomendacionSeleccionadaId != null and recomendacionSeleccionadaId == estudio.id}"
+                                                                   th:disabled="${recomendacionSeleccionadaId != null}"
+                                                                   th:onclick="${recomendacionSeleccionadaId == null} ? 'toggleEstudioRadio(this, ' + ${estudio.id} + ')' : null"
+                                                                   class="w-5 h-5 text-green-600 border-gray-300 focus:ring-green-500 mr-3 cursor-pointer"
+                                                                   style="cursor: pointer;">
+                                                            <h5 class="font-semibold text-black mb-1" th:text="${estudio.nombreOferta}">Nombre de la Oferta</h5>
+                                                        </div>
+                                                        <p class="text-sm text-gray-600 mb-2 ml-8" th:text="${estudio.nombreInstitucion}">Institución</p>
                                                     </div>
                                                     <div th:if="${estudio.imagenInstitucion != null and !estudio.imagenInstitucion.isEmpty()}" class="ml-3 flex-shrink-0">
                                                         <img th:src="${estudio.imagenInstitucion}" 
@@ -253,8 +286,8 @@
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <p class="text-sm text-gray-700 mb-3" th:text="${estudio.descripcion}">Descripción del estudio...</p>
-                                                <div class="flex items-center justify-between mt-4">
+                                                <p class="text-sm text-gray-700 mb-3 ml-8" th:text="${estudio.descripcion}">Descripción del estudio...</p>
+                                                <div class="flex items-center justify-between mt-4 ml-8">
                                                     <span th:if="${estudio.duracion != null and !estudio.duracion.isEmpty()}" class="text-lg font-semibold text-black">
                                                         <i class="fas fa-clock mr-2"></i><span th:text="${estudio.duracion}">Duración</span>
                                                     </span>
@@ -280,28 +313,350 @@
                         </div>
                     </div>
                     
-                    <!-- Action Buttons -->
-                    <div class="flex flex-col sm:flex-row justify-center gap-4 pt-6 border-t border-gray-200">
-                        <a href="/" class="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-all duration-200">
-                            <i class="fas fa-home mr-2"></i>Inicio
-                        </a>
-                    </div>
-                    
-                    <!-- PDF Download Button -->
-                    <div class="mt-6 p-4 bg-gray-50 rounded-lg">
-                        <h5 class="text-lg font-semibold text-gray-800 mb-4 text-center">
-                            <i class="fas fa-file-pdf mr-2 text-red-500"></i>Descargar Resultado en PDF
-                        </h5>
-                        <div class="flex justify-center">
-                            <a th:href="@{/pdf/resultado-completo/{personaId}(personaId=${resultado.personaId})}" 
-                               class="inline-flex items-center justify-center px-6 py-3 bg-red-500 text-black font-medium rounded-lg hover:bg-red-600 transition-all duration-200 shadow-lg">
-                                <i class="fas fa-file-pdf mr-2"></i>Descargar PDF con Resultado y Recomendaciones
-                            </a>
+                    <!-- Botones de Acción - Al final de todo -->
+                    <div class="mt-8 pt-8 border-t-2 border-gray-300">
+                        <div class="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-6 shadow-lg">
+                            <!-- Botón Continuar (si hay recomendaciones de estudios) -->
+                            <div th:if="${recomendacionesEstudios != null and !recomendacionesEstudios.empty}" class="mb-6">
+                                <div class="flex flex-col items-center">
+                                    <p class="text-sm text-gray-700 mb-4 text-center">
+                                        <i class="fas fa-info-circle mr-2 text-blue-600"></i>
+                                        <span th:if="${recomendacionSeleccionadaId == null}">Selecciona una recomendación de estudios arriba y luego haz clic en "Continuar" para confirmar tu selección.</span>
+                                        <span th:if="${recomendacionSeleccionadaId != null}" class="text-green-700">
+                                            <i class="fas fa-check-circle mr-2"></i>Ya has seleccionado una recomendación. No puedes cambiar tu selección.
+                                        </span>
+                                    </p>
+                                    <button th:attr="onclick=${recomendacionSeleccionadaId == null} ? 'guardarSeleccion()' : 'mostrarMensajeInfo(\'Ya has seleccionado una recomendación. No puedes cambiar tu selección.\')'"
+                                            th:disabled="${recomendacionSeleccionadaId != null}"
+                                            th:classappend="${recomendacionSeleccionadaId != null} ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600'"
+                                            class="px-12 py-4 text-white font-bold text-lg rounded-lg transition-all duration-200 shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                                            id="btnContinuar">
+                                        <i class="fas fa-check-circle mr-2"></i>
+                                        <span th:if="${recomendacionSeleccionadaId != null}">Selección Confirmada</span>
+                                        <span th:if="${recomendacionSeleccionadaId == null}">Continuar</span>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Botón Descargar PDF -->
+                            <div class="flex flex-col items-center">
+                                <h5 class="text-lg font-semibold text-gray-800 mb-4">
+                                    <i class="fas fa-file-pdf mr-2 text-red-500"></i>Descargar Resultado en PDF
+                                </h5>
+                                <a th:href="@{/pdf/resultado-completo/{personaId}(personaId=${resultado.personaId})}" 
+                                   class="inline-flex items-center justify-center px-8 py-3 bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 transition-all duration-200 shadow-lg hover:shadow-xl">
+                                    <i class="fas fa-file-pdf mr-2"></i>Descargar PDF con Resultado y Recomendaciones
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    
+    <script>
+        // Variable global para almacenar la selección temporal (antes de guardar)
+        let seleccionTemporal = null;
+        const personaId = [[${resultado.personaId}]];
+        const yaGuardado = [[${recomendacionSeleccionadaId != null}]];
+        
+        function toggleEstudio(cardElement, estudioId) {
+            // Si ya está guardado, no permitir cambios
+            if (yaGuardado) {
+                mostrarMensajeInfo('Ya has seleccionado una recomendación. No puedes cambiar tu selección.');
+                return;
+            }
+            
+            // Obtener el radio button de esta tarjeta
+            const radio = cardElement.querySelector('input[type="radio"]');
+            if (radio) {
+                radio.checked = !radio.checked;
+                toggleEstudioRadio(radio, estudioId);
+            }
+        }
+        
+        function toggleEstudioRadio(radioElement, estudioId) {
+            // Si ya está guardado, no permitir cambios
+            if (yaGuardado) {
+                radioElement.checked = false;
+                mostrarMensajeInfo('Ya has seleccionado una recomendación. No puedes cambiar tu selección.');
+                return;
+            }
+            
+            // Si el radio está desmarcado, deseleccionar
+            if (!radioElement.checked) {
+                const cardElement = radioElement.closest('.estudio-card');
+                if (cardElement) {
+                    cardElement.classList.remove('border-green-500', 'bg-green-50');
+                    cardElement.classList.add('border-sky-300');
+                }
+                seleccionTemporal = null;
+            } else {
+                // Desmarcar todos los otros radio buttons
+                document.querySelectorAll('input[name="estudioSeleccionado"]').forEach(radio => {
+                    if (radio !== radioElement) {
+                        radio.checked = false;
+                        const card = radio.closest('.estudio-card');
+                        if (card) {
+                            card.classList.remove('border-green-500', 'bg-green-50');
+                            card.classList.add('border-sky-300');
+                        }
+                    }
+                });
+                
+                // Marcar la tarjeta seleccionada
+                const cardElement = radioElement.closest('.estudio-card');
+                if (cardElement) {
+                    cardElement.classList.remove('border-sky-300');
+                    cardElement.classList.add('border-green-500', 'bg-green-50');
+                }
+                seleccionTemporal = estudioId;
+            }
+            
+            // Actualizar estado del botón Continuar
+            actualizarBotonContinuar();
+        }
+        
+        function actualizarBotonContinuar() {
+            const btnContinuar = document.getElementById('btnContinuar');
+            if (btnContinuar) {
+                if (seleccionTemporal != null) {
+                    btnContinuar.disabled = false;
+                    btnContinuar.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                    btnContinuar.classList.add('bg-green-500', 'hover:bg-green-600');
+                } else {
+                    btnContinuar.disabled = true;
+                    btnContinuar.classList.remove('bg-green-500', 'hover:bg-green-600');
+                    btnContinuar.classList.add('bg-gray-400', 'cursor-not-allowed');
+                }
+            }
+        }
+        
+        function guardarSeleccion() {
+            // Si ya está guardado, no permitir cambios
+            if (yaGuardado) {
+                mostrarMensajeInfo('Ya has seleccionado una recomendación. No puedes cambiar tu selección.');
+                return;
+            }
+            
+            // Verificar que hay una selección
+            if (seleccionTemporal == null) {
+                mostrarMensajeError('Por favor, selecciona una recomendación antes de continuar.');
+                return;
+            }
+            
+            // Deshabilitar el botón mientras se guarda
+            const btnContinuar = document.getElementById('btnContinuar');
+            if (btnContinuar) {
+                btnContinuar.disabled = true;
+                btnContinuar.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Guardando...';
+            }
+            
+            // Enviar la selección al servidor
+            guardarSeleccionEstudio(seleccionTemporal, personaId);
+        }
+        
+        function guardarSeleccionEstudio(estudioId, personaId) {
+            fetch('/api/examen/guardar-recomendacion-estudios', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    estudioId: estudioId,
+                    personaId: personaId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('Recomendación guardada exitosamente');
+                    mostrarMensajeExito('Recomendación guardada exitosamente');
+                    
+                    // Deshabilitar todas las tarjetas y el botón
+                    document.querySelectorAll('.estudio-card').forEach(card => {
+                        card.classList.add('opacity-75');
+                        card.onclick = null;
+                    });
+                    
+                    const btnContinuar = document.getElementById('btnContinuar');
+                    if (btnContinuar) {
+                        btnContinuar.disabled = true;
+                        btnContinuar.classList.remove('bg-green-500', 'hover:bg-green-600');
+                        btnContinuar.classList.add('bg-gray-400', 'cursor-not-allowed');
+                        btnContinuar.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Selección Confirmada';
+                    }
+                    
+                    // Recargar la página después de 1.5 segundos para mostrar el estado guardado
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    console.error('Error al guardar:', data.error);
+                    mostrarMensajeError('Error al guardar la recomendación: ' + (data.error || 'Error desconocido'));
+                    
+                    // Rehabilitar el botón
+                    const btnContinuar = document.getElementById('btnContinuar');
+                    if (btnContinuar) {
+                        btnContinuar.disabled = false;
+                        btnContinuar.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Continuar';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                mostrarMensajeError('Error al guardar la recomendación');
+                
+                // Rehabilitar el botón
+                const btnContinuar = document.getElementById('btnContinuar');
+                if (btnContinuar) {
+                    btnContinuar.disabled = false;
+                    btnContinuar.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Continuar';
+                }
+            });
+        }
+        
+        function mostrarMensajeExito(mensaje) {
+            // Crear o actualizar mensaje de éxito
+            let mensajeDiv = document.getElementById('mensaje-exito');
+            if (!mensajeDiv) {
+                mensajeDiv = document.createElement('div');
+                mensajeDiv.id = 'mensaje-exito';
+                mensajeDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+                document.body.appendChild(mensajeDiv);
+            }
+            mensajeDiv.innerHTML = '<i class="fas fa-check-circle mr-2"></i>' + mensaje;
+            mensajeDiv.style.display = 'block';
+            
+            // Ocultar después de 3 segundos
+            setTimeout(() => {
+                mensajeDiv.style.display = 'none';
+            }, 3000);
+        }
+        
+        function mostrarMensajeError(mensaje) {
+            // Crear o actualizar mensaje de error
+            let mensajeDiv = document.getElementById('mensaje-error');
+            if (!mensajeDiv) {
+                mensajeDiv = document.createElement('div');
+                mensajeDiv.id = 'mensaje-error';
+                mensajeDiv.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+                document.body.appendChild(mensajeDiv);
+            }
+            mensajeDiv.innerHTML = '<i class="fas fa-exclamation-circle mr-2"></i>' + mensaje;
+            mensajeDiv.style.display = 'block';
+            
+            // Ocultar después de 5 segundos
+            setTimeout(() => {
+                mensajeDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        function mostrarMensajeInfo(mensaje) {
+            // Crear o actualizar mensaje informativo
+            let mensajeDiv = document.getElementById('mensaje-info');
+            if (!mensajeDiv) {
+                mensajeDiv = document.createElement('div');
+                mensajeDiv.id = 'mensaje-info';
+                mensajeDiv.className = 'fixed top-4 right-4 bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+                document.body.appendChild(mensajeDiv);
+            }
+            mensajeDiv.innerHTML = '<i class="fas fa-info-circle mr-2"></i>' + mensaje;
+            mensajeDiv.style.display = 'block';
+            
+            // Ocultar después de 3 segundos
+            setTimeout(() => {
+                mensajeDiv.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Función para colapsar/expandir tarjetas de roles profesionales
+        function toggleRolCard(headerElement, event) {
+            if (event) {
+                event.stopPropagation();
+            }
+            const card = headerElement.closest('.rol-card');
+            if (!card) return;
+            
+            const content = card.querySelector('.rol-content');
+            const icon = card.querySelector('.rol-icon');
+            
+            if (!content || !icon) {
+                console.error('No se encontró content o icon:', {content, icon});
+                return;
+            }
+            
+            const isCollapsed = content.style.display === 'none' || 
+                               (content.style.display === '' && !content.classList.contains('expanded'));
+            
+            if (isCollapsed) {
+                content.style.display = 'block';
+                content.classList.add('expanded');
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-up');
+            } else {
+                content.style.display = 'none';
+                content.classList.remove('expanded');
+                icon.classList.remove('fa-chevron-up');
+                icon.classList.add('fa-chevron-down');
+            }
+        }
+        
+        
+        // Inicializar estado del botón al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inicializar tarjetas de roles profesionales (expandidas por defecto)
+            document.querySelectorAll('.rol-card').forEach(card => {
+                const content = card.querySelector('.rol-content');
+                const icon = card.querySelector('.rol-icon');
+                if (content && icon) {
+                    content.style.display = 'block';
+                    icon.classList.remove('fa-chevron-down');
+                    icon.classList.add('fa-chevron-up');
+                }
+            });
+            
+            if (yaGuardado) {
+                // Si ya está guardado, deshabilitar todas las tarjetas y radio buttons
+                document.querySelectorAll('.estudio-card').forEach(card => {
+                    card.classList.add('opacity-75');
+                    card.onclick = null;
+                });
+                
+                document.querySelectorAll('input[name="estudioSeleccionado"]').forEach(radio => {
+                    radio.disabled = true;
+                });
+                
+                // Marcar la selección guardada
+                const seleccionGuardada = [[${recomendacionSeleccionadaId}]];
+                if (seleccionGuardada) {
+                    document.querySelectorAll('.estudio-card').forEach(card => {
+                        const cardId = card.getAttribute('data-estudio-id');
+                        if (cardId && parseInt(cardId) === seleccionGuardada) {
+                            card.classList.add('border-green-500', 'bg-green-50');
+                            const radio = card.querySelector('input[type="radio"]');
+                            if (radio) {
+                                radio.checked = true;
+                            }
+                        }
+                    });
+                }
+            } else {
+                // Si no está guardado, inicializar el botón
+                actualizarBotonContinuar();
+                
+                // Agregar event listeners a los radio buttons
+                document.querySelectorAll('input[name="estudioSeleccionado"]').forEach(radio => {
+                    radio.addEventListener('change', function() {
+                        if (this.checked) {
+                            const estudioId = parseInt(this.value);
+                            toggleEstudioRadio(this, estudioId);
+                        }
+                    });
+                });
+            }
+        });
+    </script>
 </body>
 </html> 

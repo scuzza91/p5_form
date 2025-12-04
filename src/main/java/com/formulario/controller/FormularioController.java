@@ -27,6 +27,7 @@ import org.springframework.http.MediaType;
 import com.formulario.model.ResultadoDTO;
 import com.formulario.model.RecomendacionRolDTO;
 import com.formulario.model.RecomendacionEstudiosDTO;
+import com.formulario.repository.RecomendacionEstudiosRepository;
 import jakarta.servlet.http.HttpServletRequest;
 
 @Controller
@@ -53,6 +54,9 @@ public class FormularioController {
     
     @Autowired
     private RecomendacionEstudiosService recomendacionEstudiosService;
+    
+    @Autowired
+    private RecomendacionEstudiosRepository recomendacionEstudiosRepository;
     
     // Página principal - Ahora redirige directamente al examen
     @GetMapping("/")
@@ -165,7 +169,24 @@ public class FormularioController {
                 // Construir URL del examen
                 String examenUrl = construirUrlExamen(request, examen.getId());
                 
-                // Preparar respuesta con header Location para redirección 302
+                // Si se solicita explícitamente JSON (header Accept o X-Response-Type), devolver JSON
+                String acceptHeader = request.getHeader("Accept");
+                String responseType = request.getHeader("X-Response-Type");
+                boolean solicitaJson = (acceptHeader != null && acceptHeader.contains("application/json")) 
+                                     || "json".equalsIgnoreCase(responseType);
+                
+                if (solicitaJson) {
+                    return ResponseEntity.ok(Map.of(
+                        "success", true,
+                        "mensaje", "Persona encontrada y examen creado",
+                        "personaId", personaExistente.getId(),
+                        "examenId", examen.getId(),
+                        "examenUrl", examenUrl,
+                        "email", email
+                    ));
+                }
+                
+                // Por defecto, redirección 302 (comportamiento original para compatibilidad)
                 HttpHeaders headers = new HttpHeaders();
                 headers.setLocation(java.net.URI.create(examenUrl));
                 
@@ -187,7 +208,24 @@ public class FormularioController {
             // Construir URL del examen
             String examenUrl = construirUrlExamen(request, examen.getId());
             
-            // Preparar respuesta con header Location para redirección 302
+            // Si se solicita explícitamente JSON (header Accept o X-Response-Type), devolver JSON
+            String acceptHeader = request.getHeader("Accept");
+            String responseType = request.getHeader("X-Response-Type");
+            boolean solicitaJson = (acceptHeader != null && acceptHeader.contains("application/json")) 
+                                 || "json".equalsIgnoreCase(responseType);
+            
+            if (solicitaJson) {
+                return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "mensaje", "Persona y examen creados exitosamente",
+                    "personaId", personaGuardada.getId(),
+                    "examenId", examen.getId(),
+                    "examenUrl", examenUrl,
+                    "email", personaGuardada.getEmail()
+                ));
+            }
+            
+            // Por defecto, redirección 302 (comportamiento original para compatibilidad)
             HttpHeaders headers = new HttpHeaders();
             headers.setLocation(java.net.URI.create(examenUrl));
             
@@ -438,6 +476,17 @@ public class FormularioController {
                     List<RecomendacionEstudiosDTO> recomendacionesEstudios = recomendacionEstudiosService.obtenerTodas();
                     model.addAttribute("recomendacionesEstudios", recomendacionesEstudios);
                     logger.info("Recomendaciones de estudios cargadas: {} para persona ID: {}", recomendacionesEstudios.size(), personaId);
+                    
+                    // Obtener la recomendación ya seleccionada si existe
+                    Optional<Persona> personaOpt = formularioService.buscarPersonaPorId(personaId);
+                    if (personaOpt.isPresent()) {
+                        Optional<Examen> examenOpt = formularioService.buscarExamenPorPersona(personaOpt.get());
+                        if (examenOpt.isPresent() && examenOpt.get().getRecomendacionEstudiosSeleccionada() != null) {
+                            Long recomendacionSeleccionadaId = examenOpt.get().getRecomendacionEstudiosSeleccionada().getId();
+                            model.addAttribute("recomendacionSeleccionadaId", recomendacionSeleccionadaId);
+                            logger.info("Recomendación ya seleccionada: ID {}", recomendacionSeleccionadaId);
+                        }
+                    }
                 } catch (Exception e) {
                     logger.warn("Error al cargar recomendaciones de estudios para persona ID: {} - {}", personaId, e.getMessage());
                     model.addAttribute("recomendacionesEstudios", new ArrayList<>());
@@ -546,16 +595,24 @@ public class FormularioController {
                 try {
                     logger.info("Intentando actualizar caso en Bondarea: idCaso={}", idCaso);
                     
-                    // Obtener nombre de institución de las recomendaciones de estudios (primera recomendación activa)
+                    // Obtener datos de la recomendación de estudios seleccionada por el usuario
                     String nombreInstitucion = null;
-                    try {
-                        List<RecomendacionEstudiosDTO> recomendacionesEstudios = recomendacionEstudiosService.obtenerTodas();
-                        if (!recomendacionesEstudios.isEmpty()) {
-                            nombreInstitucion = recomendacionesEstudios.get(0).getNombreInstitucion();
-                            logger.info("Nombre de institución obtenido: {}", nombreInstitucion);
-                        }
-                    } catch (Exception e) {
-                        logger.warn("No se pudo obtener nombre de institución de recomendaciones: {}", e.getMessage());
+                    String nombreCurso = null;
+                    String duracion = null;
+                    Long idCurso = null;
+                    java.math.BigDecimal monto = null;
+                    
+                    if (examen.getRecomendacionEstudiosSeleccionada() != null) {
+                        RecomendacionEstudios recomendacion = examen.getRecomendacionEstudiosSeleccionada();
+                        nombreInstitucion = recomendacion.getNombreInstitucion();
+                        nombreCurso = recomendacion.getNombreOferta();
+                        duracion = recomendacion.getDuracion();
+                        idCurso = recomendacion.getId();
+                        monto = recomendacion.getCosto();
+                        logger.info("Datos de recomendación seleccionada - Institución: {}, Curso: {}, Duración: {}, ID: {}, Monto: {}", 
+                                   nombreInstitucion, nombreCurso, duracion, idCurso, monto);
+                    } else {
+                        logger.warn("No hay recomendación de estudios seleccionada para el examen");
                     }
                     
                     // Construir comentarios con información del examen
@@ -567,7 +624,7 @@ public class FormularioController {
                         examen.getProgramacion() != null ? examen.getProgramacion() : 0);
                     
                     // Llamar al método de actualización en Bondarea
-                    boolean actualizado = bondareaService.actualizarCasoEnBondarea(idCaso, examen, nombreInstitucion, comentarios);
+                    boolean actualizado = bondareaService.actualizarCasoEnBondarea(idCaso, examen, nombreInstitucion, nombreCurso, duracion, idCurso, monto, comentarios);
                     if (actualizado) {
                         logger.info("✅ Caso actualizado exitosamente en Bondarea para idCaso: {}", idCaso);
                     } else {
@@ -588,6 +645,103 @@ public class FormularioController {
             logger.error("Error al procesar el examen", e);
             redirectAttributes.addFlashAttribute("error", "Error al procesar el examen: " + e.getMessage());
             return "redirect:/";
+        }
+    }
+    
+    // Endpoint para guardar la recomendación de estudios seleccionada
+    @PostMapping("/api/examen/guardar-recomendacion-estudios")
+    @ResponseBody
+    @CrossOrigin(origins = "*")
+    public ResponseEntity<?> guardarRecomendacionEstudios(@RequestBody Map<String, Object> request) {
+        try {
+            logger.info("=== INICIO GUARDAR RECOMENDACIÓN ESTUDIOS ===");
+            
+            Long estudioId = null;
+            Long personaId = null;
+            
+            // Obtener los IDs del request
+            if (request.get("estudioId") != null) {
+                if (request.get("estudioId") instanceof Integer) {
+                    estudioId = ((Integer) request.get("estudioId")).longValue();
+                } else if (request.get("estudioId") instanceof Long) {
+                    estudioId = (Long) request.get("estudioId");
+                } else {
+                    estudioId = Long.parseLong(request.get("estudioId").toString());
+                }
+            }
+            
+            if (request.get("personaId") != null) {
+                if (request.get("personaId") instanceof Integer) {
+                    personaId = ((Integer) request.get("personaId")).longValue();
+                } else if (request.get("personaId") instanceof Long) {
+                    personaId = (Long) request.get("personaId");
+                } else {
+                    personaId = Long.parseLong(request.get("personaId").toString());
+                }
+            }
+            
+            logger.info("Estudio ID: {}, Persona ID: {}", estudioId, personaId);
+            
+            if (estudioId == null || personaId == null) {
+                logger.error("Faltan parámetros requeridos: estudioId={}, personaId={}", estudioId, personaId);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("success", false, "error", "Faltan parámetros requeridos: estudioId y personaId"));
+            }
+            
+            // Buscar el examen de la persona
+            Optional<Persona> personaOpt = formularioService.buscarPersonaPorId(personaId);
+            if (personaOpt.isEmpty()) {
+                logger.error("Persona no encontrada con ID: {}", personaId);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("success", false, "error", "Persona no encontrada"));
+            }
+            
+            Optional<Examen> examenOpt = formularioService.buscarExamenPorPersona(personaOpt.get());
+            if (examenOpt.isEmpty()) {
+                logger.error("Examen no encontrado para persona ID: {}", personaId);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("success", false, "error", "Examen no encontrado"));
+            }
+            
+            Examen examen = examenOpt.get();
+            
+            // Verificar si ya hay una recomendación guardada (no permitir cambios)
+            if (examen.getRecomendacionEstudiosSeleccionada() != null) {
+                logger.warn("Intento de cambiar recomendación ya guardada para examen ID: {}", examen.getId());
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("success", false, "error", "Ya has seleccionado una recomendación. No puedes cambiar tu selección."));
+            }
+            
+            // Buscar la recomendación de estudios
+            Optional<RecomendacionEstudios> recomendacionOpt = recomendacionEstudiosRepository.findById(estudioId);
+            if (recomendacionOpt.isEmpty()) {
+                logger.error("Recomendación de estudios no encontrada con ID: {}", estudioId);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("success", false, "error", "Recomendación de estudios no encontrada"));
+            }
+            
+            RecomendacionEstudios recomendacion = recomendacionOpt.get();
+            
+            // Guardar la selección
+            examen.setRecomendacionEstudiosSeleccionada(recomendacion);
+            formularioService.guardarExamen(examen);
+            
+            logger.info("✅ Recomendación de estudios guardada exitosamente - Examen ID: {}, Recomendación ID: {}", 
+                       examen.getId(), recomendacion.getId());
+            logger.info("=== FIN GUARDAR RECOMENDACIÓN ESTUDIOS ===");
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Recomendación guardada exitosamente",
+                "examenId", examen.getId(),
+                "recomendacionId", recomendacion.getId(),
+                "recomendacionNombre", recomendacion.getNombreOferta()
+            ));
+            
+        } catch (Exception e) {
+            logger.error("Error al guardar recomendación de estudios", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("success", false, "error", "Error al guardar la recomendación: " + e.getMessage()));
         }
     }
     

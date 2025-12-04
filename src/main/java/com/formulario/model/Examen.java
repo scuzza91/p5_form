@@ -40,6 +40,11 @@ public class Examen {
     @OneToMany(mappedBy = "examen", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<RespuestaExamen> respuestas;
     
+    // Recomendación de estudios seleccionada por el usuario
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "recomendacion_estudios_id")
+    private RecomendacionEstudios recomendacionEstudiosSeleccionada;
+    
     // Constructores
     public Examen() {}
     
@@ -239,5 +244,12 @@ public class Examen {
         this.respuestas = respuestas;
     }
     
+    public RecomendacionEstudios getRecomendacionEstudiosSeleccionada() {
+        return recomendacionEstudiosSeleccionada;
+    }
+    
+    public void setRecomendacionEstudiosSeleccionada(RecomendacionEstudios recomendacionEstudiosSeleccionada) {
+        this.recomendacionEstudiosSeleccionada = recomendacionEstudiosSeleccionada;
+    }
 
 } 

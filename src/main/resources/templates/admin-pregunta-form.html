@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${modo == 'crear' ? 'Nueva Pregunta' : 'Editar Pregunta'}">Formulario - argentina<strong>tech</strong></title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * {
+            font-family: sans-serif !important;
+        }
+        i[class*="fa-"], i[class^="fas"], i[class^="far"], i[class^="fal"], i[class^="fab"], i[class^="fad"] {
+            font-family: "Font Awesome 6 Free", "Font Awesome 6 Pro", "Font Awesome 6 Brands" !important;
+        }
+    </style>
+</head>
+<body class="bg-sky-200 min-h-screen font-sans">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <a href="/admin/preguntas" class="text-gray-600 hover:text-sky-600 transition-colors duration-300">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Volver a Preguntas
+                    </a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="w-10 h-10 flex items-center justify-center">
+                        <img src="/1.png" alt="Logo argentina<strong>tech</strong>" class="w-8 h-8 object-contain">
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-gray-800">argentina<strong>tech</strong></h1>
+                        <p class="text-gray-600 text-sm" th:text="${modo == 'crear' ? 'Nueva Pregunta' : 'Editar Pregunta'}"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Mensajes -->
+        <div th:if="${error}" class="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+            <i class="fas fa-exclamation-triangle mr-2"></i>
+            <span th:text="${error}"></span>
+        </div>
+
+        <!-- Page Header -->
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">
+                <i class="fas fa-question-circle mr-3 text-sky-600"></i>
+                <span th:text="${modo == 'crear' ? 'Nueva Pregunta' : 'Editar Pregunta'}"></span>
+            </h2>
+            <p class="text-gray-600">Complete el formulario para <span th:text="${modo == 'crear' ? 'crear' : 'actualizar'}"></span> una pregunta del test</p>
+        </div>
+
+        <!-- Form -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+            <form th:action="${modo == 'crear' ? '/admin/preguntas/crear' : '/admin/preguntas/actualizar/' + pregunta.id}" 
+                  method="post"
+                  enctype="multipart/form-data">
+                
+                <!-- Información Básica -->
+                <div class="mb-8">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
+                        <i class="fas fa-info-circle mr-2 text-sky-600"></i>
+                        Información Básica
+                    </h3>
+                    
+                    <!-- Enunciado -->
+                    <div class="mb-6">
+                        <label for="enunciado" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-question mr-2 text-sky-600"></i>
+                            Enunciado de la Pregunta <span class="text-red-500">*</span>
+                        </label>
+                        <textarea id="enunciado" 
+                                  name="enunciado"
+                                  rows="4"
+                                  required
+                                  th:text="${pregunta.enunciado}"
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500"></textarea>
+                    </div>
+
+                    <!-- Área de Conocimiento -->
+                    <div class="mb-6">
+                        <label for="areaConocimiento" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-tags mr-2 text-sky-600"></i>
+                            Área de Conocimiento <span class="text-red-500">*</span>
+                        </label>
+                        <select id="areaConocimiento" 
+                                name="areaConocimiento"
+                                required
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                            <option value="">Seleccione un área</option>
+                            <option th:each="area : ${areasConocimiento}"
+                                    th:value="${area.name()}"
+                                    th:text="${area.nombre}"
+                                    th:selected="${pregunta.areaConocimiento != null && pregunta.areaConocimiento.name() == area.name()}"></option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Imagen de la Pregunta -->
+                <div class="mb-8">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
+                        <i class="fas fa-image mr-2 text-sky-600"></i>
+                        Imagen de la Pregunta (Opcional)
+                    </h3>
+                    <p class="text-sm text-gray-600 mb-4">Puede agregar una imagen que acompañe a la pregunta. Formatos permitidos: JPG, PNG, GIF, WEBP (máx. 10MB)</p>
+                    
+                    <!-- Imagen actual si existe -->
+                    <div th:if="${modo == 'editar' && pregunta.imagenUrl != null && !pregunta.imagenUrl.isEmpty()}" class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-image mr-2 text-sky-600"></i>
+                            Imagen Actual
+                        </label>
+                        <div class="relative inline-block">
+                            <img th:src="${pregunta.imagenUrl}" 
+                                 alt="Imagen de la pregunta" 
+                                 class="max-w-md max-h-64 rounded-lg border border-gray-300 shadow-sm">
+                        </div>
+                        <div class="mt-2">
+                            <label class="flex items-center">
+                                <input type="checkbox" 
+                                       name="eliminarImagen" 
+                                       value="true"
+                                       class="rounded border-gray-300 text-red-600 shadow-sm focus:border-red-300 focus:ring focus:ring-red-200 focus:ring-opacity-50">
+                                <span class="ml-2 text-sm font-medium text-red-700">
+                                    <i class="fas fa-trash mr-2"></i>
+                                    Eliminar imagen actual
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Campo para subir nueva imagen -->
+                    <div class="mb-4">
+                        <label for="imagenFile" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-upload mr-2 text-sky-600"></i>
+                            <span th:text="${modo == 'crear' || (pregunta.imagenUrl == null || pregunta.imagenUrl.isEmpty()) ? 'Subir Imagen' : 'Reemplazar Imagen'}"></span>
+                        </label>
+                        <input type="file" 
+                               id="imagenFile" 
+                               name="imagenFile"
+                               accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                        <p class="mt-1 text-xs text-gray-500">Seleccione una imagen para la pregunta (opcional)</p>
+                    </div>
+                    
+                    <!-- Vista previa de la imagen seleccionada -->
+                    <div id="previewContainer" class="hidden mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-eye mr-2 text-sky-600"></i>
+                            Vista Previa
+                        </label>
+                        <img id="previewImage" 
+                             src="" 
+                             alt="Vista previa" 
+                             class="max-w-md max-h-64 rounded-lg border border-gray-300 shadow-sm">
+                    </div>
+                </div>
+
+                <!-- Opciones de Respuesta -->
+                <div class="mb-8">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
+                        <i class="fas fa-list-ul mr-2 text-sky-600"></i>
+                        Opciones de Respuesta
+                    </h3>
+                    <p class="text-sm text-gray-600 mb-4">Ingrese las 4 opciones de respuesta. Una de ellas debe ser marcada como correcta.</p>
+                    
+                    <div class="space-y-4">
+                        <!-- Opción 1 -->
+                        <div class="mb-4">
+                            <label for="opcion1" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-circle text-blue-600 mr-2"></i>
+                                Opción 1 <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" 
+                                   id="opcion1" 
+                                   name="opcion1"
+                                   required
+                                   th:value="${pregunta.opciones != null && !pregunta.opciones.isEmpty() && pregunta.opciones[0] != null ? pregunta.opciones[0].texto : ''}"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                        </div>
+
+                        <!-- Opción 2 -->
+                        <div class="mb-4">
+                            <label for="opcion2" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-circle text-green-600 mr-2"></i>
+                                Opción 2 <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" 
+                                   id="opcion2" 
+                                   name="opcion2"
+                                   required
+                                   th:value="${pregunta.opciones != null && pregunta.opciones.size() > 1 && pregunta.opciones[1] != null ? pregunta.opciones[1].texto : ''}"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                        </div>
+
+                        <!-- Opción 3 -->
+                        <div class="mb-4">
+                            <label for="opcion3" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-circle text-yellow-600 mr-2"></i>
+                                Opción 3 <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" 
+                                   id="opcion3" 
+                                   name="opcion3"
+                                   required
+                                   th:value="${pregunta.opciones != null && pregunta.opciones.size() > 2 && pregunta.opciones[2] != null ? pregunta.opciones[2].texto : ''}"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                        </div>
+
+                        <!-- Opción 4 -->
+                        <div class="mb-4">
+                            <label for="opcion4" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-circle text-red-600 mr-2"></i>
+                                Opción 4 <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" 
+                                   id="opcion4" 
+                                   name="opcion4"
+                                   required
+                                   th:value="${pregunta.opciones != null && pregunta.opciones.size() > 3 && pregunta.opciones[3] != null ? pregunta.opciones[3].texto : ''}"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Opción Correcta -->
+                <div class="mb-8">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
+                        <i class="fas fa-check-circle mr-2 text-sky-600"></i>
+                        Opción Correcta
+                    </h3>
+                    <div class="mb-6">
+                        <label for="opcionCorrecta" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-star mr-2 text-sky-600"></i>
+                            Seleccione la opción correcta <span class="text-red-500">*</span>
+                        </label>
+                        <select id="opcionCorrecta" 
+                                name="opcionCorrecta"
+                                required
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                            <option value="">Seleccione la opción correcta</option>
+                            <option value="1" th:selected="${pregunta.opcionCorrecta != null && pregunta.opcionCorrecta == 1}">Opción 1</option>
+                            <option value="2" th:selected="${pregunta.opcionCorrecta != null && pregunta.opcionCorrecta == 2}">Opción 2</option>
+                            <option value="3" th:selected="${pregunta.opcionCorrecta != null && pregunta.opcionCorrecta == 3}">Opción 3</option>
+                            <option value="4" th:selected="${pregunta.opcionCorrecta != null && pregunta.opcionCorrecta == 4}">Opción 4</option>
+                        </select>
+                        <p class="mt-1 text-xs text-gray-500">Esta opción será considerada como la respuesta correcta en el examen</p>
+                    </div>
+                </div>
+
+                <!-- Estado -->
+                <div class="mb-6">
+                    <label class="flex items-center">
+                        <input type="checkbox" 
+                               name="activa" 
+                               value="true"
+                               th:checked="${pregunta.activa}"
+                               class="rounded border-gray-300 text-sky-600 shadow-sm focus:border-sky-300 focus:ring focus:ring-sky-200 focus:ring-opacity-50">
+                        <span class="ml-2 text-sm font-medium text-gray-700">
+                            <i class="fas fa-check-circle mr-2 text-sky-600"></i>
+                            Pregunta Activa
+                        </span>
+                    </label>
+                    <p class="mt-1 text-xs text-gray-500">Las preguntas inactivas no aparecerán en los exámenes</p>
+                </div>
+
+                <!-- Botones -->
+                <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                    <a href="/admin/preguntas" 
+                       class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-300">
+                        Cancelar
+                    </a>
+                    <button type="submit" 
+                            class="px-6 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors duration-300">
+                        <i class="fas fa-save mr-2"></i>
+                        <span th:text="${modo == 'crear' ? 'Crear Pregunta' : 'Actualizar Pregunta'}"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 mt-12">
+        <div class="container mx-auto px-4 py-6">
+            <div class="text-center text-gray-600 text-sm">
+                <p>© 2024 argentina<strong>tech</strong>. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Script para vista previa de imagen -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const imagenFile = document.getElementById('imagenFile');
+            const previewContainer = document.getElementById('previewContainer');
+            const previewImage = document.getElementById('previewImage');
+            
+            if (imagenFile) {
+                imagenFile.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        // Validar que sea una imagen
+                        if (!file.type.startsWith('image/')) {
+                            alert('Por favor, seleccione un archivo de imagen válido.');
+                            e.target.value = '';
+                            previewContainer.classList.add('hidden');
+                            return;
+                        }
+                        
+                        // Validar tamaño (10MB)
+                        if (file.size > 10 * 1024 * 1024) {
+                            alert('La imagen no debe superar los 10MB.');
+                            e.target.value = '';
+                            previewContainer.classList.add('hidden');
+                            return;
+                        }
+                        
+                        // Mostrar vista previa
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            previewImage.src = e.target.result;
+                            previewContainer.classList.remove('hidden');
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        previewContainer.classList.add('hidden');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
+
