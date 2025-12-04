@@ -66,6 +66,13 @@ public class FormularioController {
         return "index";
     }
     
+    // Endpoint OPTIONS para manejar preflight CORS
+    @RequestMapping(value = "/api/persona/crear", method = RequestMethod.OPTIONS)
+    @CrossOrigin(origins = "*")
+    public ResponseEntity<?> optionsCrearPersona() {
+        return ResponseEntity.ok().build();
+    }
+    
     // Endpoint para recibir ID de caso y obtener datos de persona desde Bondarea
     @PostMapping("/api/persona/crear")
     @CrossOrigin(origins = "*")
@@ -76,6 +83,15 @@ public class FormularioController {
             HttpServletRequest request,
             RedirectAttributes redirectAttributes) {
         try {
+            // Log para diagnosticar problemas de método HTTP
+            logger.info("=== REQUEST RECIBIDO ===");
+            logger.info("Método HTTP: {}", request.getMethod());
+            logger.info("URI: {}", request.getRequestURI());
+            logger.info("Query String: {}", request.getQueryString());
+            logger.info("Content-Type: {}", request.getContentType());
+            logger.info("Headers: X-API-Token={}, Authorization={}", apiToken != null ? "presente" : "ausente", 
+                       authorization != null ? "presente" : "ausente");
+            
             // Obtener idCaso del request
             String idCaso = requestBody.get("idCaso");
             if (idCaso == null || idCaso.trim().isEmpty()) {
