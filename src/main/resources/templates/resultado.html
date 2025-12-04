@@ -15,7 +15,7 @@
         }
     </style>
 </head>
-<body class="bg-sky-200 min-h-screen font-sans">
+<body class="bg-sky-200 min-h-screen font-sans" th:attr="data-persona-id=${resultado.personaId}">
     <div class="container mx-auto px-4 py-8">
         <div class="max-w-6xl mx-auto">
             <!-- Result Container -->
@@ -403,10 +403,10 @@
         }
     </style>
     
-    <script>
+    <script th:inline="javascript">
         // Variable global para almacenar la selección temporal (antes de guardar)
         let seleccionTemporal = null;
-        const personaId = /*[[${resultado.personaId}]]*/ 0;
+        let personaId = null;
         const yaGuardado = /*[[${recomendacionSeleccionadaId != null}]]*/ false;
         
         function toggleEstudio(cardElement, estudioId) {
@@ -494,6 +494,15 @@
                 return;
             }
             
+            // Verificar que personaId es válido
+            if (!personaId || personaId === 0) {
+                console.error('Error: personaId no válido:', personaId);
+                mostrarMensajeError('Error: No se pudo identificar al usuario. Por favor, recarga la página.');
+                return;
+            }
+            
+            console.log('Guardando selección - Estudio ID:', seleccionTemporal, 'Persona ID:', personaId);
+            
             // Deshabilitar el botón mientras se guarda
             const btnContinuar = document.getElementById('btnContinuar');
             if (btnContinuar) {
@@ -505,7 +514,22 @@
             guardarSeleccionEstudio(seleccionTemporal, personaId);
         }
         
-        function guardarSeleccionEstudio(estudioId, personaId) {
+        function guardarSeleccionEstudio(estudioId, personaIdParam) {
+            // Validar parámetros antes de enviar
+            if (!personaIdParam || personaIdParam === 0 || isNaN(personaIdParam)) {
+                console.error('Error: personaId inválido en guardarSeleccionEstudio:', personaIdParam);
+                mostrarMensajeError('Error: No se pudo identificar al usuario. Por favor, recarga la página.');
+                return;
+            }
+            
+            if (!estudioId || estudioId === 0 || isNaN(estudioId)) {
+                console.error('Error: estudioId inválido:', estudioId);
+                mostrarMensajeError('Error: No se pudo identificar la recomendación seleccionada.');
+                return;
+            }
+            
+            console.log('Enviando al servidor - Estudio ID:', estudioId, 'Persona ID:', personaIdParam);
+            
             fetch('/api/examen/guardar-recomendacion-estudios', {
                 method: 'POST',
                 headers: {
@@ -513,7 +537,7 @@
                 },
                 body: JSON.stringify({
                     estudioId: estudioId,
-                    personaId: personaId
+                    personaId: personaIdParam
                 })
             })
             .then(response => response.json())
@@ -675,6 +699,15 @@
         
         // Inicializar estado del botón al cargar la página
         document.addEventListener('DOMContentLoaded', function() {
+            // Obtener personaId del atributo data del body
+            const personaIdElement = document.querySelector('[data-persona-id]');
+            if (personaIdElement) {
+                personaId = parseInt(personaIdElement.getAttribute('data-persona-id'));
+                console.log('PersonaId inicializado desde data attribute:', personaId);
+            } else {
+                console.error('No se encontró el atributo data-persona-id');
+            }
+            
             // Inicializar tarjetas de roles profesionales (expandidas por defecto)
             document.querySelectorAll('.rol-card').forEach(card => {
                 const content = card.querySelector('.rol-content');
