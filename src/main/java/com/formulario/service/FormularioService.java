@@ -60,6 +60,38 @@ public class FormularioService {
         return examenRepository.findById(id);
     }
     
+    /**
+     * Busca un examen por token (hash calculado)
+     * El token se valida y se extrae el ID del examen
+     */
+    public Optional<Examen> buscarExamenPorToken(String token) {
+        Long examenId = com.formulario.util.ExamenTokenUtil.validarYExtraerId(token);
+        if (examenId == null) {
+            return Optional.empty();
+        }
+        return examenRepository.findById(examenId);
+    }
+    
+    /**
+     * Busca examen por token o ID (compatibilidad)
+     * Intenta primero como token, luego como ID numérico
+     */
+    public Optional<Examen> buscarExamenPorTokenOId(String identificador) {
+        // Intentar como token primero
+        Optional<Examen> porToken = buscarExamenPorToken(identificador);
+        if (porToken.isPresent()) {
+            return porToken;
+        }
+        
+        // Si no es token válido, intentar como ID numérico
+        try {
+            Long id = Long.parseLong(identificador);
+            return examenRepository.findById(id);
+        } catch (NumberFormatException e) {
+            return Optional.empty();
+        }
+    }
+    
     public Optional<Examen> buscarExamenPorPersona(Persona persona) {
         return examenRepository.findByPersona(persona);
     }

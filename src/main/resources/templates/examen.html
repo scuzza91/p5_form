@@ -107,7 +107,7 @@
 
             <!-- Exam Form -->
             <form id="examForm" th:action="@{/examen/finalizar}" method="post" class="space-y-6">
-                <input type="hidden" name="examenId" th:value="${examen.id}">
+                <input type="hidden" name="examenToken" th:value="${T(com.formulario.util.ExamenTokenUtil).generarToken(examen.id)}">
                 
                 <!-- Questions Container -->
                 <div id="questionsContainer">
@@ -177,6 +177,7 @@
         // Datos del examen
         const examData = {
             examenId: /*[[${examen.id}]]*/ null,
+            examenToken: /*[[${T(com.formulario.util.ExamenTokenUtil).generarToken(examen.id)}]]*/ null,
             totalPreguntas: 32,
             tiempoLimite: 60 * 60, // 60 minutos en segundos
             tiempoRestante: 60 * 60,
@@ -185,10 +186,13 @@
             preguntas: []
         };
         
+        // Usar token si está disponible, sino usar ID (compatibilidad)
+        const examenIdentificador = examData.examenToken || examData.examenId;
+        
         // Cargar preguntas desde el endpoint REST
         async function cargarPreguntasExamen() {
             try {
-                console.log('Cargando preguntas para examen:', examData.examenId);
+                console.log('Cargando preguntas para examen - ID:', examData.examenId, 'Token:', examData.examenToken);
                 
                 // Primero probar el endpoint de test
                 console.log('Probando endpoint de test...');
@@ -199,8 +203,8 @@
                 const testResult = await testResponse.json();
                 console.log('Test endpoint OK:', testResult);
                 
-                // Ahora cargar las preguntas
-                const response = await fetch(`/api/examen/${examData.examenId}/preguntas`);
+                // Ahora cargar las preguntas usando token o ID
+                const response = await fetch(`/api/examen/${examenIdentificador}/preguntas`);
                 console.log('Response status:', response.status);
                 console.log('Response headers:', response.headers);
                 
@@ -443,12 +447,12 @@
             tempForm.method = 'POST';
             tempForm.action = '/examen/finalizar';
             
-            // Agregar el examenId
-            const examenIdInput = document.createElement('input');
-            examenIdInput.type = 'hidden';
-            examenIdInput.name = 'examenId';
-            examenIdInput.value = examData.examenId;
-            tempForm.appendChild(examenIdInput);
+            // Agregar el examenToken (o examenId como fallback)
+            const examenTokenInput = document.createElement('input');
+            examenTokenInput.type = 'hidden';
+            examenTokenInput.name = 'examenToken';
+            examenTokenInput.value = examenIdentificador;
+            tempForm.appendChild(examenTokenInput);
             
             // Agregar las respuestas
             const respuestasInput = document.createElement('input');
@@ -459,6 +463,7 @@
             
             // Verificar los datos antes de enviar
             console.log('Datos a enviar:');
+            console.log('examenToken:', examenIdentificador);
             console.log('examenId:', examData.examenId);
             console.log('respuestas:', JSON.stringify(respuestasData));
             

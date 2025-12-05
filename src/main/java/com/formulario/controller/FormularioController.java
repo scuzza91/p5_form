@@ -279,8 +279,8 @@ public class FormularioController {
                 Examen examen = new Examen(personaExistente);
                 examen = formularioService.guardarExamen(examen);
                 
-                // Construir URL del examen
-                String examenUrl = construirUrlExamen(request, examen.getId());
+                // Construir URL del examen usando token hash
+                String examenUrl = construirUrlExamen(request, examen);
                 logger.info("URL del examen construida (persona existente): {}", examenUrl);
                 
                 // Verificar si el cliente solicita redirección explícitamente
@@ -322,8 +322,8 @@ public class FormularioController {
             logger.info("Persona y examen creados exitosamente - Persona ID: {}, Examen ID: {}, Email: {}", 
                        personaGuardada.getId(), examen.getId(), personaGuardada.getEmail());
             
-            // Construir URL del examen
-            String examenUrl = construirUrlExamen(request, examen.getId());
+            // Construir URL del examen usando token hash
+            String examenUrl = construirUrlExamen(request, examen);
             logger.info("URL del examen construida: {}", examenUrl);
             
             // Verificar si el cliente solicita redirección explícitamente
@@ -533,8 +533,14 @@ public class FormularioController {
                               @ModelAttribute("personaId") Long personaId,
                               RedirectAttributes redirectAttributes) {
         
-        // Si viene examenId, redirigir directamente al examen
+        // Si viene examenId, redirigir directamente al examen usando token hash
         if (examenId != null) {
+            Optional<Examen> examenOpt = formularioService.buscarExamenPorId(examenId);
+            if (examenOpt.isPresent()) {
+                String token = com.formulario.util.ExamenTokenUtil.generarToken(examenId);
+                return "redirect:/examen/" + token;
+            }
+            // Fallback a ID si no se encuentra el examen
             return "redirect:/examen/" + examenId;
         }
         
@@ -552,11 +558,12 @@ public class FormularioController {
                 return "redirect:/resultado/" + personaId;
             }
             
-            // Crear nuevo examen y redirigir al examen múltiple choice
+            // Crear nuevo examen y redirigir al examen múltiple choice usando token hash
             Examen examen = new Examen(persona.get());
             examen = formularioService.guardarExamen(examen);
             
-            return "redirect:/examen/" + examen.getId();
+            String token = com.formulario.util.ExamenTokenUtil.generarToken(examen.getId());
+            return "redirect:/examen/" + token;
         }
         
         // Si no viene ningún parámetro, redirigir al inicio
@@ -633,22 +640,24 @@ public class FormularioController {
         }
     }
     
-    // Nuevo sistema de examen múltiple choice
-    @GetMapping("/examen/{examenId}")
-    public String mostrarExamen(@PathVariable Long examenId, Model model, RedirectAttributes redirectAttributes) {
+    // Nuevo sistema de examen múltiple choice - Acepta token hash o ID para compatibilidad
+    @GetMapping("/examen/{identificador}")
+    public String mostrarExamen(@PathVariable String identificador, Model model, RedirectAttributes redirectAttributes) {
         try {
-            logger.info("Iniciando carga del examen ID: {}", examenId);
+            logger.info("Iniciando carga del examen con identificador: {}", identificador);
             
-            Optional<Examen> examenOpt = formularioService.buscarExamenPorId(examenId);
+            // Buscar por token hash o ID (compatibilidad con exámenes antiguos)
+            Optional<Examen> examenOpt = formularioService.buscarExamenPorTokenOId(identificador);
             
             if (examenOpt.isEmpty()) {
-                logger.warn("Examen no encontrado con ID: {}", examenId);
+                logger.warn("Examen no encontrado con identificador: {}", identificador);
                 redirectAttributes.addFlashAttribute("error", "Examen no encontrado");
                 return "redirect:/";
             }
             
             Examen examen = examenOpt.get();
-            logger.info("Examen encontrado para persona: {}", examen.getPersona().getEmail());
+            logger.info("Examen encontrado para persona: {} (ID: {})", 
+                       examen.getPersona().getEmail(), examen.getId());
             
             // Verificar si el examen ya fue completado
             if (examen.getFechaFin() != null) {
@@ -665,7 +674,7 @@ public class FormularioController {
             return "examen";
             
         } catch (Exception e) {
-            logger.error("Error al cargar el examen ID: {}", examenId, e);
+            logger.error("Error al cargar el examen con identificador: {}", identificador, e);
             e.printStackTrace();
             redirectAttributes.addFlashAttribute("error", "Error al cargar el examen: " + e.getMessage());
             return "redirect:/paso1";
@@ -673,12 +682,12 @@ public class FormularioController {
     }
     
     @PostMapping("/examen/finalizar")
-    public String finalizarExamen(@RequestParam Long examenId,
+    public String finalizarExamen(@RequestParam String examenToken,
                                  @RequestParam String respuestas,
                                  RedirectAttributes redirectAttributes) {
         try {
             logger.info("=== INICIO FINALIZAR EXAMEN ===");
-            logger.info("Finalizando examen ID: {}", examenId);
+            logger.info("Finalizando examen con token/ID: {}", examenToken);
             logger.info("Respuestas recibidas: {}", respuestas);
             
             if (respuestas == null || respuestas.trim().isEmpty()) {
@@ -686,6 +695,18 @@ public class FormularioController {
                 redirectAttributes.addFlashAttribute("error", "No se recibieron respuestas del examen");
                 return "redirect:/";
             }
+            
+            // Buscar examen por token hash o ID (compatibilidad)
+            Optional<Examen> examenOpt = formularioService.buscarExamenPorTokenOId(examenToken);
+            if (examenOpt.isEmpty()) {
+                logger.error("Examen no encontrado con token/ID: {}", examenToken);
+                redirectAttributes.addFlashAttribute("error", "Examen no encontrado");
+                return "redirect:/";
+            }
+            
+            Examen examen = examenOpt.get();
+            Long examenId = examen.getId();
+            logger.info("Examen encontrado - ID: {}", examenId);
             
             // Parsear las respuestas JSON
             ObjectMapper mapper = new ObjectMapper();
@@ -710,7 +731,7 @@ public class FormularioController {
             logger.info("Respuestas finales: {}", respuestasFinales);
             
             // Procesar el examen
-            Examen examen = examenService.procesarRespuestas(examenId, respuestasFinales);
+            examen = examenService.procesarRespuestas(examenId, respuestasFinales);
             
             logger.info("Examen procesado exitosamente para persona: {}", examen.getPersona().getId());
             
@@ -1258,8 +1279,8 @@ public class FormularioController {
         return url;
     }
     
-    // Método auxiliar para construir la URL completa del examen
-    private String construirUrlExamen(HttpServletRequest request, Long examenId) {
+    // Método auxiliar para construir la URL completa del examen usando token hash
+    private String construirUrlExamen(HttpServletRequest request, Examen examen) {
         // Intentar obtener el host desde headers (útil cuando hay proxy/load balancer)
         String host = request.getHeader("Host");
         if (host == null || host.isEmpty()) {
@@ -1290,12 +1311,15 @@ public class FormularioController {
             url.append(contextPath);
         }
         
-        // Agregar ruta del examen
-        url.append("/examen/").append(examenId);
+        // Generar token hash para el examen
+        String token = com.formulario.util.ExamenTokenUtil.generarToken(examen.getId());
+        
+        // Agregar ruta del examen con token
+        url.append("/examen/").append(token);
         
         String finalUrl = url.toString();
-        logger.info("URL construida - Scheme: {}, Host: {}, ContextPath: {}, ExamenId: {}, URL final: {}", 
-                   scheme, host, contextPath, examenId, finalUrl);
+        logger.info("URL construida - Scheme: {}, Host: {}, ContextPath: {}, ExamenId: {}, Token: {}, URL final: {}", 
+                   scheme, host, contextPath, examen.getId(), token, finalUrl);
         
         return finalUrl;
     }

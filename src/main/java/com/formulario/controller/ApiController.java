@@ -101,32 +101,34 @@ public class ApiController {
         }
     }
     
-    // Endpoint para obtener preguntas del examen por ID
-    @GetMapping("/examen/{examenId}/preguntas")
-    public ResponseEntity<?> obtenerPreguntasExamen(@PathVariable Long examenId) {
+    // Endpoint para obtener preguntas del examen por token hash o ID (compatibilidad)
+    @GetMapping("/examen/{identificador}/preguntas")
+    public ResponseEntity<?> obtenerPreguntasExamen(@PathVariable String identificador) {
         try {
-            logger.info("Solicitando preguntas para examen ID: {}", examenId);
+            logger.info("Solicitando preguntas para examen con identificador: {}", identificador);
             
-            Optional<Examen> examenOpt = formularioService.buscarExamenPorId(examenId);
+            // Buscar por token hash o ID (compatibilidad con exámenes antiguos)
+            Optional<Examen> examenOpt = formularioService.buscarExamenPorTokenOId(identificador);
             if (examenOpt.isEmpty()) {
-                logger.warn("Examen no encontrado: {}", examenId);
+                logger.warn("Examen no encontrado con identificador: {}", identificador);
                 Map<String, String> error = new HashMap<>();
                 error.put("error", "Examen no encontrado");
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
             }
             
             Examen examen = examenOpt.get();
-            logger.info("Examen encontrado para persona: {}", examen.getPersona().getEmail());
+            logger.info("Examen encontrado para persona: {} (ID: {})", 
+                       examen.getPersona().getEmail(), examen.getId());
             
             if (examen.getFechaFin() != null) {
-                logger.warn("Examen ya completado: {}", examenId);
+                logger.warn("Examen ya completado: {}", identificador);
                 Map<String, String> error = new HashMap<>();
                 error.put("error", "Examen ya completado");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
             }
             
             List<Pregunta> preguntas = examenService.generarPreguntasExamen();
-            logger.info("Preguntas generadas para examen {}: {}", examenId, preguntas.size());
+            logger.info("Preguntas generadas para examen {}: {}", identificador, preguntas.size());
             
             // Crear una lista de preguntas simplificada para evitar problemas de serialización
             List<Map<String, Object>> preguntasSimplificadas = new ArrayList<>();
@@ -153,14 +155,14 @@ public class ApiController {
             }
             
             Map<String, Object> response = new HashMap<>();
-            response.put("examenId", examenId);
+            response.put("examenId", examen.getId());
             response.put("preguntas", preguntasSimplificadas);
             response.put("totalPreguntas", preguntasSimplificadas.size());
             
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            logger.error("Error al obtener preguntas para examen {}", examenId, e);
+            logger.error("Error al obtener preguntas para examen {}", identificador, e);
             e.printStackTrace();
             Map<String, String> error = new HashMap<>();
             error.put("error", "Error interno del servidor: " + e.getMessage());
