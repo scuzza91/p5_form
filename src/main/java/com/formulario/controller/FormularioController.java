@@ -853,6 +853,51 @@ public class FormularioController {
             
             logger.info("✅ Recomendación de estudios guardada exitosamente - Examen ID: {}, Recomendación ID: {}", 
                        examen.getId(), recomendacion.getId());
+            
+            // Actualizar caso en Bondarea si la persona tiene idCaso
+            // Asegurar que la persona esté cargada
+            Persona persona = examen.getPersona();
+            if (persona == null) {
+                logger.warn("El examen no tiene persona asociada, no se puede enviar a Bondarea");
+            } else {
+                String idCaso = persona.getIdCasoBondarea();
+                if (idCaso != null && !idCaso.trim().isEmpty()) {
+                    try {
+                        logger.info("Intentando actualizar caso en Bondarea con recomendación de estudios: idCaso={}", idCaso);
+                        
+                        // Obtener datos de la recomendación de estudios seleccionada
+                        String nombreInstitucion = recomendacion.getNombreInstitucion();
+                        String nombreCurso = recomendacion.getNombreOferta();
+                        String duracion = recomendacion.getDuracion();
+                        Long idCurso = recomendacion.getId();
+                        java.math.BigDecimal monto = recomendacion.getCosto();
+                        
+                        logger.info("Datos de recomendación a enviar a Bondarea - Institución: {}, Curso: {}, Duración: {}, ID: {}, Monto: {}", 
+                                   nombreInstitucion, nombreCurso, duracion, idCurso, monto);
+                        
+                        // Construir comentarios con información del examen y la recomendación
+                        String comentarios = String.format("Recomendación de estudios seleccionada - Institución: %s, Curso: %s, Duración: %s, Monto: %s",
+                            nombreInstitucion != null ? nombreInstitucion : "N/A",
+                            nombreCurso != null ? nombreCurso : "N/A",
+                            duracion != null ? duracion : "N/A",
+                            monto != null ? monto.toString() : "N/A");
+                        
+                        // Llamar al método de actualización en Bondarea
+                        boolean actualizado = bondareaService.actualizarCasoEnBondarea(idCaso, examen, nombreInstitucion, nombreCurso, duracion, idCurso, monto, comentarios);
+                        if (actualizado) {
+                            logger.info("✅ Caso actualizado exitosamente en Bondarea con recomendación de estudios para idCaso: {}", idCaso);
+                        } else {
+                            logger.warn("⚠️ No se pudo actualizar el caso en Bondarea para idCaso: {}", idCaso);
+                        }
+                    } catch (Exception e) {
+                        logger.error("Error al actualizar caso en Bondarea para idCaso: {} - {}", idCaso, e.getMessage(), e);
+                        // No interrumpir el flujo si falla la actualización en Bondarea
+                    }
+                } else {
+                    logger.info("Persona no tiene idCaso de Bondarea, omitiendo actualización");
+                }
+            }
+            
             logger.info("=== FIN GUARDAR RECOMENDACIÓN ESTUDIOS ===");
             
             return ResponseEntity.ok(Map.of(
