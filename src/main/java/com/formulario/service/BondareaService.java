@@ -295,23 +295,27 @@ public class BondareaService {
      * @param idCurso ID del curso seleccionado (opcional)
      * @param monto Monto del curso (opcional)
      * @param comentarios Comentarios adicionales (opcional)
-     * @return true si la actualización fue exitosa, false en caso contrario
+     * @return Map con el resultado: "success" (boolean) y "trackingPars" (String) si está disponible
      */
-    public boolean actualizarCasoEnBondarea(String idCaso, Examen examen, String nombreInstitucion, String nombreCurso, String duracion, Long idCurso, java.math.BigDecimal monto, String comentarios) {
+    public Map<String, Object> actualizarCasoEnBondarea(String idCaso, Examen examen, String nombreInstitucion, String nombreCurso, String duracion, Long idCurso, java.math.BigDecimal monto, String comentarios) {
+        Map<String, Object> resultado = new HashMap<>();
+        resultado.put("success", false);
+        resultado.put("trackingPars", null);
+        
         if (idCaso == null || idCaso.trim().isEmpty()) {
             logger.warn("ID de caso vacío o nulo - No se puede actualizar en Bondarea");
-            return false;
+            return resultado;
         }
         
         if (examen == null) {
             logger.warn("Examen es null - No se puede actualizar en Bondarea");
-            return false;
+            return resultado;
         }
         
         String token = configuracionService.obtenerApiTokenBondarea();
         if (token == null || token.isEmpty()) {
             logger.warn("Token de Bondarea no configurado - No se puede actualizar el caso");
-            return false;
+            return resultado;
         }
         
         String idStage = "B26F5NF6"; // ID Stage específico según el curl
@@ -394,8 +398,8 @@ public class BondareaService {
         requestBody.put("custom_B26FNHFR", promedio);
         
         // custom_B26FNHF6: Resultado (Aprobado o Reprobado)
-        String resultado = examen.isAprobado() ? "Aprobado" : "Reprobado";
-        requestBody.put("custom_B26FNHF6", resultado);
+        String resultadoExamen = examen.isAprobado() ? "Aprobado" : "Reprobado";
+        requestBody.put("custom_B26FNHF6", resultadoExamen);
         
         // custom_B26FNHF8: Tiempo medio del test (en minutos)
         if (examen.getTiempoTotalMinutos() != null) {
@@ -410,7 +414,7 @@ public class BondareaService {
             logger.debug("Body de actualización: {}", jsonBody);
         } catch (Exception e) {
             logger.error("Error al convertir body a JSON: {}", e.getMessage(), e);
-            return false;
+            return resultado;
         }
         
         HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
@@ -437,7 +441,22 @@ public class BondareaService {
                 
                 if (response.getStatusCode().is2xxSuccessful()) {
                     logger.info("✅ Caso actualizado exitosamente en Bondarea: idStage={}, idCaso={}", idStage, idCaso);
-                    return true;
+                    
+                    // Intentar extraer trackingPars de la respuesta
+                    Map<String, Object> responseBody = response.getBody();
+                    if (responseBody != null) {
+                        Object trackingParsObj = responseBody.get("trackingPars");
+                        if (trackingParsObj != null) {
+                            String trackingPars = trackingParsObj.toString();
+                            logger.info("trackingPars obtenido de la respuesta: {}", trackingPars);
+                            resultado.put("trackingPars", trackingPars);
+                        } else {
+                            logger.debug("trackingPars no encontrado en la respuesta de Bondarea");
+                        }
+                    }
+                    
+                    resultado.put("success", true);
+                    return resultado;
                 } else {
                     logger.warn("Respuesta no exitosa - Status: {}", response.getStatusCode());
                     ultimoError = "Status: " + response.getStatusCode();
@@ -473,7 +492,7 @@ public class BondareaService {
         
         logger.error("❌ No se pudo actualizar el caso {} en Bondarea después de intentar todas las URLs. Último error: {}", 
             idCaso, ultimoError);
-        return false;
+        return resultado;
     }
 }
 

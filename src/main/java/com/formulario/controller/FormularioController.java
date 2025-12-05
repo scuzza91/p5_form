@@ -749,8 +749,9 @@ public class FormularioController {
                         examen.getProgramacion() != null ? examen.getProgramacion() : 0);
                     
                     // Llamar al método de actualización en Bondarea
-                    boolean actualizado = bondareaService.actualizarCasoEnBondarea(idCaso, examen, nombreInstitucion, nombreCurso, duracion, idCurso, monto, comentarios);
-                    if (actualizado) {
+                    Map<String, Object> resultadoActualizacion = bondareaService.actualizarCasoEnBondarea(idCaso, examen, nombreInstitucion, nombreCurso, duracion, idCurso, monto, comentarios);
+                    Boolean actualizado = (Boolean) resultadoActualizacion.get("success");
+                    if (actualizado != null && actualizado) {
                         logger.info("✅ Caso actualizado exitosamente en Bondarea para idCaso: {}", idCaso);
                     } else {
                         logger.warn("⚠️ No se pudo actualizar el caso en Bondarea para idCaso: {}", idCaso);
@@ -883,9 +884,37 @@ public class FormularioController {
                             monto != null ? monto.toString() : "N/A");
                         
                         // Llamar al método de actualización en Bondarea
-                        boolean actualizado = bondareaService.actualizarCasoEnBondarea(idCaso, examen, nombreInstitucion, nombreCurso, duracion, idCurso, monto, comentarios);
-                        if (actualizado) {
+                        Map<String, Object> resultadoActualizacion = bondareaService.actualizarCasoEnBondarea(idCaso, examen, nombreInstitucion, nombreCurso, duracion, idCurso, monto, comentarios);
+                        Boolean actualizado = (Boolean) resultadoActualizacion.get("success");
+                        String trackingPars = (String) resultadoActualizacion.get("trackingPars");
+                        
+                        if (actualizado != null && actualizado) {
                             logger.info("✅ Caso actualizado exitosamente en Bondarea con recomendación de estudios para idCaso: {}", idCaso);
+                            
+                            // Construir URL de redirección a Bondarea si tenemos trackingPars
+                            if (trackingPars != null && !trackingPars.trim().isEmpty()) {
+                                String emailCliente = persona.getEmail();
+                                if (emailCliente != null && !emailCliente.trim().isEmpty()) {
+                                    // Construir URL: https://argentinatech.bondarea.com/?c=public&ui=-217&originmail=mail@mail.com&caseid=1234&casetoken=abc12345678900123456
+                                    String urlBondarea = construirUrlRedireccionBondarea(emailCliente, trackingPars);
+                                    logger.info("URL de redirección a Bondarea construida: {}", urlBondarea);
+                                    
+                                    logger.info("=== FIN GUARDAR RECOMENDACIÓN ESTUDIOS ===");
+                                    
+                                    return ResponseEntity.ok(Map.of(
+                                        "success", true,
+                                        "message", "Recomendación guardada exitosamente",
+                                        "examenId", examen.getId(),
+                                        "recomendacionId", recomendacion.getId(),
+                                        "recomendacionNombre", recomendacion.getNombreOferta(),
+                                        "redirectUrl", urlBondarea
+                                    ));
+                                } else {
+                                    logger.warn("Email del cliente no disponible, no se puede construir URL de redirección");
+                                }
+                            } else {
+                                logger.warn("trackingPars no disponible en la respuesta de Bondarea");
+                            }
                         } else {
                             logger.warn("⚠️ No se pudo actualizar el caso en Bondarea para idCaso: {}", idCaso);
                         }
@@ -1206,6 +1235,27 @@ public class FormularioController {
             logger.error("Error al generar Excel de inscripciones", e);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+    
+    // Método auxiliar para construir la URL de redirección a Bondarea
+    private String construirUrlRedireccionBondarea(String emailCliente, String trackingPars) {
+        // URL base fija
+        String urlBase = "https://argentinatech.bondarea.com/?c=public&ui=-217";
+        
+        // Agregar email del cliente
+        String url = urlBase + "&originmail=" + java.net.URLEncoder.encode(emailCliente, java.nio.charset.StandardCharsets.UTF_8);
+        
+        // Agregar trackingPars (ya viene con &caseid=...&casetoken=...)
+        if (trackingPars != null && !trackingPars.trim().isEmpty()) {
+            // Si trackingPars no empieza con &, agregarlo
+            if (!trackingPars.startsWith("&")) {
+                url += "&";
+            }
+            url += trackingPars;
+        }
+        
+        logger.info("URL de redirección a Bondarea construida: {}", url);
+        return url;
     }
     
     // Método auxiliar para construir la URL completa del examen

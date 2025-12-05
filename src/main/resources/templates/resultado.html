@@ -556,16 +556,23 @@
                         btnContinuar.disabled = true;
                         btnContinuar.classList.remove('bg-green-500', 'hover:bg-green-600');
                         btnContinuar.classList.add('bg-gray-400', 'cursor-not-allowed');
-                        btnContinuar.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Selección Confirmada';
+                        btnContinuar.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Redirigiendo...';
                     }
                     
-                    // Mostrar el modal de éxito
-                    mostrarModalExito();
-                    
-                    // Recargar la página después de 2.5 segundos para mostrar el estado guardado
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 2500);
+                    // Verificar si hay URL de redirección a Bondarea
+                    if (data.redirectUrl) {
+                        console.log('Redirigiendo a Bondarea:', data.redirectUrl);
+                        // Redirigir después de un breve delay para mostrar el mensaje
+                        setTimeout(() => {
+                            window.location.href = data.redirectUrl;
+                        }, 1000);
+                    } else {
+                        // Si no hay URL de redirección, mostrar modal y recargar como antes
+                        mostrarModalExito();
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 2500);
+                    }
                 } else {
                     console.error('Error al guardar:', data.error);
                     mostrarMensajeError('Error al guardar la recomendación: ' + (data.error || 'Error desconocido'));
