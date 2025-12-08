@@ -139,10 +139,18 @@ public class ApiController {
                 preguntaMap.put("areaConocimiento", pregunta.getAreaConocimiento());
                 preguntaMap.put("opcionCorrecta", pregunta.getOpcionCorrecta());
                 
-                // Agregar opciones
+                // Agregar opciones (ordenadas por el campo orden)
                 List<Map<String, Object>> opcionesList = new ArrayList<>();
                 if (pregunta.getOpciones() != null) {
-                    for (var opcion : pregunta.getOpciones()) {
+                    // Ordenar opciones por el campo orden antes de agregarlas
+                    List<Opcion> opcionesOrdenadas = pregunta.getOpciones().stream()
+                        .sorted((o1, o2) -> Integer.compare(
+                            o1.getOrden() != null ? o1.getOrden() : 0,
+                            o2.getOrden() != null ? o2.getOrden() : 0
+                        ))
+                        .collect(Collectors.toList());
+                    
+                    for (var opcion : opcionesOrdenadas) {
                         Map<String, Object> opcionMap = new HashMap<>();
                         opcionMap.put("id", opcion.getId());
                         opcionMap.put("texto", opcion.getTexto());

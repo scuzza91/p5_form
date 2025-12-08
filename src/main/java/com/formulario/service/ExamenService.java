@@ -46,21 +46,37 @@ public class ExamenService {
                 inicializarPreguntasEjemplo();
             }
             
-            // Obtener preguntas aleatorias por área
-            List<Pregunta> preguntasLogica = preguntaRepository.findRandomByAreaConocimiento(
-                Pregunta.AreaConocimiento.LOGICA.name(), PREGUNTAS_POR_AREA);
+            // Obtener todas las preguntas activas por área con sus opciones cargadas
+            List<Pregunta> todasPreguntasLogica = preguntaRepository.findByAreaConocimientoWithOpciones(
+                Pregunta.AreaConocimiento.LOGICA);
+            Collections.shuffle(todasPreguntasLogica);
+            List<Pregunta> preguntasLogica = todasPreguntasLogica.stream()
+                .limit(PREGUNTAS_POR_AREA)
+                .collect(Collectors.toList());
             System.out.println("Preguntas lógica: " + preguntasLogica.size());
             
-            List<Pregunta> preguntasMatematica = preguntaRepository.findRandomByAreaConocimiento(
-                Pregunta.AreaConocimiento.MATEMATICA.name(), PREGUNTAS_POR_AREA);
+            List<Pregunta> todasPreguntasMatematica = preguntaRepository.findByAreaConocimientoWithOpciones(
+                Pregunta.AreaConocimiento.MATEMATICA);
+            Collections.shuffle(todasPreguntasMatematica);
+            List<Pregunta> preguntasMatematica = todasPreguntasMatematica.stream()
+                .limit(PREGUNTAS_POR_AREA)
+                .collect(Collectors.toList());
             System.out.println("Preguntas matemática: " + preguntasMatematica.size());
             
-            List<Pregunta> preguntasCreatividad = preguntaRepository.findRandomByAreaConocimiento(
-                Pregunta.AreaConocimiento.CREATIVIDAD.name(), PREGUNTAS_POR_AREA);
+            List<Pregunta> todasPreguntasCreatividad = preguntaRepository.findByAreaConocimientoWithOpciones(
+                Pregunta.AreaConocimiento.CREATIVIDAD);
+            Collections.shuffle(todasPreguntasCreatividad);
+            List<Pregunta> preguntasCreatividad = todasPreguntasCreatividad.stream()
+                .limit(PREGUNTAS_POR_AREA)
+                .collect(Collectors.toList());
             System.out.println("Preguntas creatividad: " + preguntasCreatividad.size());
             
-            List<Pregunta> preguntasProgramacion = preguntaRepository.findRandomByAreaConocimiento(
-                Pregunta.AreaConocimiento.PROGRAMACION.name(), PREGUNTAS_POR_AREA);
+            List<Pregunta> todasPreguntasProgramacion = preguntaRepository.findByAreaConocimientoWithOpciones(
+                Pregunta.AreaConocimiento.PROGRAMACION);
+            Collections.shuffle(todasPreguntasProgramacion);
+            List<Pregunta> preguntasProgramacion = todasPreguntasProgramacion.stream()
+                .limit(PREGUNTAS_POR_AREA)
+                .collect(Collectors.toList());
             System.out.println("Preguntas programación: " + preguntasProgramacion.size());
             
             // Combinar todas las preguntas

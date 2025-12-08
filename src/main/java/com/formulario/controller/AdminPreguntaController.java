@@ -9,6 +9,7 @@ import com.formulario.service.FileUploadService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -248,6 +249,7 @@ public class AdminPreguntaController {
     /**
      * Procesa la actualización de una pregunta existente
      */
+    @Transactional
     @PostMapping("/actualizar/{id}")
     public String actualizarPregunta(
             @PathVariable Long id,
@@ -317,13 +319,13 @@ public class AdminPreguntaController {
             }
             
             // Actualizar o crear opciones
-            List<Opcion> opcionesExistentes = pregunta.getOpciones();
-            if (opcionesExistentes == null) {
-                opcionesExistentes = new ArrayList<>();
-            }
+            // Primero, eliminar todas las opciones existentes de esta pregunta
+            // Usar el método del repositorio para asegurar que se eliminen todas
+            opcionRepository.deleteByPregunta(pregunta);
             
-            // Eliminar opciones existentes
-            opcionRepository.deleteAll(opcionesExistentes);
+            // Limpiar la lista de opciones en la entidad para evitar problemas de caché
+            pregunta.setOpciones(new ArrayList<>());
+            preguntaRepository.flush(); // Forzar la sincronización con la base de datos
             
             // Crear nuevas opciones
             List<Opcion> nuevasOpciones = new ArrayList<>();
@@ -337,6 +339,7 @@ public class AdminPreguntaController {
                 nuevasOpciones.add(opcion);
             }
             
+            // Guardar las nuevas opciones
             opcionRepository.saveAll(nuevasOpciones);
             pregunta.setOpciones(nuevasOpciones);
             preguntaRepository.save(pregunta);
