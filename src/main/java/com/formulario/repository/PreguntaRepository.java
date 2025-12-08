@@ -29,4 +29,8 @@ public interface PreguntaRepository extends JpaRepository<Pregunta, Long> {
     // El servicio se encargará de seleccionar aleatoriamente las necesarias
     @Query("SELECT DISTINCT p FROM Pregunta p LEFT JOIN FETCH p.opciones WHERE p.areaConocimiento = :areaConocimiento AND p.activa = true")
     List<Pregunta> findByAreaConocimientoWithOpciones(@Param("areaConocimiento") AreaConocimiento areaConocimiento);
+    
+    // Obtener todas las preguntas con sus opciones cargadas (para el dashboard)
+    @Query("SELECT DISTINCT p FROM Pregunta p LEFT JOIN FETCH p.opciones ORDER BY p.id")
+    List<Pregunta> findAllWithOpciones();
 } 

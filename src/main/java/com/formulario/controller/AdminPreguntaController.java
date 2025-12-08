@@ -16,8 +16,10 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Controller
 @RequestMapping("/admin/preguntas")
@@ -55,7 +57,8 @@ public class AdminPreguntaController {
         }
         
         try {
-            List<Pregunta> preguntas = preguntaRepository.findAll();
+            // Usar consulta con JOIN FETCH para cargar opciones correctamente
+            List<Pregunta> preguntas = preguntaRepository.findAllWithOpciones();
             model.addAttribute("preguntas", preguntas);
             model.addAttribute("usuario", session.getAttribute("usuario"));
             return "admin-preguntas";
@@ -131,10 +134,40 @@ public class AdminPreguntaController {
             
             Pregunta pregunta = preguntaOpt.get();
             
-            // Asegurar que tenga 4 opciones
-            List<Opcion> opciones = pregunta.getOpciones();
-            if (opciones == null) {
-                opciones = new ArrayList<>();
+            // Obtener todas las opciones de la pregunta desde la base de datos
+            List<Opcion> todasOpciones = opcionRepository.findByPregunta(pregunta);
+            
+            // Filtrar opciones duplicadas: mantener solo las primeras 4 únicas
+            List<Opcion> opciones = new ArrayList<>();
+            if (todasOpciones != null && !todasOpciones.isEmpty()) {
+                // Ordenar por orden, luego por ID para mantener consistencia
+                todasOpciones.sort((o1, o2) -> {
+                    int comparacionOrden = Integer.compare(
+                        o1.getOrden() != null ? o1.getOrden() : 0,
+                        o2.getOrden() != null ? o2.getOrden() : 0
+                    );
+                    if (comparacionOrden != 0) {
+                        return comparacionOrden;
+                    }
+                    return Long.compare(
+                        o1.getId() != null ? o1.getId() : 0,
+                        o2.getId() != null ? o2.getId() : 0
+                    );
+                });
+                
+                // Tomar solo las primeras 4 opciones únicas (evitando duplicados por orden)
+                Set<Integer> ordenesUsados = new HashSet<>();
+                for (Opcion opcion : todasOpciones) {
+                    if (opciones.size() >= 4) {
+                        break;
+                    }
+                    int ordenActual = opcion.getOrden() != null ? opcion.getOrden() : 0;
+                    // Solo agregar si no hemos usado este orden antes
+                    if (!ordenesUsados.contains(ordenActual)) {
+                        opciones.add(opcion);
+                        ordenesUsados.add(ordenActual);
+                    }
+                }
             }
             
             // Completar hasta 4 opciones si faltan
@@ -145,7 +178,7 @@ public class AdminPreguntaController {
                 opciones.add(opcion);
             }
             
-            // Ordenar opciones por orden
+            // Asegurar que las opciones estén ordenadas
             opciones.sort((o1, o2) -> Integer.compare(
                 o1.getOrden() != null ? o1.getOrden() : 0,
                 o2.getOrden() != null ? o2.getOrden() : 0
@@ -319,13 +352,12 @@ public class AdminPreguntaController {
             }
             
             // Actualizar o crear opciones
-            // Primero, eliminar todas las opciones existentes de esta pregunta
-            // Usar el método del repositorio para asegurar que se eliminen todas
-            opcionRepository.deleteByPregunta(pregunta);
+            // Primero, eliminar TODAS las opciones existentes de esta pregunta usando el ID directamente
+            // Esto evita problemas con la relación bidireccional y el caché de Hibernate
+            opcionRepository.deleteByPreguntaId(pregunta.getId());
             
             // Limpiar la lista de opciones en la entidad para evitar problemas de caché
             pregunta.setOpciones(new ArrayList<>());
-            preguntaRepository.flush(); // Forzar la sincronización con la base de datos
             
             // Crear nuevas opciones
             List<Opcion> nuevasOpciones = new ArrayList<>();
@@ -381,6 +413,91 @@ public class AdminPreguntaController {
             redirectAttributes.addFlashAttribute("mensaje", "Pregunta eliminada (desactivada) exitosamente.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error al eliminar la pregunta: " + e.getMessage());
+        }
+        
+        return "redirect:/admin/preguntas";
+    }
+    
+    /**
+     * Limpia opciones duplicadas de todas las preguntas
+     * Mantiene solo las primeras 4 opciones únicas por orden para cada pregunta
+     */
+    @PostMapping("/limpiar-duplicados")
+    @Transactional
+    public String limpiarOpcionesDuplicadas(
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+        
+        if (!esAdministrador(session)) {
+            redirectAttributes.addFlashAttribute("error", "Acceso denegado.");
+            return "redirect:/login";
+        }
+        
+        try {
+            List<Pregunta> preguntas = preguntaRepository.findAll();
+            int totalEliminadas = 0;
+            
+            for (Pregunta pregunta : preguntas) {
+                List<Opcion> todasOpciones = opcionRepository.findByPregunta(pregunta);
+                
+                if (todasOpciones != null && todasOpciones.size() > 4) {
+                    // Ordenar por orden
+                    todasOpciones.sort((o1, o2) -> Integer.compare(
+                        o1.getOrden() != null ? o1.getOrden() : 0,
+                        o2.getOrden() != null ? o2.getOrden() : 0
+                    ));
+                    
+                    // Mantener solo las primeras 4 opciones únicas por orden
+                    List<Opcion> opcionesAMantener = new ArrayList<>();
+                    Set<Integer> ordenesUsados = new HashSet<>();
+                    
+                    // Ordenar por orden, luego por ID
+                    todasOpciones.sort((o1, o2) -> {
+                        int comparacionOrden = Integer.compare(
+                            o1.getOrden() != null ? o1.getOrden() : 0,
+                            o2.getOrden() != null ? o2.getOrden() : 0
+                        );
+                        if (comparacionOrden != 0) {
+                            return comparacionOrden;
+                        }
+                        return Long.compare(
+                            o1.getId() != null ? o1.getId() : 0,
+                            o2.getId() != null ? o2.getId() : 0
+                        );
+                    });
+                    
+                    for (Opcion opcion : todasOpciones) {
+                        if (opcionesAMantener.size() >= 4) {
+                            break;
+                        }
+                        int ordenActual = opcion.getOrden() != null ? opcion.getOrden() : 0;
+                        // Solo agregar si no hemos usado este orden antes
+                        if (!ordenesUsados.contains(ordenActual)) {
+                            opcionesAMantener.add(opcion);
+                            ordenesUsados.add(ordenActual);
+                        }
+                    }
+                    
+                    // Eliminar las opciones que no se van a mantener
+                    List<Opcion> opcionesAEliminar = new ArrayList<>(todasOpciones);
+                    opcionesAEliminar.removeAll(opcionesAMantener);
+                    
+                    if (!opcionesAEliminar.isEmpty()) {
+                        opcionRepository.deleteAll(opcionesAEliminar);
+                        totalEliminadas += opcionesAEliminar.size();
+                        
+                        // Actualizar la lista de opciones en la pregunta
+                        pregunta.setOpciones(opcionesAMantener);
+                        preguntaRepository.save(pregunta);
+                    }
+                }
+            }
+            
+            redirectAttributes.addFlashAttribute("mensaje", 
+                "Limpieza completada. Se eliminaron " + totalEliminadas + " opciones duplicadas.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", 
+                "Error al limpiar opciones duplicadas: " + e.getMessage());
         }
         
         return "redirect:/admin/preguntas";
