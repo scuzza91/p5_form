@@ -21,6 +21,9 @@ public class RolProfesionalService {
     @Autowired
     private RecomendacionEstudiosRepository recomendacionEstudiosRepository;
     
+    @Autowired
+    private PosicionLaboralRepository posicionLaboralRepository;
+    
     /**
      * Genera recomendaciones de roles profesionales para un candidato
      */
@@ -525,10 +528,29 @@ public class RolProfesionalService {
             customerSupport.setPesoProgramacion(30);
             roles.add(customerSupport);
             
-            // Guardar todos los roles
+            // Guardar todos los roles primero
             rolProfesionalRepository.saveAll(roles);
             
-            System.out.println("✅ " + roles.size() + " roles profesionales creados exitosamente");
+            // Ahora vincular las posiciones laborales (después de guardar para asegurar que los IDs estén disponibles)
+            System.out.println("🔗 Vinculando roles con posiciones laborales...");
+            List<PosicionLaboral> todasLasPosiciones = posicionLaboralRepository.findByActivaTrue();
+            
+            for (RolProfesional rol : roles) {
+                // Buscar posición laboral que coincida con el título del rol
+                Optional<PosicionLaboral> posicionOpt = todasLasPosiciones.stream()
+                        .filter(p -> rol.getTitulo().equalsIgnoreCase(p.getTitulo()))
+                        .findFirst();
+                
+                if (posicionOpt.isPresent()) {
+                    rol.setPosicionLaboral(posicionOpt.get());
+                    rolProfesionalRepository.save(rol);
+                    System.out.println("✅ Rol '" + rol.getTitulo() + "' vinculado a posición laboral ID: " + posicionOpt.get().getId());
+                } else {
+                    System.out.println("⚠️ No se encontró posición laboral para el rol: " + rol.getTitulo());
+                }
+            }
+            
+            System.out.println("✅ " + roles.size() + " roles profesionales creados y vinculados exitosamente");
             
         } catch (Exception e) {
             System.err.println("❌ Error al inicializar roles profesionales: " + e.getMessage());
