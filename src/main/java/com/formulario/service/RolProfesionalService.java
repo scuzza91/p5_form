@@ -18,6 +18,9 @@ public class RolProfesionalService {
     @Autowired
     private FormularioService formularioService;
     
+    @Autowired
+    private RecomendacionEstudiosRepository recomendacionEstudiosRepository;
+    
     /**
      * Genera recomendaciones de roles profesionales para un candidato
      */
@@ -57,8 +60,13 @@ public class RolProfesionalService {
                     // Solo incluir roles con compatibilidad > 0
                     if (compatibilidad > 0) {
                         RecomendacionRolDTO recomendacion = new RecomendacionRolDTO(rol, examen, compatibilidad);
+                        
+                        // Obtener recomendaciones de estudios vinculadas a este rol
+                        List<RecomendacionEstudiosDTO> estudiosVinculados = obtenerRecomendacionesEstudiosPorRol(rol);
+                        recomendacion.setRecomendacionesEstudios(estudiosVinculados);
+                        
                         recomendaciones.add(recomendacion);
-                        System.out.println("✅ Recomendación agregada: " + rol.getTitulo() + " (" + compatibilidad + ")");
+                        System.out.println("✅ Recomendación agregada: " + rol.getTitulo() + " (" + compatibilidad + ") con " + estudiosVinculados.size() + " estudios vinculados");
                     } else {
                         System.out.println("❌ Compatibilidad insuficiente: " + rol.getTitulo() + " (" + compatibilidad + ")");
                     }
@@ -525,6 +533,52 @@ public class RolProfesionalService {
         } catch (Exception e) {
             System.err.println("❌ Error al inicializar roles profesionales: " + e.getMessage());
             e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Obtiene las recomendaciones de estudios vinculadas a un rol profesional
+     * Obtiene la posición laboral vinculada al rol (ManyToOne)
+     * y luego todas las recomendaciones de estudios que tienen marcado el checkbox de esa posición
+     * en la sección "Posiciones Laborales Vinculadas" de la edición de recomendaciones de estudios
+     */
+    @Transactional(readOnly = true)
+    private List<RecomendacionEstudiosDTO> obtenerRecomendacionesEstudiosPorRol(RolProfesional rol) {
+        try {
+            // Obtener la posición laboral vinculada al rol (ManyToOne)
+            PosicionLaboral posicion = rol.getPosicionLaboral();
+            
+            if (posicion == null) {
+                System.out.println("⚠️ El rol " + rol.getTitulo() + " no tiene una posición laboral vinculada");
+                return new ArrayList<>();
+            }
+            
+            if (!posicion.isActiva()) {
+                System.out.println("⚠️ La posición laboral vinculada al rol " + rol.getTitulo() + " no está activa");
+                return new ArrayList<>();
+            }
+            
+            System.out.println("🔍 Rol " + rol.getTitulo() + " vinculado a posición laboral: " + posicion.getTitulo() + " (ID: " + posicion.getId() + ")");
+            
+            // Obtener todas las recomendaciones de estudios que tienen marcado el checkbox de esta posición
+            // en la sección "Posiciones Laborales Vinculadas" de la edición de recomendaciones de estudios
+            List<RecomendacionEstudios> estudios = recomendacionEstudiosRepository.findByPosicionLaboralId(posicion.getId());
+            
+            System.out.println("📚 Posición " + posicion.getTitulo() + " tiene " + estudios.size() + " recomendaciones de estudios vinculadas (checkboxes marcados)");
+            
+            // Convertir a DTO y retornar solo las activas
+            List<RecomendacionEstudiosDTO> estudiosDTO = estudios.stream()
+                    .filter(RecomendacionEstudios::isActiva)
+                    .map(RecomendacionEstudiosDTO::new)
+                    .collect(Collectors.toList());
+            
+            System.out.println("✅ Total de " + estudiosDTO.size() + " recomendaciones de estudios activas para el rol: " + rol.getTitulo());
+            return estudiosDTO;
+            
+        } catch (Exception e) {
+            System.err.println("❌ Error al obtener recomendaciones de estudios para el rol " + rol.getTitulo() + ": " + e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
         }
     }
 } 

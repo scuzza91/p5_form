@@ -1,5 +1,8 @@
 package com.formulario.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class RecomendacionRolDTO {
     private Long rolId;
     private String titulo;
@@ -27,7 +30,12 @@ public class RecomendacionRolDTO {
     private Integer minProgramacion;
     private Integer minPromedio;
     
-    public RecomendacionRolDTO() {}
+    // Recomendaciones de estudios vinculadas a este rol
+    private List<RecomendacionEstudiosDTO> recomendacionesEstudios;
+    
+    public RecomendacionRolDTO() {
+        this.recomendacionesEstudios = new ArrayList<>();
+    }
     
     public RecomendacionRolDTO(RolProfesional rol, Examen examen, double compatibilidad) {
         this.rolId = rol.getId();
@@ -55,6 +63,9 @@ public class RecomendacionRolDTO {
         this.minCreatividad = rol.getMinCreatividad();
         this.minProgramacion = rol.getMinProgramacion();
         this.minPromedio = rol.getMinPromedio();
+        
+        // Inicializar lista de recomendaciones de estudios
+        this.recomendacionesEstudios = new ArrayList<>();
     }
     
     private String determinarNivelCompatibilidad(double compatibilidad) {
@@ -128,6 +139,14 @@ public class RecomendacionRolDTO {
     
     public Integer getMinPromedio() { return minPromedio; }
     public void setMinPromedio(Integer minPromedio) { this.minPromedio = minPromedio; }
+    
+    public List<RecomendacionEstudiosDTO> getRecomendacionesEstudios() {
+        return recomendacionesEstudios;
+    }
+    
+    public void setRecomendacionesEstudios(List<RecomendacionEstudiosDTO> recomendacionesEstudios) {
+        this.recomendacionesEstudios = recomendacionesEstudios;
+    }
     
     @Override
     public String toString() {

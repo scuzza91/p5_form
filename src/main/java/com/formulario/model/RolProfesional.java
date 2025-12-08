@@ -50,6 +50,11 @@ public class RolProfesional {
     @Column(nullable = false)
     private Boolean activo = true;
     
+    // Relación con Posición Laboral (para obtener recomendaciones de estudios vinculadas)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "posicion_laboral_id")
+    private PosicionLaboral posicionLaboral;
+    
     // Constructores
     public RolProfesional() {}
     
@@ -233,6 +238,9 @@ public class RolProfesional {
     
     public Boolean getActivo() { return activo; }
     public void setActivo(Boolean activo) { this.activo = activo; }
+    
+    public PosicionLaboral getPosicionLaboral() { return posicionLaboral; }
+    public void setPosicionLaboral(PosicionLaboral posicionLaboral) { this.posicionLaboral = posicionLaboral; }
     
     @Override
     public String toString() {

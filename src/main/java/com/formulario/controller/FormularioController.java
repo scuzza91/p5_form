@@ -603,13 +603,9 @@ public class FormularioController {
                 
                 logger.info("Recomendaciones cargadas: {} roles para persona ID: {}", recomendaciones.size(), personaId);
                 
-                // Cargar recomendaciones de estudios
+                // Obtener la recomendación ya seleccionada si existe
+                // Las recomendaciones de estudios ahora están incluidas en cada rol
                 try {
-                    List<RecomendacionEstudiosDTO> recomendacionesEstudios = recomendacionEstudiosService.obtenerTodas();
-                    model.addAttribute("recomendacionesEstudios", recomendacionesEstudios);
-                    logger.info("Recomendaciones de estudios cargadas: {} para persona ID: {}", recomendacionesEstudios.size(), personaId);
-                    
-                    // Obtener la recomendación ya seleccionada si existe
                     Optional<Persona> personaOpt = formularioService.buscarPersonaPorId(personaId);
                     if (personaOpt.isPresent()) {
                         Optional<Examen> examenOpt = formularioService.buscarExamenPorPersona(personaOpt.get());
@@ -620,13 +616,11 @@ public class FormularioController {
                         }
                     }
                 } catch (Exception e) {
-                    logger.warn("Error al cargar recomendaciones de estudios para persona ID: {} - {}", personaId, e.getMessage());
-                    model.addAttribute("recomendacionesEstudios", new ArrayList<>());
+                    logger.warn("Error al obtener recomendación seleccionada para persona ID: {} - {}", personaId, e.getMessage());
                 }
             } catch (Exception e) {
                 logger.warn("Error al cargar recomendaciones para persona ID: {} - {}", personaId, e.getMessage());
                 model.addAttribute("recomendaciones", new ArrayList<>());
-                model.addAttribute("recomendacionesEstudios", new ArrayList<>());
             }
             
             logger.info("Resultado cargado exitosamente para persona ID: {}", personaId);
