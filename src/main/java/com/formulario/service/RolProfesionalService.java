@@ -42,8 +42,8 @@ public class RolProfesionalService {
             Examen examen = examenOpt.get();
             System.out.println("✅ Examen encontrado - ID: " + examen.getId());
             
-            // Obtener todos los roles activos
-            List<RolProfesional> roles = rolProfesionalRepository.findByActivoTrue();
+            // Obtener todos los roles activos con posición laboral cargada (JOIN FETCH)
+            List<RolProfesional> roles = rolProfesionalRepository.findByActivoTrueWithPosicionLaboral();
             System.out.println("📋 Roles profesionales activos encontrados: " + roles.size());
             
             if (roles.isEmpty()) {
@@ -51,10 +51,28 @@ public class RolProfesionalService {
                 return new ArrayList<>();
             }
             
+            // Obtener todas las posiciones laborales para vincular si es necesario
+            List<PosicionLaboral> todasLasPosiciones = posicionLaboralRepository.findByActivaTrue();
+            Map<String, PosicionLaboral> posicionesPorTitulo = todasLasPosiciones.stream()
+                    .collect(Collectors.toMap(
+                            PosicionLaboral::getTitulo,
+                            p -> p,
+                            (p1, p2) -> p1 // En caso de duplicados, tomar la primera
+                    ));
+            
             // Calcular compatibilidad para cada rol
             List<RecomendacionRolDTO> recomendaciones = new ArrayList<>();
             
             for (RolProfesional rol : roles) {
+                // Si el rol no tiene posición vinculada, intentar vincularla automáticamente
+                if (rol.getPosicionLaboral() == null) {
+                    PosicionLaboral posicionCorrespondiente = posicionesPorTitulo.get(rol.getTitulo());
+                    if (posicionCorrespondiente != null) {
+                        rol.setPosicionLaboral(posicionCorrespondiente);
+                        rolProfesionalRepository.save(rol);
+                        System.out.println("🔗 Rol '" + rol.getTitulo() + "' vinculado automáticamente a posición laboral ID: " + posicionCorrespondiente.getId());
+                    }
+                }
                 try {
                     System.out.println("🔄 Calculando compatibilidad para rol: " + rol.getTitulo());
                     double compatibilidad = rol.calcularCompatibilidad(examen);
@@ -567,12 +585,27 @@ public class RolProfesionalService {
     @Transactional(readOnly = true)
     private List<RecomendacionEstudiosDTO> obtenerRecomendacionesEstudiosPorRol(RolProfesional rol) {
         try {
-            // Obtener la posición laboral vinculada al rol (ManyToOne)
+            // Forzar la carga de la relación LAZY antes de usarla
+            // Esto asegura que la posición laboral esté cargada desde la base de datos
             PosicionLaboral posicion = rol.getPosicionLaboral();
             
+            // Si es null, intentar recargar el rol desde la base de datos para forzar la carga
             if (posicion == null) {
-                System.out.println("⚠️ El rol " + rol.getTitulo() + " no tiene una posición laboral vinculada");
+                System.out.println("⚠️ El rol " + rol.getTitulo() + " no tiene posición laboral cargada, intentando recargar...");
+                Optional<RolProfesional> rolRecargado = rolProfesionalRepository.findById(rol.getId());
+                if (rolRecargado.isPresent()) {
+                    posicion = rolRecargado.get().getPosicionLaboral();
+                }
+            }
+            
+            if (posicion == null) {
+                System.out.println("⚠️ El rol " + rol.getTitulo() + " (ID: " + rol.getId() + ") no tiene una posición laboral vinculada en la base de datos");
                 return new ArrayList<>();
+            }
+            
+            // Forzar la inicialización de la posición (para evitar LazyInitializationException)
+            if (posicion.getId() != null) {
+                System.out.println("🔍 Rol " + rol.getTitulo() + " vinculado a posición laboral: " + posicion.getTitulo() + " (ID: " + posicion.getId() + ")");
             }
             
             if (!posicion.isActiva()) {
@@ -580,13 +613,11 @@ public class RolProfesionalService {
                 return new ArrayList<>();
             }
             
-            System.out.println("🔍 Rol " + rol.getTitulo() + " vinculado a posición laboral: " + posicion.getTitulo() + " (ID: " + posicion.getId() + ")");
-            
             // Obtener todas las recomendaciones de estudios que tienen marcado el checkbox de esta posición
             // en la sección "Posiciones Laborales Vinculadas" de la edición de recomendaciones de estudios
             List<RecomendacionEstudios> estudios = recomendacionEstudiosRepository.findByPosicionLaboralId(posicion.getId());
             
-            System.out.println("📚 Posición " + posicion.getTitulo() + " tiene " + estudios.size() + " recomendaciones de estudios vinculadas (checkboxes marcados)");
+            System.out.println("📚 Posición " + posicion.getTitulo() + " (ID: " + posicion.getId() + ") tiene " + estudios.size() + " recomendaciones de estudios vinculadas (checkboxes marcados)");
             
             // Convertir a DTO y retornar solo las activas
             List<RecomendacionEstudiosDTO> estudiosDTO = estudios.stream()

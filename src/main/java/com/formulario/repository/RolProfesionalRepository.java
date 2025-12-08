@@ -14,6 +14,10 @@ public interface RolProfesionalRepository extends JpaRepository<RolProfesional, 
     // Buscar roles activos
     List<RolProfesional> findByActivoTrue();
     
+    // Buscar roles activos con posición laboral cargada (JOIN FETCH)
+    @Query("SELECT r FROM RolProfesional r LEFT JOIN FETCH r.posicionLaboral WHERE r.activo = true")
+    List<RolProfesional> findByActivoTrueWithPosicionLaboral();
+    
     // Buscar por categoría
     List<RolProfesional> findByCategoriaAndActivoTrue(String categoria);
     
