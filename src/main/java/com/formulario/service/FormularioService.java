@@ -59,6 +59,15 @@ public class FormularioService {
     public Optional<Examen> buscarExamenPorId(Long id) {
         return examenRepository.findById(id);
     }
+
+    /**
+     * Busca un examen por ID cargando la recomendación de estudios y sus posiciones laborales.
+     * Evita LazyInitializationException en el endpoint de recomendación-estudios.
+     */
+    @Transactional(readOnly = true)
+    public Optional<Examen> buscarExamenPorIdWithRecomendacionEstudios(Long id) {
+        return examenRepository.findByIdWithRecomendacionEstudios(id);
+    }
     
     /**
      * Busca un examen por token (hash calculado)

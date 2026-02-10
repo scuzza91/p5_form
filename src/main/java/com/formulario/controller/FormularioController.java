@@ -1027,8 +1027,8 @@ public class FormularioController {
         try {
             logger.info("Consultando recomendación de estudios para examen ID: {}", examenId);
             
-            // Buscar el examen
-            Optional<Examen> examenOpt = formularioService.buscarExamenPorId(examenId);
+            // Buscar el examen con recomendación y posiciones laborales cargadas (evita LazyInitializationException)
+            Optional<Examen> examenOpt = formularioService.buscarExamenPorIdWithRecomendacionEstudios(examenId);
             if (examenOpt.isEmpty()) {
                 logger.warn("Examen no encontrado con ID: {}", examenId);
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)

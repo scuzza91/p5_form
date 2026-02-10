@@ -32,4 +32,11 @@ public interface ExamenRepository extends JpaRepository<Examen, Long> {
            "LEFT JOIN FETCH pr.opciones " +
            "WHERE e.persona.id = :personaId")
     Optional<Examen> findCompleteByPersonaId(@Param("personaId") Long personaId);
+
+    /** Carga el examen con la recomendación de estudios y sus posiciones laborales (evita LazyInitializationException). */
+    @Query("SELECT DISTINCT e FROM Examen e " +
+           "LEFT JOIN FETCH e.recomendacionEstudiosSeleccionada r " +
+           "LEFT JOIN FETCH r.posicionesLaborales " +
+           "WHERE e.id = :id")
+    Optional<Examen> findByIdWithRecomendacionEstudios(@Param("id") Long id);
 } 
