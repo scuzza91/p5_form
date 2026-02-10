@@ -52,6 +52,8 @@ services:
       - "${SERVER_PORT:-8083}:8083"
     volumes:
       - uploads_data:/app/uploads
+      # Logs en el host: /var/log/p5_form (crear en el servidor: sudo mkdir -p /var/log/p5_form && sudo chown 100:101 /var/log/p5_form)
+      - /var/log/p5_form:/app/logs
     depends_on:
       postgres:
         condition: service_healthy

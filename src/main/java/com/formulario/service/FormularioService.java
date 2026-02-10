@@ -100,6 +100,29 @@ public class FormularioService {
         return examenRepository.existsByPersona(persona);
     }
     
+    /**
+     * Elimina el examen asociado a un caso de Bondarea cuando el caso es eliminado allí.
+     * Usado por el webhook /api/bondarea/caso-eliminado.
+     * @param idCaso ID del caso en Bondarea (idCasoBondarea de la persona)
+     * @return true si se eliminó un examen o no había nada que eliminar (sincronizado); false solo en error
+     */
+    @Transactional
+    public boolean eliminarExamenPorIdCasoBondarea(String idCaso) {
+        if (idCaso == null || idCaso.trim().isEmpty()) {
+            return true;
+        }
+        Optional<Persona> personaOpt = personaRepository.findByIdCasoBondarea(idCaso.trim());
+        if (personaOpt.isEmpty()) {
+            return true; // Sin persona asociada, nada que eliminar
+        }
+        Optional<Examen> examenOpt = examenRepository.findByPersona(personaOpt.get());
+        if (examenOpt.isEmpty()) {
+            return true; // Sin examen asociado, ya sincronizado
+        }
+        examenRepository.delete(examenOpt.get());
+        return true;
+    }
+    
     public List<Examen> listarTodosLosExamenes() {
         return examenRepository.findAll();
     }

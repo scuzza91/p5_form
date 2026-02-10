@@ -22,9 +22,9 @@ RUN apk add --no-cache curl
 # Crear usuario no-root para seguridad
 RUN addgroup -S spring && adduser -S spring -G spring
 
-# Crear directorio de uploads y dar permisos al usuario spring
-RUN mkdir -p /app/uploads/instituciones && \
-    chown -R spring:spring /app/uploads
+# Crear directorios de uploads y logs, dar permisos al usuario spring
+RUN mkdir -p /app/uploads/instituciones /app/logs && \
+    chown -R spring:spring /app/uploads /app/logs
 
 USER spring:spring
 

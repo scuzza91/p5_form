@@ -365,6 +365,66 @@ public class FormularioController {
         }
     }
     
+    /**
+     * Webhook para Bondarea: cuando se elimina un caso en Bondarea, Bondarea puede llamar
+     * a este endpoint para eliminar también el examen asociado en la base de datos local.
+     * Requiere el mismo token de API que /api/persona/crear (X-API-Token o Authorization: Bearer).
+     * Body esperado: { "idCaso": "128276" } (o id, caseId, case_id, idCasoBondarea).
+     */
+    @PostMapping("/api/bondarea/caso-eliminado")
+    @CrossOrigin(origins = "*")
+    public ResponseEntity<?> casoEliminadoEnBondarea(
+            @RequestBody(required = false) Map<String, Object> requestBody,
+            @RequestHeader(value = "X-API-Token", required = false) String apiToken,
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            HttpServletRequest request) {
+        try {
+            // Validar token (mismo criterio que /api/persona/crear)
+            String token = apiToken;
+            if (token == null && authorization != null && authorization.startsWith("Bearer ")) {
+                token = authorization.substring(7);
+            }
+            if (!configuracionService.validarApiToken(token)) {
+                logger.warn("Intento de acceso a caso-eliminado con token inválido desde IP: {}", getClientIpAddress(request));
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Token de API inválido o no configurado"));
+            }
+            // Extraer idCaso del body (mismos nombres que en crearPersonaDesdeApi)
+            String idCaso = null;
+            if (requestBody != null) {
+                for (String key : new String[]{"idCaso", "id", "caseId", "case_id", "idCasoBondarea", "id_caso"}) {
+                    Object v = requestBody.get(key);
+                    if (v != null && !v.toString().trim().isEmpty()) {
+                        idCaso = v.toString().trim();
+                        break;
+                    }
+                }
+                if (idCaso == null && requestBody.get("data") instanceof Map) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> data = (Map<String, Object>) requestBody.get("data");
+                    Object v = data.get("id");
+                    if (v == null) v = data.get("idCaso");
+                    if (v != null) idCaso = v.toString().trim();
+                }
+            }
+            if (idCaso == null || idCaso.isEmpty()) {
+                return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Falta el identificador del caso", "mensaje", "Incluir idCaso (o id, caseId) en el body"));
+            }
+            formularioService.eliminarExamenPorIdCasoBondarea(idCaso);
+            logger.info("Examen eliminado localmente por caso Bondarea eliminado: idCaso={}", idCaso);
+            return ResponseEntity.ok(Map.of(
+                "ok", true,
+                "mensaje", "Examen asociado al caso eliminado en la base de datos local",
+                "idCaso", idCaso
+            ));
+        } catch (Exception e) {
+            logger.error("Error al procesar caso eliminado desde Bondarea", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", "Error al procesar: " + e.getMessage()));
+        }
+    }
+    
     // Método auxiliar para mapear datos de Bondarea a Persona
     private Persona mapearPersonaDesdeBondarea(Map<String, Object> datosBondarea, String idCaso) {
         Persona persona = new Persona();
