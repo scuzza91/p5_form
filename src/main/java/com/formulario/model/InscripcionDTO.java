@@ -16,6 +16,10 @@ public class InscripcionDTO {
     private Double promedio;
     private Boolean aprobado;
     private String fechaExamen;
+    /** Si hubo al menos un intento fallido al guardar la recomendación de estudios (opción 3). */
+    private Boolean tieneIntentoFallidoGuardarRecomendacion;
+    /** Fecha del último intento fallido (formateada), para mostrar en la interfaz. */
+    private String intentoFallidoGuardarRecomendacionFecha;
 
     public InscripcionDTO() {}
 
@@ -160,6 +164,22 @@ public class InscripcionDTO {
 
     public void setFechaExamen(String fechaExamen) {
         this.fechaExamen = fechaExamen;
+    }
+
+    public Boolean getTieneIntentoFallidoGuardarRecomendacion() {
+        return tieneIntentoFallidoGuardarRecomendacion;
+    }
+
+    public void setTieneIntentoFallidoGuardarRecomendacion(Boolean tieneIntentoFallidoGuardarRecomendacion) {
+        this.tieneIntentoFallidoGuardarRecomendacion = tieneIntentoFallidoGuardarRecomendacion;
+    }
+
+    public String getIntentoFallidoGuardarRecomendacionFecha() {
+        return intentoFallidoGuardarRecomendacionFecha;
+    }
+
+    public void setIntentoFallidoGuardarRecomendacionFecha(String intentoFallidoGuardarRecomendacionFecha) {
+        this.intentoFallidoGuardarRecomendacionFecha = intentoFallidoGuardarRecomendacionFecha;
     }
     
     // Método para calcular el promedio automáticamente

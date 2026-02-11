@@ -28,6 +28,8 @@ import com.formulario.model.ResultadoDTO;
 import com.formulario.model.RecomendacionRolDTO;
 import com.formulario.model.RecomendacionEstudiosDTO;
 import com.formulario.repository.RecomendacionEstudiosRepository;
+import com.formulario.repository.IntentoFallidoGuardarRecomendacionRepository;
+import com.formulario.model.IntentoFallidoGuardarRecomendacion;
 import jakarta.servlet.http.HttpServletRequest;
 
 @Controller
@@ -57,6 +59,9 @@ public class FormularioController {
     
     @Autowired
     private RecomendacionEstudiosRepository recomendacionEstudiosRepository;
+
+    @Autowired
+    private IntentoFallidoGuardarRecomendacionRepository intentoFallidoGuardarRecomendacionRepository;
     
     // Página principal - Ahora redirige directamente al examen
     @GetMapping("/")
@@ -1014,8 +1019,74 @@ public class FormularioController {
             
         } catch (Exception e) {
             logger.error("Error al guardar recomendación de estudios", e);
+            // Registrar intento fallido (opción 3: falló el guardado en servidor) para poder verlo en inscripciones
+            try {
+                Long personaIdCatch = null;
+                if (request.get("personaId") != null) {
+                    if (request.get("personaId") instanceof Integer) {
+                        personaIdCatch = ((Integer) request.get("personaId")).longValue();
+                    } else if (request.get("personaId") instanceof Long) {
+                        personaIdCatch = (Long) request.get("personaId");
+                    } else {
+                        personaIdCatch = Long.parseLong(request.get("personaId").toString());
+                    }
+                }
+                if (personaIdCatch != null) {
+                    Optional<Persona> pOpt = formularioService.buscarPersonaPorId(personaIdCatch);
+                    if (pOpt.isPresent()) {
+                        Optional<Examen> exOpt = formularioService.buscarExamenPorPersona(pOpt.get());
+                        if (exOpt.isPresent()) {
+                            IntentoFallidoGuardarRecomendacion intento = new IntentoFallidoGuardarRecomendacion(
+                                exOpt.get().getId(), "error_servidor",
+                                e.getMessage() != null ? (e.getMessage().length() > 500 ? e.getMessage().substring(0, 500) : e.getMessage()) : null);
+                            intentoFallidoGuardarRecomendacionRepository.save(intento);
+                            logger.info("Registrado intento fallido de guardar recomendación para examen ID: {}", exOpt.get().getId());
+                        }
+                    }
+                }
+            } catch (Exception ex) {
+                logger.warn("No se pudo registrar el intento fallido: {}", ex.getMessage());
+            }
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("success", false, "error", "Error al guardar la recomendación: " + e.getMessage()));
+        }
+    }
+
+    /** El frontend llama a este endpoint cuando el guardado falla por red/timeout (opción 3). */
+    @PostMapping("/api/examen/reporte-fallo-guardar-recomendacion")
+    @ResponseBody
+    @CrossOrigin(origins = "*")
+    public ResponseEntity<?> reporteFalloGuardarRecomendacion(@RequestBody Map<String, Object> request) {
+        try {
+            Long personaId = null;
+            if (request.get("personaId") != null) {
+                if (request.get("personaId") instanceof Integer) {
+                    personaId = ((Integer) request.get("personaId")).longValue();
+                } else if (request.get("personaId") instanceof Long) {
+                    personaId = (Long) request.get("personaId");
+                } else {
+                    personaId = Long.parseLong(request.get("personaId").toString());
+                }
+            }
+            if (personaId == null) {
+                return ResponseEntity.badRequest().body(Map.of("success", false, "error", "personaId requerido"));
+            }
+            Optional<Persona> personaOpt = formularioService.buscarPersonaPorId(personaId);
+            if (personaOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("success", false, "error", "Persona no encontrada"));
+            }
+            Optional<Examen> examenOpt = formularioService.buscarExamenPorPersona(personaOpt.get());
+            if (examenOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("success", false, "error", "Examen no encontrado"));
+            }
+            IntentoFallidoGuardarRecomendacion intento = new IntentoFallidoGuardarRecomendacion(
+                examenOpt.get().getId(), "error_cliente", "Error de red o timeout al guardar");
+            intentoFallidoGuardarRecomendacionRepository.save(intento);
+            logger.info("Registrado reporte de fallo (cliente) al guardar recomendación para examen ID: {}", examenOpt.get().getId());
+            return ResponseEntity.ok(Map.of("success", true));
+        } catch (Exception e) {
+            logger.error("Error al registrar reporte de fallo", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("success", false));
         }
     }
     
@@ -1040,11 +1111,11 @@ public class FormularioController {
             // Verificar si tiene una recomendación de estudios seleccionada
             if (examen.getRecomendacionEstudiosSeleccionada() == null) {
                 logger.info("El examen ID {} no tiene recomendación de estudios seleccionada", examenId);
-                return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "recomendacion", null,
-                    "message", "El usuario no ha seleccionado una recomendación de estudios"
-                ));
+                Map<String, Object> body = new HashMap<>();
+                body.put("success", true);
+                body.put("recomendacion", null);
+                body.put("message", "El usuario no ha seleccionado una recomendación de estudios");
+                return ResponseEntity.ok(body);
             }
             
             // Convertir la recomendación a DTO

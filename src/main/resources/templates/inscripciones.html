@@ -366,6 +366,14 @@
                                         <i class="fas fa-graduation-cap mr-1"></i>
                                         Estudio
                                     </button>
+                                    <!-- Badge: intentó guardar recomendación pero falló (opción 3) -->
+                                    <span th:if="${inscripcion.tieneIntentoFallidoGuardarRecomendacion == true}"
+                                          class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800"
+                                          th:attr="title=${'Intentó guardar la recomendación de estudios pero falló el ' + (inscripcion.intentoFallidoGuardarRecomendacionFecha != null ? inscripcion.intentoFallidoGuardarRecomendacionFecha : '?')}"
+                                          title="Intentó guardar la recomendación pero falló (error de red o del servidor)">
+                                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                                        Falló guardado
+                                    </span>
                                 </div>
                             </td>
                         </tr>
@@ -378,7 +386,7 @@
                 <h5 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
                     <i class="fas fa-info-circle mr-2 text-blue-600"></i>Información de Exportación
                 </h5>
-                <div class="grid md:grid-cols-5 gap-4 text-sm">
+                <div class="grid md:grid-cols-6 gap-4 text-sm">
                     <div class="flex items-center">
                         <div class="w-6 h-6 bg-red-100 rounded mr-3 flex items-center justify-center">
                             <i class="fas fa-file-pdf text-red-600 text-xs"></i>
@@ -408,6 +416,12 @@
                             <i class="fas fa-file-excel text-green-600 text-xs"></i>
                         </div>
                         <span class="text-gray-700"><strong>Excel:</strong> Datos completos con 5 hojas</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-6 h-6 bg-amber-100 rounded mr-3 flex items-center justify-center">
+                            <i class="fas fa-exclamation-triangle text-amber-600 text-xs"></i>
+                        </div>
+                        <span class="text-gray-700"><strong>Falló guardado:</strong> El candidato intentó guardar la recomendación de estudios pero falló (red o servidor)</span>
                     </div>
                 </div>
                 <div class="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">

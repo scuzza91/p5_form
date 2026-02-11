@@ -3,8 +3,10 @@ package com.formulario.service;
 import com.formulario.model.Examen;
 import com.formulario.model.Persona;
 import com.formulario.model.InscripcionDTO;
+import com.formulario.model.IntentoFallidoGuardarRecomendacion;
 import com.formulario.repository.ExamenRepository;
 import com.formulario.repository.PersonaRepository;
+import com.formulario.repository.IntentoFallidoGuardarRecomendacionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +19,7 @@ import java.util.ArrayList;
 import java.util.stream.Collectors;
 import java.time.format.DateTimeFormatter;
 import java.io.IOException;
+import java.time.LocalDateTime;
 
 @Service
 public class FormularioService {
@@ -29,6 +32,9 @@ public class FormularioService {
     
     @Autowired
     private ExcelService excelService;
+
+    @Autowired
+    private IntentoFallidoGuardarRecomendacionRepository intentoFallidoGuardarRecomendacionRepository;
     
     // Métodos para Persona
     public Persona guardarPersona(Persona persona) {
@@ -271,7 +277,13 @@ public class FormularioService {
                         examen.isAprobado(),
                         fechaExamen
                     );
-                    
+                    // Marcar si hubo intento fallido al guardar recomendación (opción 3)
+                    intentoFallidoGuardarRecomendacionRepository.findFirstByExamenIdOrderByFechaHoraDesc(examen.getId())
+                        .ifPresent(intento -> {
+                            dto.setTieneIntentoFallidoGuardarRecomendacion(true);
+                            LocalDateTime f = intento.getFechaHora();
+                            dto.setIntentoFallidoGuardarRecomendacionFecha(f != null ? f.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : null);
+                        });
                     System.out.println("  - DTO creado exitosamente");
                     return dto;
                 })

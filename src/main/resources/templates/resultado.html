@@ -530,6 +530,14 @@
             
             console.log('Enviando al servidor - Estudio ID:', estudioId, 'Persona ID:', personaIdParam);
             
+            function reportarFalloGuardarRecomendacion() {
+                fetch('/api/examen/reporte-fallo-guardar-recomendacion', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ personaId: personaIdParam })
+                }).catch(() => {});
+            }
+            
             fetch('/api/examen/guardar-recomendacion-estudios', {
                 method: 'POST',
                 headers: {
@@ -540,7 +548,12 @@
                     personaId: personaIdParam
                 })
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    reportarFalloGuardarRecomendacion();
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     console.log('Recomendación guardada exitosamente');
@@ -587,6 +600,7 @@
             })
             .catch(error => {
                 console.error('Error:', error);
+                reportarFalloGuardarRecomendacion();
                 mostrarMensajeError('Error al guardar la recomendación');
                 
                 // Rehabilitar el botón
