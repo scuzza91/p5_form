@@ -42,12 +42,21 @@ public class RolProfesionalService {
             Examen examen = examenOpt.get();
             System.out.println("✅ Examen encontrado - ID: " + examen.getId());
             
+            // Recomendaciones universales: se muestran a todos sin importar el resultado del test
+            List<RecomendacionEstudiosDTO> recomendacionesUniversales = recomendacionEstudiosRepository
+                    .findByActivaTrueAndRecomendacionUniversalTrue()
+                    .stream()
+                    .filter(RecomendacionEstudios::isActiva)
+                    .map(RecomendacionEstudiosDTO::new)
+                    .collect(Collectors.toList());
+            System.out.println("📚 Recomendaciones universales: " + recomendacionesUniversales.size());
+            
             // Obtener todos los roles activos con posición laboral cargada (JOIN FETCH)
             List<RolProfesional> roles = rolProfesionalRepository.findByActivoTrueWithPosicionLaboral();
             System.out.println("📋 Roles profesionales activos encontrados: " + roles.size());
             
-            if (roles.isEmpty()) {
-                System.out.println("❌ No hay roles profesionales activos en la base de datos");
+            if (roles.isEmpty() && recomendacionesUniversales.isEmpty()) {
+                System.out.println("❌ No hay roles profesionales activos ni recomendaciones universales en la base de datos");
                 return new ArrayList<>();
             }
             
@@ -82,12 +91,13 @@ public class RolProfesionalService {
                     if (compatibilidad > 0) {
                         RecomendacionRolDTO recomendacion = new RecomendacionRolDTO(rol, examen, compatibilidad);
                         
-                        // Obtener recomendaciones de estudios vinculadas a este rol
+                        // Obtener recomendaciones de estudios vinculadas a este rol y fusionar con universales (sin duplicados por id)
                         List<RecomendacionEstudiosDTO> estudiosVinculados = obtenerRecomendacionesEstudiosPorRol(rol);
-                        recomendacion.setRecomendacionesEstudios(estudiosVinculados);
+                        List<RecomendacionEstudiosDTO> estudiosConUniversales = fusionarConRecomendacionesUniversales(estudiosVinculados, recomendacionesUniversales);
+                        recomendacion.setRecomendacionesEstudios(estudiosConUniversales);
                         
                         recomendaciones.add(recomendacion);
-                        System.out.println("✅ Recomendación agregada: " + rol.getTitulo() + " (" + compatibilidad + ") con " + estudiosVinculados.size() + " estudios vinculados");
+                        System.out.println("✅ Recomendación agregada: " + rol.getTitulo() + " (" + compatibilidad + ") con " + estudiosConUniversales.size() + " estudios (incl. universales)");
                     } else {
                         System.out.println("❌ Compatibilidad insuficiente: " + rol.getTitulo() + " (" + compatibilidad + ")");
                     }
@@ -99,7 +109,17 @@ public class RolProfesionalService {
             
             System.out.println("📊 Total de recomendaciones de roles generadas: " + recomendaciones.size());
             
-            // Ordenar por compatibilidad descendente
+            // Si no hay roles que coincidan pero sí hay recomendaciones universales, mostrar solo estas (rol "virtual")
+            if (recomendaciones.isEmpty() && !recomendacionesUniversales.isEmpty()) {
+                RecomendacionRolDTO rolUniversal = new RecomendacionRolDTO();
+                rolUniversal.setTitulo("Recomendación Universal");
+                rolUniversal.setDescripcion("Las siguientes opciones están disponibles para todos los perfiles, sin importar el resultado del test.");
+                rolUniversal.setRecomendacionesEstudios(recomendacionesUniversales);
+                recomendaciones.add(rolUniversal);
+                System.out.println("✅ Mostrando bloque de Recomendación Universal con " + recomendacionesUniversales.size() + " opciones");
+            }
+            
+            // Ordenar por compatibilidad descendente (el rol virtual no tiene compatibilidad, queda al final)
             recomendaciones.sort((r1, r2) -> Double.compare(r2.getCompatibilidad(), r1.getCompatibilidad()));
             
             System.out.println("✅ Generación de recomendaciones de roles completada exitosamente");
@@ -583,6 +603,30 @@ public class RolProfesionalService {
      * en la sección "Posiciones Laborales Vinculadas" de la edición de recomendaciones de estudios
      */
     @Transactional(readOnly = true)
+    /**
+     * Fusiona la lista de estudios vinculados al rol con las recomendaciones universales, sin duplicados por id.
+     */
+    private List<RecomendacionEstudiosDTO> fusionarConRecomendacionesUniversales(
+            List<RecomendacionEstudiosDTO> estudiosVinculados,
+            List<RecomendacionEstudiosDTO> recomendacionesUniversales) {
+        if (recomendacionesUniversales == null || recomendacionesUniversales.isEmpty()) {
+            return new ArrayList<>(estudiosVinculados);
+        }
+        Set<Long> ids = new HashSet<>();
+        List<RecomendacionEstudiosDTO> resultado = new ArrayList<>();
+        for (RecomendacionEstudiosDTO e : estudiosVinculados) {
+            if (e.getId() != null && ids.add(e.getId())) {
+                resultado.add(e);
+            }
+        }
+        for (RecomendacionEstudiosDTO e : recomendacionesUniversales) {
+            if (e.getId() != null && ids.add(e.getId())) {
+                resultado.add(e);
+            }
+        }
+        return resultado;
+    }
+    
     private List<RecomendacionEstudiosDTO> obtenerRecomendacionesEstudiosPorRol(RolProfesional rol) {
         try {
             // Forzar la carga de la relación LAZY antes de usarla

@@ -140,6 +140,7 @@ public class AdminRecomendacionEstudiosController {
             @ModelAttribute RecomendacionEstudiosDTO dto,
             @RequestParam(required = false) List<Long> posicionesIds,
             @RequestParam(required = false) Boolean activa,
+            @RequestParam(required = false) Boolean recomendacionUniversal,
             @RequestParam(required = false) MultipartFile imagenFile,
             HttpSession session,
             RedirectAttributes redirectAttributes) {
@@ -152,6 +153,7 @@ public class AdminRecomendacionEstudiosController {
         try {
             // Manejar checkbox activa (si no viene, es false)
             dto.setActiva(activa != null && activa);
+            dto.setRecomendacionUniversal(recomendacionUniversal != null && recomendacionUniversal);
             
             if (posicionesIds != null && !posicionesIds.isEmpty()) {
                 dto.setPosicionesLaboralesIds(posicionesIds);
@@ -189,6 +191,7 @@ public class AdminRecomendacionEstudiosController {
             @ModelAttribute RecomendacionEstudiosDTO dto,
             @RequestParam(required = false) List<Long> posicionesIds,
             @RequestParam(required = false) Boolean activa,
+            @RequestParam(required = false) Boolean recomendacionUniversal,
             @RequestParam(required = false) MultipartFile imagenFile,
             @RequestParam(required = false) Boolean eliminarImagen,
             HttpSession session,
@@ -202,6 +205,7 @@ public class AdminRecomendacionEstudiosController {
         try {
             // Manejar checkbox activa (si no viene, es false)
             dto.setActiva(activa != null && activa);
+            dto.setRecomendacionUniversal(recomendacionUniversal != null && recomendacionUniversal);
             
             if (posicionesIds != null && !posicionesIds.isEmpty()) {
                 dto.setPosicionesLaboralesIds(posicionesIds);

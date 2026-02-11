@@ -66,6 +66,7 @@ public class RecomendacionEstudiosService {
         recomendacion.setDescripcion(dto.getDescripcion());
         recomendacion.setCosto(dto.getCosto());
         recomendacion.setActiva(dto.isActiva());
+        recomendacion.setRecomendacionUniversal(dto.isRecomendacionUniversal());
         
         // Vincular posiciones laborales si se proporcionan
         if (dto.getPosicionesLaboralesIds() != null && !dto.getPosicionesLaboralesIds().isEmpty()) {
@@ -100,6 +101,7 @@ public class RecomendacionEstudiosService {
         recomendacion.setDescripcion(dto.getDescripcion());
         recomendacion.setCosto(dto.getCosto());
         recomendacion.setActiva(dto.isActiva());
+        recomendacion.setRecomendacionUniversal(dto.isRecomendacionUniversal());
         
         // Actualizar posiciones laborales
         // Primero, remover todas las relaciones existentes
@@ -203,6 +205,18 @@ public class RecomendacionEstudiosService {
     @Transactional(readOnly = true)
     public List<RecomendacionEstudiosDTO> obtenerOrdenadasPorCostoDesc() {
         return recomendacionEstudiosRepository.findByActivaTrueOrderByCostoDesc()
+                .stream()
+                .map(RecomendacionEstudiosDTO::new)
+                .collect(Collectors.toList());
+    }
+    
+    /**
+     * Obtiene todas las recomendaciones de estudios marcadas como universales (activas).
+     * Se muestran a todos los candidatos sin importar el resultado del test.
+     */
+    @Transactional(readOnly = true)
+    public List<RecomendacionEstudiosDTO> obtenerUniversales() {
+        return recomendacionEstudiosRepository.findByActivaTrueAndRecomendacionUniversalTrue()
                 .stream()
                 .map(RecomendacionEstudiosDTO::new)
                 .collect(Collectors.toList());

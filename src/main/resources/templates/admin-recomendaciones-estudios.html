@@ -171,6 +171,11 @@
                                       class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
                                     Inactiva
                                 </span>
+                                <span th:if="${recomendacion.recomendacionUniversal}" 
+                                      class="ml-1 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-amber-100 text-amber-800"
+                                      title="Se muestra a todos los candidatos sin importar el resultado del test">
+                                    Universal
+                                </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <a th:href="@{/admin/recomendaciones-estudios/editar/{id}(id=${recomendacion.id})}" 

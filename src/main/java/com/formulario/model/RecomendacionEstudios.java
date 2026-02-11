@@ -53,6 +53,10 @@ public class RecomendacionEstudios {
     @Column(name = "activa")
     private boolean activa = true;
     
+    /** Si es true, esta recomendación se muestra a todos los candidatos sin importar el resultado del test. */
+    @Column(name = "recomendacion_universal")
+    private boolean recomendacionUniversal = false;
+    
     // Constructores
     public RecomendacionEstudios() {}
     
@@ -146,6 +150,14 @@ public class RecomendacionEstudios {
     
     public void setActiva(boolean activa) {
         this.activa = activa;
+    }
+    
+    public boolean isRecomendacionUniversal() {
+        return recomendacionUniversal;
+    }
+    
+    public void setRecomendacionUniversal(boolean recomendacionUniversal) {
+        this.recomendacionUniversal = recomendacionUniversal;
     }
 }
 

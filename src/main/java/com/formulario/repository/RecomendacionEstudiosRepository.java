@@ -37,5 +37,8 @@ public interface RecomendacionEstudiosRepository extends JpaRepository<Recomenda
     
     // Contar recomendaciones activas
     long countByActivaTrue();
+    
+    // Recomendaciones que se muestran a todos los candidatos (sin depender del resultado del test)
+    List<RecomendacionEstudios> findByActivaTrueAndRecomendacionUniversalTrue();
 }
 

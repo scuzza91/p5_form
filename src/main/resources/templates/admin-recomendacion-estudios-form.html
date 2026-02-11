@@ -271,6 +271,20 @@
                     <p class="mt-1 text-sm text-gray-500">Las recomendaciones inactivas no se mostrarán a los candidatos</p>
                 </div>
 
+                <!-- Recomendación Universal -->
+                <div class="mb-6">
+                    <label class="flex items-center">
+                        <input type="checkbox" 
+                               name="recomendacionUniversal" 
+                               th:checked="${recomendacion.recomendacionUniversal}"
+                               class="mr-2 h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded">
+                        <span class="text-sm font-medium text-gray-700">
+                            Recomendación Universal
+                        </span>
+                    </label>
+                    <p class="mt-1 text-sm text-gray-500">Si se marca, esta recomendación se mostrará a todos los candidatos sin importar el resultado del test (cualquier porcentaje).</p>
+                </div>
+
                 <!-- Buttons -->
                 <div class="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
                     <a href="/admin/recomendaciones-estudios" 

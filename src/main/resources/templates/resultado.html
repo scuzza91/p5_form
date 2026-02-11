@@ -127,7 +127,7 @@
                                                     <i class="fas fa-chevron-down rol-icon text-xl transition-transform duration-300"></i>
                                                 </button>
                                             </div>
-                                            <div class="flex flex-wrap gap-2">
+                                            <div th:if="${recomendacion.rolId != null}" class="flex flex-wrap gap-2">
                                                 <span class="bg-sky-300 px-3 py-1 rounded-full text-sm font-medium text-black" 
                                                       th:text="${recomendacion.categoria}">Categoría</span>
                                                 <span class="bg-sky-300 px-3 py-1 rounded-full text-sm font-medium text-black" 
@@ -136,13 +136,19 @@
                                                     <i class="fas fa-route mr-1"></i>Rol Profesional
                                                 </span>
                                             </div>
+                                            <div th:if="${recomendacion.rolId == null}" class="flex flex-wrap gap-2">
+                                                <span class="bg-amber-200 px-3 py-1 rounded-full text-sm font-medium text-black">
+                                                    <i class="fas fa-globe mr-1"></i>Disponible para todos los perfiles
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
 
                                 <!-- Contenido (colapsable) -->
                                 <div class="rol-content p-6" style="display: block;">
-                                    <div class="grid md:grid-cols-2 gap-6">
+                                    <!-- Solo mostrar descripción y comparación cuando es un rol real (no Recomendación Universal) -->
+                                    <div th:if="${recomendacion.rolId != null}" class="grid md:grid-cols-2 gap-6">
                                         <!-- Información del rol -->
                                         <div>
                                             <h4 class="text-lg font-semibold text-black mb-3">
@@ -234,6 +240,8 @@
                                             </div>
                                         </div>
                                     </div>
+                                    <!-- Mensaje breve para bloque Recomendación Universal -->
+                                    <p th:if="${recomendacion.rolId == null}" class="text-gray-600 mb-4" th:text="${recomendacion.descripcion}">Las siguientes opciones están disponibles para todos los perfiles.</p>
                                     
                                     <!-- Recomendaciones de Estudios -->
                                     <div th:if="${recomendacion.recomendacionesEstudios != null and !recomendacion.recomendacionesEstudios.empty}" class="mt-6 pt-6 border-t border-sky-300">
