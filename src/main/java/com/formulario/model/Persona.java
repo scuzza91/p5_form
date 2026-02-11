@@ -57,6 +57,7 @@ public class Persona {
     
     @NotBlank(message = "El CUIL es obligatorio")
     @Pattern(regexp = "^[0-9]{11}$", message = "El CUIL debe tener exactamente 11 dígitos")
+    @Column(unique = true)
     private String cuil;
     
     // ID del caso en Bondarea (opcional, solo para personas creadas desde Bondarea)

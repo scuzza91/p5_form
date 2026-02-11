@@ -53,6 +53,14 @@ public class FormularioService {
         return personaRepository.existsByEmail(email);
     }
     
+    public Persona buscarPersonaPorCuil(String cuil) {
+        return personaRepository.findByCuil(cuil);
+    }
+    
+    public boolean existeCuil(String cuil) {
+        return personaRepository.existsByCuil(cuil);
+    }
+    
     public List<Persona> listarTodasLasPersonas() {
         return personaRepository.findAll();
     }

@@ -14,6 +14,12 @@ public interface PersonaRepository extends JpaRepository<Persona, Long> {
     // Método para verificar si existe un email
     boolean existsByEmail(String email);
     
+    // Método para buscar por CUIL
+    Persona findByCuil(String cuil);
+    
+    // Método para verificar si existe un CUIL (evitar que una persona vuelva a hacer el test)
+    boolean existsByCuil(String cuil);
+    
     // Método para buscar persona por ID de caso de Bondarea (sincronización al eliminar caso)
     Optional<Persona> findByIdCasoBondarea(String idCasoBondarea);
 } 

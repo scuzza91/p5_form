@@ -573,9 +573,9 @@ public class FormularioController {
             return "paso1";
         }
         
-        // Verificar si el email ya existe
-        if (formularioService.existeEmail(persona.getEmail())) {
-            result.rejectValue("email", "error.persona", "Este email ya está registrado");
+        // Verificar si el CUIL ya existe (evitar que una persona vuelva a hacer el test)
+        if (formularioService.existeCuil(persona.getCuil())) {
+            result.rejectValue("cuil", "error.persona", "Este CUIL ya está registrado");
             // Volver a cargar las provincias cuando hay errores
             model.addAttribute("provincias", localidadService.obtenerTodasLasProvincias());
             return "paso1";
