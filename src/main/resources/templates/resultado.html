@@ -617,6 +617,10 @@
                     if (esGratuitaSeleccion) {
                         const mensajeGratuita = 'Su selección ha sido confirmada! La licencia será enviada al correo electronico proporcionado';
                         if (window.confirm(mensajeGratuita)) {
+                            // Actualizar texto del botón para indicar fin de proceso
+                            if (btnContinuar) {
+                                btnContinuar.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Proceso finalizado, revisa tu correo';
+                            }
                             // Intentar cerrar la ventana (caso típico: se abrió como popup desde el test)
                             try {
                                 window.close();
