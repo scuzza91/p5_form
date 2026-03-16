@@ -67,6 +67,7 @@ public class RecomendacionEstudiosService {
         recomendacion.setCosto(dto.getCosto());
         recomendacion.setActiva(dto.isActiva());
         recomendacion.setRecomendacionUniversal(dto.isRecomendacionUniversal());
+        recomendacion.setGratuita(dto.isGratuita());
         
         // Vincular posiciones laborales si se proporcionan
         if (dto.getPosicionesLaboralesIds() != null && !dto.getPosicionesLaboralesIds().isEmpty()) {
@@ -102,6 +103,7 @@ public class RecomendacionEstudiosService {
         recomendacion.setCosto(dto.getCosto());
         recomendacion.setActiva(dto.isActiva());
         recomendacion.setRecomendacionUniversal(dto.isRecomendacionUniversal());
+        recomendacion.setGratuita(dto.isGratuita());
         
         // Actualizar posiciones laborales
         // Primero, remover todas las relaciones existentes

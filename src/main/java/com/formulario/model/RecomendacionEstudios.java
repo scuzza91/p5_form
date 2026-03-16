@@ -56,6 +56,10 @@ public class RecomendacionEstudios {
     /** Si es true, esta recomendación se muestra a todos los candidatos sin importar el resultado del test. */
     @Column(name = "recomendacion_universal")
     private Boolean recomendacionUniversal = false;
+
+    /** Indica si la oferta es completamente gratuita para el usuario final. */
+    @Column(name = "gratuita")
+    private Boolean gratuita = false;
     
     // Constructores
     public RecomendacionEstudios() {}
@@ -159,6 +163,15 @@ public class RecomendacionEstudios {
     
     public void setRecomendacionUniversal(Boolean recomendacionUniversal) {
         this.recomendacionUniversal = recomendacionUniversal != null ? recomendacionUniversal : false;
+    }
+
+    /** Devuelve true solo si la recomendación está marcada explícitamente como gratuita. */
+    public boolean isGratuita() {
+        return Boolean.TRUE.equals(gratuita);
+    }
+
+    public void setGratuita(Boolean gratuita) {
+        this.gratuita = gratuita != null ? gratuita : false;
     }
 }
 

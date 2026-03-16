@@ -284,6 +284,7 @@
                                         <div class="grid md:grid-cols-2 gap-4">
                                             <div th:each="estudio : ${recomendacion.recomendacionesEstudios}" 
                                                  th:data-estudio-id="${estudio.id}"
+                                                 th:data-gratuita="${estudio.gratuita}"
                                                  th:data-estudio-seleccionado="${recomendacionSeleccionadaId != null and recomendacionSeleccionadaId == estudio.id}"
                                                  th:class="'estudio-card bg-white rounded-lg p-4 border-2 transition-all duration-200 ' + ((recomendacionSeleccionadaId != null and recomendacionSeleccionadaId == estudio.id) ? 'border-green-500 bg-green-50' : 'border-sky-300') + ' ' + ((recomendacionSeleccionadaId != null) ? 'opacity-75' : 'cursor-pointer hover:border-sky-500 hover:shadow-lg')"
                                                  th:data-clickable="${recomendacionSeleccionadaId == null}">
@@ -559,6 +560,17 @@
             
             console.log('Enviando al servidor - Estudio ID:', estudioId, 'Persona ID:', personaIdParam);
             
+            // Verificar en el DOM si la recomendación seleccionada es gratuita
+            let esGratuitaSeleccion = false;
+            try {
+                const cardSeleccionada = document.querySelector('.estudio-card[data-estudio-id="' + estudioId + '"]');
+                if (cardSeleccionada) {
+                    esGratuitaSeleccion = cardSeleccionada.getAttribute('data-gratuita') === 'true';
+                }
+            } catch (e) {
+                console.warn('No se pudo determinar si la recomendación es gratuita:', e);
+            }
+            
             function reportarFalloGuardarRecomendacion() {
                 fetch('/api/examen/reporte-fallo-guardar-recomendacion', {
                     method: 'POST',
@@ -598,22 +610,40 @@
                         btnContinuar.disabled = true;
                         btnContinuar.classList.remove('bg-green-500', 'hover:bg-green-600');
                         btnContinuar.classList.add('bg-gray-400', 'cursor-not-allowed');
-                        btnContinuar.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Redirigiendo...';
+                        btnContinuar.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Procesando...';
                     }
                     
-                    // Verificar si hay URL de redirección a Bondarea
-                    if (data.redirectUrl) {
-                        console.log('Redirigiendo a Bondarea:', data.redirectUrl);
-                        // Redirigir después de un breve delay para mostrar el mensaje
-                        setTimeout(() => {
-                            window.location.href = data.redirectUrl;
-                        }, 1000);
+                    // Si la recomendación seleccionada es gratuita, mostrar mensaje y volver a la ventana del test
+                    if (esGratuitaSeleccion) {
+                        const mensajeGratuita = 'Su selección ha sido confirmada! La licencia será enviada al correo electronico proporcionado';
+                        if (window.confirm(mensajeGratuita)) {
+                            // Intentar cerrar la ventana (caso típico: se abrió como popup desde el test)
+                            try {
+                                window.close();
+                            } catch (e) {
+                                console.warn('No se pudo cerrar la ventana, regresando al historial:', e);
+                                window.history.back();
+                            }
+                        } else {
+                            // Si el usuario no acepta, simplemente no lo redirigimos y deja la pantalla como está
+                            console.log('Confirmación de selección gratuita cancelada por el usuario.');
+                        }
                     } else {
-                        // Si no hay URL de redirección, mostrar modal y recargar como antes
-                        mostrarModalExito();
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 2500);
+                        // Comportamiento original para recomendaciones no gratuitas
+                        // Verificar si hay URL de redirección a Bondarea
+                        if (data.redirectUrl) {
+                            console.log('Redirigiendo a Bondarea:', data.redirectUrl);
+                            // Redirigir después de un breve delay para mostrar el mensaje
+                            setTimeout(() => {
+                                window.location.href = data.redirectUrl;
+                            }, 1000);
+                        } else {
+                            // Si no hay URL de redirección, mostrar modal y recargar como antes
+                            mostrarModalExito();
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 2500);
+                        }
                     }
                 } else {
                     console.error('Error al guardar:', data.error);

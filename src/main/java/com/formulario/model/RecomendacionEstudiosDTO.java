@@ -15,6 +15,7 @@ public class RecomendacionEstudiosDTO {
     private BigDecimal costo;
     private boolean activa;
     private boolean recomendacionUniversal;
+    private boolean gratuita;
     private List<Long> posicionesLaboralesIds;
     private List<String> posicionesLaboralesTitulos; // Para mostrar en el frontend
     
@@ -33,6 +34,7 @@ public class RecomendacionEstudiosDTO {
         this.costo = recomendacion.getCosto();
         this.activa = recomendacion.isActiva();
         this.recomendacionUniversal = recomendacion.isRecomendacionUniversal();
+        this.gratuita = recomendacion.isGratuita();
         this.posicionesLaboralesIds = new ArrayList<>();
         this.posicionesLaboralesTitulos = new ArrayList<>();
         
@@ -116,6 +118,14 @@ public class RecomendacionEstudiosDTO {
     
     public void setRecomendacionUniversal(boolean recomendacionUniversal) {
         this.recomendacionUniversal = recomendacionUniversal;
+    }
+
+    public boolean isGratuita() {
+        return gratuita;
+    }
+
+    public void setGratuita(boolean gratuita) {
+        this.gratuita = gratuita;
     }
     
     public List<Long> getPosicionesLaboralesIds() {
