@@ -260,63 +260,6 @@ public class FormularioController {
                 persona.setEmail(email);
             }
             
-            // Verificar si el email ya existe
-            if (formularioService.existeEmail(email)) {
-                Persona personaExistente = formularioService.buscarPersonaPorEmail(email);
-                logger.info("Persona ya existe con email: {}, ID: {}", email, personaExistente.getId());
-                
-                // Actualizar idCaso si no lo tiene
-                if (personaExistente.getIdCasoBondarea() == null || personaExistente.getIdCasoBondarea().trim().isEmpty()) {
-                    personaExistente.setIdCasoBondarea(idCaso);
-                    formularioService.guardarPersona(personaExistente);
-                    logger.info("ID de caso de Bondarea actualizado en persona existente: {}", idCaso);
-                }
-                
-                // Si ya existe, verificar si tiene examen
-                if (formularioService.existeExamenParaPersona(personaExistente)) {
-                    return ResponseEntity.status(HttpStatus.CONFLICT)
-                        .body(Map.of("error", "Ya existe un examen para esta persona", 
-                                     "personaId", personaExistente.getId(),
-                                     "email", email));
-                }
-                
-                // Si no tiene examen, crear uno nuevo
-                Examen examen = new Examen(personaExistente);
-                examen = formularioService.guardarExamen(examen);
-                
-                // Construir URL del examen usando token hash
-                String examenUrl = construirUrlExamen(request, examen);
-                logger.info("URL del examen construida (persona existente): {}", examenUrl);
-                
-                // Verificar si el cliente solicita redirección explícitamente
-                String acceptHeader = request.getHeader("Accept");
-                String responseType = request.getHeader("X-Response-Type");
-                boolean solicitaRedireccion = "redirect".equalsIgnoreCase(responseType) 
-                                           || (acceptHeader != null && acceptHeader.contains("text/html"));
-                
-                // Por defecto, devolver JSON (mejor para APIs/webhooks)
-                if (solicitaRedireccion) {
-                    logger.info("Devolviendo redirección 302 a: {}", examenUrl);
-                    HttpHeaders headers = new HttpHeaders();
-                    headers.setLocation(java.net.URI.create(examenUrl));
-                    
-                    return ResponseEntity.status(HttpStatus.FOUND)
-                        .headers(headers)
-                        .build();
-                }
-                
-                // Por defecto, devolver JSON con la URL del examen
-                logger.info("Devolviendo respuesta JSON con examenUrl: {}", examenUrl);
-                return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "mensaje", "Persona encontrada y examen creado",
-                    "personaId", personaExistente.getId(),
-                    "examenId", examen.getId(),
-                    "examenUrl", examenUrl,
-                    "email", email
-                ));
-            }
-            
             // Guardar la persona
             Persona personaGuardada = formularioService.guardarPersona(persona);
             
@@ -568,14 +511,6 @@ public class FormularioController {
         }
         
         if (result.hasErrors()) {
-            // Volver a cargar las provincias cuando hay errores
-            model.addAttribute("provincias", localidadService.obtenerTodasLasProvincias());
-            return "paso1";
-        }
-        
-        // Verificar si el CUIL ya existe (evitar que una persona vuelva a hacer el test)
-        if (formularioService.existeCuil(persona.getCuil())) {
-            result.rejectValue("cuil", "error.persona", "Este CUIL ya está registrado");
             // Volver a cargar las provincias cuando hay errores
             model.addAttribute("provincias", localidadService.obtenerTodasLasProvincias());
             return "paso1";
