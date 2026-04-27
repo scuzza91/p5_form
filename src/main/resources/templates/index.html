@@ -126,24 +126,6 @@
                             </div>
                         </div>
                         
-                        <!-- Information Section -->
-                        <div th:if="${inscripcionesAbiertas}" class="space-y-4">
-                            <div class="bg-sky-200 border-l-4 border-sky-400 rounded-lg p-4">
-                                <div class="flex items-start">
-                                    <i class="fas fa-info-circle text-black mt-1 mr-3"></i>
-                                    <div class="flex-1">
-                                        <p class="text-sm font-medium text-black mb-2">
-                                            Los datos personales se recibirán automáticamente desde la API de Bondarea
-                                        </p>
-                                        <p class="text-xs text-black">
-                                            Para iniciar el examen, los datos deben ser enviados mediante POST a 
-                                            <code class="bg-sky-300 text-black px-2 py-1 rounded font-mono text-xs">/api/persona/crear</code>
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
                         <div th:unless="${inscripcionesAbiertas}" class="text-center py-6">
                             <div class="inline-flex items-center justify-center px-8 py-4 bg-gray-100 text-gray-600 font-semibold rounded-lg border-2 border-gray-300">
                                 <i class="fas fa-lock mr-3 text-xl"></i>

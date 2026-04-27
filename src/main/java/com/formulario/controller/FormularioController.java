@@ -31,6 +31,7 @@ import com.formulario.model.RecomendacionEstudiosDTO;
 import com.formulario.repository.RecomendacionEstudiosRepository;
 import com.formulario.repository.IntentoFallidoGuardarRecomendacionRepository;
 import com.formulario.model.IntentoFallidoGuardarRecomendacion;
+import com.formulario.util.ExamenTokenUtil;
 import jakarta.servlet.http.HttpServletRequest;
 
 @Controller
@@ -1232,7 +1233,8 @@ public class FormularioController {
             String baseUrl = obtenerBaseUrl(request);
             inscripciones.forEach(inscripcion -> {
                 if (InscripcionDTO.ESTADO_TIEMPO_TIEMPO_AGOTADO_SIN_FINALIZAR.equals(inscripcion.getEstadoTiempo())) {
-                    inscripcion.setLinkReintentoAutomatico(baseUrl + "/examen/reintento/" + inscripcion.getId());
+                    String tokenReintento = ExamenTokenUtil.generarToken(inscripcion.getId());
+                    inscripcion.setLinkReintentoAutomatico(baseUrl + "/examen/reintento/" + tokenReintento);
                 }
             });
             
@@ -1347,11 +1349,17 @@ public class FormularioController {
         }
     }
 
-    @GetMapping("/examen/reintento/{examenId}")
-    public String reintentarExamen(@PathVariable Long examenId,
+    @GetMapping("/examen/reintento/{examenToken}")
+    public String reintentarExamen(@PathVariable String examenToken,
                                    HttpServletRequest request,
                                    RedirectAttributes redirectAttributes) {
         try {
+            Long examenId = ExamenTokenUtil.validarYExtraerId(examenToken);
+            if (examenId == null) {
+                redirectAttributes.addFlashAttribute("error", "Link de reintento inválido o vencido");
+                return "redirect:/inscripciones";
+            }
+
             Optional<Examen> examenOpt = formularioService.buscarExamenPorId(examenId);
             if (examenOpt.isEmpty()) {
                 redirectAttributes.addFlashAttribute("error", "Examen no encontrado para reintento");
