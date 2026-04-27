@@ -1,6 +1,11 @@
 package com.formulario.model;
 
 public class InscripcionDTO {
+    public static final String ESTADO_TIEMPO_FINALIZADO_EN_TIEMPO = "FINALIZADO_EN_TIEMPO";
+    public static final String ESTADO_TIEMPO_TIEMPO_AGOTADO_SIN_FINALIZAR = "TIEMPO_AGOTADO_SIN_FINALIZAR";
+    public static final String ESTADO_TIEMPO_FINALIZADO_FUERA_DE_TIEMPO = "FINALIZADO_FUERA_DE_TIEMPO";
+    public static final String ESTADO_TIEMPO_EN_CURSO = "EN_CURSO";
+
     private Long id;
     private String nombre;
     private String apellido;
@@ -20,6 +25,10 @@ public class InscripcionDTO {
     private Boolean tieneIntentoFallidoGuardarRecomendacion;
     /** Fecha del último intento fallido (formateada), para mostrar en la interfaz. */
     private String intentoFallidoGuardarRecomendacionFecha;
+    /** Estado temporal del examen según el tiempo límite configurado. */
+    private String estadoTiempo;
+    /** Link automático de reintento para exámenes con tiempo agotado sin finalizar. */
+    private String linkReintentoAutomatico;
 
     public InscripcionDTO() {}
 
@@ -180,6 +189,22 @@ public class InscripcionDTO {
 
     public void setIntentoFallidoGuardarRecomendacionFecha(String intentoFallidoGuardarRecomendacionFecha) {
         this.intentoFallidoGuardarRecomendacionFecha = intentoFallidoGuardarRecomendacionFecha;
+    }
+
+    public String getEstadoTiempo() {
+        return estadoTiempo;
+    }
+
+    public void setEstadoTiempo(String estadoTiempo) {
+        this.estadoTiempo = estadoTiempo;
+    }
+
+    public String getLinkReintentoAutomatico() {
+        return linkReintentoAutomatico;
+    }
+
+    public void setLinkReintentoAutomatico(String linkReintentoAutomatico) {
+        this.linkReintentoAutomatico = linkReintentoAutomatico;
     }
     
     // Método para calcular el promedio automáticamente

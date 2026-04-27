@@ -1219,11 +1219,21 @@ public class FormularioController {
             @RequestParam(required = false) String dni,
             @RequestParam(required = false) String cuil,
             @RequestParam(required = false) String email,
+            @RequestParam(required = false) String estadoTiempo,
+            HttpServletRequest request,
             Model model) {
         try {
             // Obtener datos reales de la base de datos
             List<InscripcionDTO> inscripciones = formularioService.obtenerTodasLasInscripciones();
             logger.info("Inscripciones obtenidas de BD: {}", inscripciones.size());
+
+            // Generar automáticamente link de reintento para exámenes con tiempo agotado sin finalizar
+            String baseUrl = obtenerBaseUrl(request);
+            inscripciones.forEach(inscripcion -> {
+                if (InscripcionDTO.ESTADO_TIEMPO_TIEMPO_AGOTADO_SIN_FINALIZAR.equals(inscripcion.getEstadoTiempo())) {
+                    inscripcion.setLinkReintentoAutomatico(baseUrl + "/examen/reintento/" + inscripcion.getId());
+                }
+            });
             
             // Aplicar filtros si están presentes
             List<InscripcionDTO> inscripcionesFiltradas = inscripciones.stream()
@@ -1246,6 +1256,11 @@ public class FormularioController {
                     if (email != null && !email.trim().isEmpty()) {
                         cumpleFiltros = cumpleFiltros && inscripcion.getEmail() != null && 
                                        inscripcion.getEmail().toLowerCase().contains(email.trim().toLowerCase());
+                    }
+
+                    // Filtro por estado temporal del examen
+                    if (estadoTiempo != null && !estadoTiempo.trim().isEmpty()) {
+                        cumpleFiltros = cumpleFiltros && estadoTiempo.trim().equals(inscripcion.getEstadoTiempo());
                     }
                     
                     return cumpleFiltros;
@@ -1282,6 +1297,7 @@ public class FormularioController {
             if (dni != null) model.addAttribute("dni", dni);
             if (cuil != null) model.addAttribute("cuil", cuil);
             if (email != null) model.addAttribute("email", email);
+            if (estadoTiempo != null) model.addAttribute("estadoTiempo", estadoTiempo);
             
             logger.info("Inscripciones filtradas cargadas: {} de {} total", inscripcionesFiltradas.size(), inscripciones.size());
             return "inscripciones";
@@ -1291,6 +1307,74 @@ public class FormularioController {
             model.addAttribute("inscripciones", new ArrayList<>());
             model.addAttribute("promedioGeneral", 0.0);
             return "inscripciones";
+        }
+    }
+
+    @GetMapping("/inscripciones/regenerar-examen/{examenId}")
+    public String regenerarExamenParaTiempoAgotado(@PathVariable Long examenId,
+                                                   HttpServletRequest request,
+                                                   RedirectAttributes redirectAttributes) {
+        try {
+            Optional<Examen> examenOpt = formularioService.buscarExamenPorId(examenId);
+            if (examenOpt.isEmpty()) {
+                redirectAttributes.addFlashAttribute("error", "Examen no encontrado");
+                return "redirect:/inscripciones";
+            }
+
+            Examen examenAnterior = examenOpt.get();
+            if (!estaTiempoAgotadoSinFinalizar(examenAnterior)) {
+                redirectAttributes.addFlashAttribute("error",
+                    "Solo se puede regenerar para exámenes con tiempo agotado sin finalizar");
+                return "redirect:/inscripciones";
+            }
+
+            Examen nuevoExamen = formularioService.recrearExamenParaPersona(examenAnterior);
+            String nuevoExamenUrl = construirUrlExamen(request, nuevoExamen);
+
+            redirectAttributes.addFlashAttribute("mensaje",
+                "Se generó un nuevo link de examen para " + nuevoExamen.getPersona().getEmail());
+            redirectAttributes.addFlashAttribute("nuevoExamenUrl", nuevoExamenUrl);
+
+            logger.info("Nuevo examen generado para persona {} - Examen anterior: {}, nuevo: {}",
+                nuevoExamen.getPersona().getEmail(), examenId, nuevoExamen.getId());
+
+            return "redirect:/inscripciones";
+        } catch (Exception e) {
+            logger.error("Error al regenerar examen agotado - examenId: {}", examenId, e);
+            redirectAttributes.addFlashAttribute("error", "No se pudo regenerar el examen: " + e.getMessage());
+            return "redirect:/inscripciones";
+        }
+    }
+
+    @GetMapping("/examen/reintento/{examenId}")
+    public String reintentarExamen(@PathVariable Long examenId,
+                                   HttpServletRequest request,
+                                   RedirectAttributes redirectAttributes) {
+        try {
+            Optional<Examen> examenOpt = formularioService.buscarExamenPorId(examenId);
+            if (examenOpt.isEmpty()) {
+                redirectAttributes.addFlashAttribute("error", "Examen no encontrado para reintento");
+                return "redirect:/inscripciones";
+            }
+
+            Examen examenAnterior = examenOpt.get();
+            if (!estaTiempoAgotadoSinFinalizar(examenAnterior)) {
+                redirectAttributes.addFlashAttribute("error",
+                    "El examen no está en estado de tiempo agotado sin finalizar");
+                return "redirect:/inscripciones";
+            }
+
+            Examen nuevoExamen = formularioService.recrearExamenParaPersona(examenAnterior);
+            String nuevoExamenUrl = construirUrlExamen(request, nuevoExamen);
+
+            logger.info("Reintento generado desde link automático para persona {} - Examen anterior: {}, nuevo: {}",
+                nuevoExamen.getPersona().getEmail(), examenId, nuevoExamen.getId());
+
+            return "redirect:" + nuevoExamenUrl;
+        } catch (Exception e) {
+            logger.error("Error al generar reintento automático - examenId: {}", examenId, e);
+            redirectAttributes.addFlashAttribute("error", "No se pudo generar el reintento: " + e.getMessage());
+            return "redirect:/inscripciones";
         }
     }
 
@@ -1382,6 +1466,41 @@ public class FormularioController {
                    scheme, host, contextPath, examen.getId(), token, finalUrl);
         
         return finalUrl;
+    }
+
+    private String obtenerBaseUrl(HttpServletRequest request) {
+        String host = request.getHeader("Host");
+        if (host == null || host.isEmpty()) {
+            host = request.getServerName();
+            int serverPort = request.getServerPort();
+            if ((request.getScheme().equals("http") && serverPort != 80) ||
+                (request.getScheme().equals("https") && serverPort != 443)) {
+                host = host + ":" + serverPort;
+            }
+        }
+
+        String scheme = request.getScheme();
+        String forwardedProto = request.getHeader("X-Forwarded-Proto");
+        if (forwardedProto != null && !forwardedProto.isEmpty()) {
+            scheme = forwardedProto;
+        }
+
+        String contextPath = request.getContextPath();
+        StringBuilder url = new StringBuilder();
+        url.append(scheme).append("://").append(host);
+        if (contextPath != null && !contextPath.isEmpty()) {
+            url.append(contextPath);
+        }
+        return url.toString();
+    }
+
+    private boolean estaTiempoAgotadoSinFinalizar(Examen examen) {
+        if (examen.getFechaFin() != null || examen.getFechaInicio() == null) {
+            return false;
+        }
+
+        LocalDateTime limite = examen.getFechaInicio().plusMinutes(60);
+        return LocalDateTime.now().isAfter(limite);
     }
     
     // Método auxiliar para obtener la IP del cliente

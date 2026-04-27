@@ -20,9 +20,11 @@ import java.util.stream.Collectors;
 import java.time.format.DateTimeFormatter;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 @Service
 public class FormularioService {
+    private static final int TIEMPO_LIMITE_EXAMEN_MINUTOS = 60;
     
     @Autowired
     private PersonaRepository personaRepository;
@@ -68,6 +70,26 @@ public class FormularioService {
     // Métodos para Examen
     public Examen guardarExamen(Examen examen) {
         return examenRepository.save(examen);
+    }
+
+    /**
+     * Crea un nuevo examen para la misma persona eliminando el examen anterior.
+     * Útil cuando el examen quedó agotado sin finalizar y se desea reintentar.
+     */
+    @Transactional
+    public Examen recrearExamenParaPersona(Examen examenAnterior) {
+        if (examenAnterior == null || examenAnterior.getPersona() == null) {
+            throw new IllegalArgumentException("Examen o persona inválidos para recrear examen");
+        }
+
+        Persona persona = examenAnterior.getPersona();
+
+        // Eliminar examen previo para respetar la relación 1 a 1 persona-examen.
+        examenRepository.delete(examenAnterior);
+        examenRepository.flush();
+
+        Examen nuevoExamen = new Examen(persona);
+        return examenRepository.save(nuevoExamen);
     }
     
     public Optional<Examen> buscarExamenPorId(Long id) {
@@ -285,6 +307,7 @@ public class FormularioService {
                         examen.isAprobado(),
                         fechaExamen
                     );
+                    dto.setEstadoTiempo(calcularEstadoTiempoExamen(examen));
                     // Marcar si hubo intento fallido al guardar recomendación (opción 3)
                     intentoFallidoGuardarRecomendacionRepository.findFirstByExamenIdOrderByFechaHoraDesc(examen.getId())
                         .ifPresent(intento -> {
@@ -313,5 +336,36 @@ public class FormularioService {
     public byte[] generarExcelInscripciones() throws IOException {
         // Delegar al ExcelService
         return excelService.generarExcelInscripciones();
+    }
+
+    /**
+     * Calcula el estado temporal del examen:
+     * - FINALIZADO_EN_TIEMPO: el usuario finalizó antes o justo al límite.
+     * - TIEMPO_AGOTADO_SIN_FINALIZAR: el tiempo se agotó y no finalizó.
+     * - FINALIZADO_FUERA_DE_TIEMPO: finalizó luego del límite.
+     * - EN_CURSO: todavía está dentro del tiempo y sin finalizar.
+     */
+    private String calcularEstadoTiempoExamen(Examen examen) {
+        LocalDateTime fechaInicio = examen.getFechaInicio();
+        LocalDateTime fechaFin = examen.getFechaFin();
+
+        if (fechaInicio == null) {
+            return fechaFin != null
+                ? InscripcionDTO.ESTADO_TIEMPO_FINALIZADO_EN_TIEMPO
+                : InscripcionDTO.ESTADO_TIEMPO_EN_CURSO;
+        }
+
+        LocalDateTime limite = fechaInicio.plusMinutes(TIEMPO_LIMITE_EXAMEN_MINUTOS);
+
+        if (fechaFin != null) {
+            long minutosEntreInicioYFin = ChronoUnit.MINUTES.between(fechaInicio, fechaFin);
+            return minutosEntreInicioYFin <= TIEMPO_LIMITE_EXAMEN_MINUTOS
+                ? InscripcionDTO.ESTADO_TIEMPO_FINALIZADO_EN_TIEMPO
+                : InscripcionDTO.ESTADO_TIEMPO_FINALIZADO_FUERA_DE_TIEMPO;
+        }
+
+        return LocalDateTime.now().isAfter(limite)
+            ? InscripcionDTO.ESTADO_TIEMPO_TIEMPO_AGOTADO_SIN_FINALIZAR
+            : InscripcionDTO.ESTADO_TIEMPO_EN_CURSO;
     }
 } 
