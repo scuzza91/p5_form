@@ -1381,7 +1381,7 @@ public class FormularioController {
 
             return "redirect:" + nuevoExamenUrl;
         } catch (Exception e) {
-            logger.error("Error al generar reintento automático - examenId: {}", examenId, e);
+            logger.error("Error al generar reintento automático - examenToken: {}", examenToken, e);
             redirectAttributes.addFlashAttribute("error", "No se pudo generar el reintento: " + e.getMessage());
             return "redirect:/inscripciones";
         }
