@@ -298,41 +298,24 @@ public class BondareaService {
      * @return Map con el resultado: "success" (boolean) y "trackingPars" (String) si está disponible
      */
     public Map<String, Object> actualizarCasoEnBondarea(String idCaso, Examen examen, String nombreInstitucion, String nombreCurso, String duracion, Long idCurso, java.math.BigDecimal monto, String comentarios) {
-        Map<String, Object> resultado = new HashMap<>();
-        resultado.put("success", false);
-        resultado.put("trackingPars", null);
-        
+        return actualizarCasoEnBondarea(idCaso, examen, nombreInstitucion, nombreCurso, duracion, idCurso, monto, comentarios, null);
+    }
+
+    public Map<String, Object> actualizarCasoEnBondarea(String idCaso, Examen examen, String nombreInstitucion, String nombreCurso, String duracion, Long idCurso, java.math.BigDecimal monto, String comentarios, String urlReintentoTest) {
         if (idCaso == null || idCaso.trim().isEmpty()) {
             logger.warn("ID de caso vacío o nulo - No se puede actualizar en Bondarea");
-            return resultado;
+            return resultadoFallidoBondarea();
         }
-        
+
         if (examen == null) {
             logger.warn("Examen es null - No se puede actualizar en Bondarea");
-            return resultado;
+            return resultadoFallidoBondarea();
         }
-        
-        String token = configuracionService.obtenerApiTokenBondarea();
-        if (token == null || token.isEmpty()) {
-            logger.warn("Token de Bondarea no configurado - No se puede actualizar el caso");
-            return resultado;
-        }
-        
-        String idStage = "B26F5NF6"; // ID Stage específico según el curl
+
+        String idStage = "B26F5NF6";
         logger.info("Actualizando caso en Bondarea: idStage={}, idCaso={}", idStage, idCaso);
-        
-        // Preparar headers
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("Accept", "application/json");
-        headers.set("Authorization", "Bearer " + token);
-        headers.set("X-API-Token", token);
-        headers.set("scope", "1258");
-        
-        // Construir el body con los datos del examen
+
         Map<String, Object> requestBody = new HashMap<>();
-        
-        // Campo obligatorio: id_etapa (idStage)
         requestBody.put("id_etapa", idStage);
         
         // Mapear campos del examen a los custom fields de Bondarea
@@ -405,8 +388,67 @@ public class BondareaService {
         if (examen.getTiempoTotalMinutos() != null) {
             requestBody.put("custom_B26FNHF8", examen.getTiempoTotalMinutos());
         }
-        
-        // Convertir el body a JSON
+
+        agregarUrlReintentoSiPresente(requestBody, urlReintentoTest);
+
+        return ejecutarPutBondarea(idCaso, requestBody);
+    }
+
+    /**
+     * Actualiza en Bondarea únicamente el campo custom_B26FNCDU (URL de reintento del test).
+     */
+    public Map<String, Object> actualizarUrlReintentoEnBondarea(String idCaso, String urlReintento) {
+        if (idCaso == null || idCaso.trim().isEmpty()) {
+            logger.warn("ID de caso vacío o nulo - No se puede actualizar URL de reintento en Bondarea");
+            return resultadoFallidoBondarea();
+        }
+        if (urlReintento == null || urlReintento.trim().isEmpty()) {
+            logger.warn("URL de reintento vacía - No se puede actualizar en Bondarea");
+            return resultadoFallidoBondarea();
+        }
+
+        String idStage = "B26F5NF6";
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("id_etapa", idStage);
+        requestBody.put("custom_B26FNCDU", urlReintento.trim());
+
+        logger.info("Actualizando URL de reintento en Bondarea: idStage={}, idCaso={}, custom_B26FNCDU={}",
+            idStage, idCaso, urlReintento);
+
+        return ejecutarPutBondarea(idCaso, requestBody);
+    }
+
+    private void agregarUrlReintentoSiPresente(Map<String, Object> requestBody, String urlReintentoTest) {
+        if (urlReintentoTest != null && !urlReintentoTest.trim().isEmpty()) {
+            requestBody.put("custom_B26FNCDU", urlReintentoTest.trim());
+        }
+    }
+
+    private Map<String, Object> resultadoFallidoBondarea() {
+        Map<String, Object> resultado = new HashMap<>();
+        resultado.put("success", false);
+        resultado.put("trackingPars", null);
+        return resultado;
+    }
+
+    private Map<String, Object> ejecutarPutBondarea(String idCaso, Map<String, Object> requestBody) {
+        Map<String, Object> resultado = resultadoFallidoBondarea();
+
+        String token = configuracionService.obtenerApiTokenBondarea();
+        if (token == null || token.isEmpty()) {
+            logger.warn("Token de Bondarea no configurado - No se puede actualizar el caso");
+            return resultado;
+        }
+
+        String idStage = "B26F5NF6";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Accept", "application/json");
+        headers.set("Authorization", "Bearer " + token);
+        headers.set("X-API-Token", token);
+        headers.set("scope", "1258");
+
         ObjectMapper objectMapper = new ObjectMapper();
         String jsonBody;
         try {
@@ -416,21 +458,18 @@ public class BondareaService {
             logger.error("Error al convertir body a JSON: {}", e.getMessage(), e);
             return resultado;
         }
-        
+
         HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
-        
-        // Intentar con cada URL base
+
         String ultimoError = null;
         for (String baseUrl : BONDAREA_BASE_URLS) {
             try {
-                // Construir URL: /api/v2/monitoring/{idStage}/{idCaso}
                 String url = baseUrl + BONDAREA_API_PATH
                     .replace("{idStage}", idStage)
                     .replace("{idCaso}", idCaso);
-                
+
                 logger.info("Actualizando caso en URL: {}", url);
-                
-                // Realizar la petición PUT
+
                 @SuppressWarnings("unchecked")
                 ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
                     url,
@@ -438,11 +477,10 @@ public class BondareaService {
                     entity,
                     (Class<Map<String, Object>>) (Class<?>) Map.class
                 );
-                
+
                 if (response.getStatusCode().is2xxSuccessful()) {
                     logger.info("✅ Caso actualizado exitosamente en Bondarea: idStage={}, idCaso={}", idStage, idCaso);
-                    
-                    // Intentar extraer trackingPars de la respuesta
+
                     Map<String, Object> responseBody = response.getBody();
                     if (responseBody != null) {
                         Object trackingParsObj = responseBody.get("trackingPars");
@@ -450,38 +488,33 @@ public class BondareaService {
                             String trackingPars = trackingParsObj.toString();
                             logger.info("trackingPars obtenido de la respuesta: {}", trackingPars);
                             resultado.put("trackingPars", trackingPars);
-                        } else {
-                            logger.debug("trackingPars no encontrado en la respuesta de Bondarea");
                         }
                     }
-                    
+
                     resultado.put("success", true);
                     return resultado;
                 } else {
                     logger.warn("Respuesta no exitosa - Status: {}", response.getStatusCode());
                     ultimoError = "Status: " + response.getStatusCode();
                 }
-                
+
             } catch (HttpClientErrorException e) {
-                String errorMsg = String.format("HTTP %d: %s", e.getStatusCode().value(), 
+                String errorMsg = String.format("HTTP %d: %s", e.getStatusCode().value(),
                     e.getResponseBodyAsString() != null ? e.getResponseBodyAsString() : e.getMessage());
                 logger.error("Error HTTP al actualizar caso en {}: {}", baseUrl, errorMsg);
                 ultimoError = errorMsg;
-                
+
                 if (e.getStatusCode().value() == 401 || e.getStatusCode().value() == 403) {
                     logger.error("Error de autenticación: Verificar que el token sea correcto");
-                    // No continuar con otras URLs si es error de autenticación
                     break;
                 } else if (e.getStatusCode().value() == 404) {
                     logger.warn("Caso no encontrado (404) en {}", baseUrl);
-                    // Continuar con siguiente URL base
                     continue;
                 }
             } catch (RestClientException e) {
                 String errorMsg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
                 logger.warn("Error de conexión al actualizar caso en {}: {}", baseUrl, errorMsg);
                 ultimoError = errorMsg;
-                // Continuar con siguiente URL base
                 continue;
             } catch (Exception e) {
                 String errorMsg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
@@ -489,8 +522,8 @@ public class BondareaService {
                 ultimoError = errorMsg;
             }
         }
-        
-        logger.error("❌ No se pudo actualizar el caso {} en Bondarea después de intentar todas las URLs. Último error: {}", 
+
+        logger.error("❌ No se pudo actualizar el caso {} en Bondarea después de intentar todas las URLs. Último error: {}",
             idCaso, ultimoError);
         return resultado;
     }

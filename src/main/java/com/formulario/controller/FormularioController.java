@@ -272,9 +272,23 @@ public class FormularioController {
             logger.info("Persona y examen creados exitosamente - Persona ID: {}, Examen ID: {}, Email: {}", 
                        personaGuardada.getId(), examen.getId(), personaGuardada.getEmail());
             
-            // Construir URL del examen usando token hash
+            // Construir URL del examen y de reintento usando token hash
             String examenUrl = construirUrlExamen(request, examen);
+            String urlReintento = construirUrlReintento(request, examen);
             logger.info("URL del examen construida: {}", examenUrl);
+            logger.info("URL de reintento construida: {}", urlReintento);
+
+            // Enviar URL de reintento a Bondarea (custom_B26FNCDU)
+            try {
+                Map<String, Object> resultadoReintento = bondareaService.actualizarUrlReintentoEnBondarea(idCaso, urlReintento);
+                if (Boolean.TRUE.equals(resultadoReintento.get("success"))) {
+                    logger.info("URL de reintento enviada a Bondarea (custom_B26FNCDU) para idCaso: {}", idCaso);
+                } else {
+                    logger.warn("No se pudo enviar URL de reintento a Bondarea para idCaso: {}", idCaso);
+                }
+            } catch (Exception e) {
+                logger.error("Error al enviar URL de reintento a Bondarea para idCaso: {} - {}", idCaso, e.getMessage(), e);
+            }
             
             // Verificar si el cliente solicita redirección explícitamente
             String acceptHeader = request.getHeader("Accept");
@@ -297,16 +311,18 @@ public class FormularioController {
                     .build();
             }
             
-            // Por defecto, devolver JSON con la URL del examen
+            // Por defecto, devolver JSON con la URL del examen y de reintento
             logger.info("Devolviendo respuesta JSON con examenUrl: {}", examenUrl);
-            return ResponseEntity.ok(Map.of(
-                "success", true,
-                "mensaje", "Persona y examen creados exitosamente",
-                "personaId", personaGuardada.getId(),
-                "examenId", examen.getId(),
-                "examenUrl", examenUrl,
-                "email", personaGuardada.getEmail()
-            ));
+            Map<String, Object> respuesta = new HashMap<>();
+            respuesta.put("success", true);
+            respuesta.put("mensaje", "Persona y examen creados exitosamente");
+            respuesta.put("personaId", personaGuardada.getId());
+            respuesta.put("examenId", examen.getId());
+            respuesta.put("examenUrl", examenUrl);
+            respuesta.put("custom_B26FNCDU", urlReintento);
+            respuesta.put("reintentoUrl", urlReintento);
+            respuesta.put("email", personaGuardada.getEmail());
+            return ResponseEntity.ok(respuesta);
             
         } catch (Exception e) {
             logger.error("Error al crear persona desde API", e);
@@ -680,6 +696,7 @@ public class FormularioController {
     @PostMapping("/examen/finalizar")
     public String finalizarExamen(@RequestParam String examenToken,
                                  @RequestParam String respuestas,
+                                 HttpServletRequest request,
                                  RedirectAttributes redirectAttributes) {
         try {
             logger.info("=== INICIO FINALIZAR EXAMEN ===");
@@ -765,8 +782,11 @@ public class FormularioController {
                         examen.getCreatividad() != null ? examen.getCreatividad() : 0,
                         examen.getProgramacion() != null ? examen.getProgramacion() : 0);
                     
-                    // Llamar al método de actualización en Bondarea
-                    Map<String, Object> resultadoActualizacion = bondareaService.actualizarCasoEnBondarea(idCaso, examen, nombreInstitucion, nombreCurso, duracion, idCurso, monto, comentarios);
+                    String urlReintento = construirUrlReintento(request, examen);
+
+                    // Llamar al método de actualización en Bondarea (incluye custom_B26FNCDU)
+                    Map<String, Object> resultadoActualizacion = bondareaService.actualizarCasoEnBondarea(
+                        idCaso, examen, nombreInstitucion, nombreCurso, duracion, idCurso, monto, comentarios, urlReintento);
                     Boolean actualizado = (Boolean) resultadoActualizacion.get("success");
                     if (actualizado != null && actualizado) {
                         logger.info("✅ Caso actualizado exitosamente en Bondarea para idCaso: {}", idCaso);
@@ -795,7 +815,8 @@ public class FormularioController {
     @PostMapping("/api/examen/guardar-recomendacion-estudios")
     @ResponseBody
     @CrossOrigin(origins = "*")
-    public ResponseEntity<?> guardarRecomendacionEstudios(@RequestBody Map<String, Object> request) {
+    public ResponseEntity<?> guardarRecomendacionEstudios(@RequestBody Map<String, Object> request,
+                                                          HttpServletRequest httpRequest) {
         try {
             logger.info("=== INICIO GUARDAR RECOMENDACIÓN ESTUDIOS ===");
             
@@ -900,8 +921,11 @@ public class FormularioController {
                             duracion != null ? duracion : "N/A",
                             monto != null ? monto.toString() : "N/A");
                         
-                        // Llamar al método de actualización en Bondarea
-                        Map<String, Object> resultadoActualizacion = bondareaService.actualizarCasoEnBondarea(idCaso, examen, nombreInstitucion, nombreCurso, duracion, idCurso, monto, comentarios);
+                        String urlReintento = construirUrlReintento(httpRequest, examen);
+
+                        // Llamar al método de actualización en Bondarea (incluye custom_B26FNCDU)
+                        Map<String, Object> resultadoActualizacion = bondareaService.actualizarCasoEnBondarea(
+                            idCaso, examen, nombreInstitucion, nombreCurso, duracion, idCurso, monto, comentarios, urlReintento);
                         Boolean actualizado = (Boolean) resultadoActualizacion.get("success");
                         String trackingPars = (String) resultadoActualizacion.get("trackingPars");
                         
@@ -1475,6 +1499,11 @@ public class FormularioController {
                    scheme, host, contextPath, examen.getId(), token, finalUrl);
         
         return finalUrl;
+    }
+
+    private String construirUrlReintento(HttpServletRequest request, Examen examen) {
+        String tokenReintento = com.formulario.util.ExamenTokenUtil.generarToken(examen.getId());
+        return obtenerBaseUrl(request) + "/examen/reintento/" + tokenReintento;
     }
 
     private String obtenerBaseUrl(HttpServletRequest request) {
