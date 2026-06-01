@@ -1271,24 +1271,31 @@ public class FormularioController {
                 return "redirect:/";
             }
 
-            Examen examenAnterior = examenOpt.get();
-            if (!estaTiempoAgotadoSinFinalizar(examenAnterior)) {
-                logger.warn("Reintento solicitado para examen que no está en estado de tiempo agotado: {}", examenId);
-                redirectAttributes.addFlashAttribute("error",
-                    "Este link de reintento no está disponible. El examen puede haber sido completado o aún no ha vencido.");
-                return "redirect:/";
+            Examen examen = examenOpt.get();
+
+            // Caso 1: examen ya completado — no se puede reintentar
+            if (examen.getFechaFin() != null) {
+                logger.info("Reintento solicitado para examen ya completado: {}, redirigiendo a resultado", examenId);
+                return "redirect:/resultado/" + examen.getPersona().getId();
             }
 
-            Examen nuevoExamen = formularioService.recrearExamenParaPersona(examenAnterior);
-            String nuevoExamenUrl = construirUrlExamen(request, nuevoExamen);
+            // Caso 2: tiempo agotado sin finalizar — crear nuevo examen
+            if (estaTiempoAgotadoSinFinalizar(examen)) {
+                Examen nuevoExamen = formularioService.recrearExamenParaPersona(examen);
+                String nuevoExamenUrl = construirUrlExamen(request, nuevoExamen);
+                logger.info("Reintento generado para persona {} - Examen anterior: {}, nuevo: {}",
+                    nuevoExamen.getPersona().getEmail(), examenId, nuevoExamen.getId());
+                return "redirect:" + nuevoExamenUrl;
+            }
 
-            logger.info("Reintento generado desde link automático para persona {} - Examen anterior: {}, nuevo: {}",
-                nuevoExamen.getPersona().getEmail(), examenId, nuevoExamen.getId());
+            // Caso 3: examen no iniciado o en curso — redirigir al examen existente
+            String examenUrl = construirUrlExamen(request, examen);
+            logger.info("Acceso via link de reintento para examen en curso o no iniciado: {}", examenId);
+            return "redirect:" + examenUrl;
 
-            return "redirect:" + nuevoExamenUrl;
         } catch (Exception e) {
-            logger.error("Error al generar reintento automático - examenToken: {}", examenToken, e);
-            redirectAttributes.addFlashAttribute("error", "No se pudo generar el reintento. Por favor contacte al administrador.");
+            logger.error("Error al procesar link de reintento - examenToken: {}", examenToken, e);
+            redirectAttributes.addFlashAttribute("error", "No se pudo procesar el link. Por favor contacte al administrador.");
             return "redirect:/";
         }
     }
