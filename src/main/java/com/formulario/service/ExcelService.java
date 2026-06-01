@@ -15,10 +15,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class ExcelService {
-    
+
+    private static final Logger logger = LoggerFactory.getLogger(ExcelService.class);
+
     @Autowired
     private PersonaRepository personaRepository;
     
@@ -415,11 +419,11 @@ public class ExcelService {
     // Método para obtener todas las inscripciones con resultados
     private List<InscripcionDTO> obtenerTodasLasInscripciones() {
         try {
-            System.out.println("=== INICIO obtenerTodasLasInscripciones ===");
+            logger.info("=== INICIO obtenerTodasLasInscripciones ===");
             
             // Usar el método estándar primero para evitar problemas con JOIN FETCH
             List<Examen> examenes = examenRepository.findAll();
-            System.out.println("Total de exámenes encontrados: " + examenes.size());
+            logger.info("Total de exámenes encontrados: " + examenes.size());
             
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
             
@@ -427,7 +431,7 @@ public class ExcelService {
                 .filter(examen -> {
                     boolean tienePersona = examen.getPersona() != null;
                     if (!tienePersona) {
-                        System.out.println("Examen ID " + examen.getId() + " sin persona asociada");
+                        logger.info("Examen ID " + examen.getId() + " sin persona asociada");
                     }
                     return tienePersona;
                 })
@@ -436,12 +440,12 @@ public class ExcelService {
                     String fechaExamen = examen.getFechaFin() != null ? 
                         examen.getFechaFin().format(formatter) : "No completado";
                     
-                    System.out.println("Procesando examen ID: " + examen.getId() + " para persona: " + persona.getEmail());
+                    logger.info("Procesando examen ID: " + examen.getId() + " para persona: " + persona.getEmail());
                     
                     // Forzar la carga de las respuestas para asegurar que las puntuaciones estén calculadas
                     if (examen.getRespuestas() != null) {
                         int respuestasCount = examen.getRespuestas().size();
-                        System.out.println("  - Respuestas cargadas: " + respuestasCount);
+                        logger.info("  - Respuestas cargadas: " + respuestasCount);
                         
                         // Si el examen está completado pero las puntuaciones son null, recalcular
                         if (examen.getFechaFin() != null && 
@@ -449,21 +453,21 @@ public class ExcelService {
                              examen.getMatematica() == null || 
                              examen.getCreatividad() == null || 
                              examen.getProgramacion() == null)) {
-                            System.out.println("  - Recalculando puntuaciones para examen ID: " + examen.getId());
+                            logger.info("  - Recalculando puntuaciones para examen ID: " + examen.getId());
                             examen.calcularPuntuaciones();
                             examenRepository.save(examen);
                         }
                     } else {
-                        System.out.println("  - No hay respuestas asociadas");
+                        logger.info("  - No hay respuestas asociadas");
                     }
                     
                     // Log de puntuaciones
-                    System.out.println("  - Lógica: " + examen.getLogica());
-                    System.out.println("  - Matemática: " + examen.getMatematica());
-                    System.out.println("  - Creatividad: " + examen.getCreatividad());
-                    System.out.println("  - Programación: " + examen.getProgramacion());
-                    System.out.println("  - Promedio: " + examen.getPromedio());
-                    System.out.println("  - Aprobado: " + examen.isAprobado());
+                    logger.info("  - Lógica: " + examen.getLogica());
+                    logger.info("  - Matemática: " + examen.getMatematica());
+                    logger.info("  - Creatividad: " + examen.getCreatividad());
+                    logger.info("  - Programación: " + examen.getProgramacion());
+                    logger.info("  - Promedio: " + examen.getPromedio());
+                    logger.info("  - Aprobado: " + examen.isAprobado());
                     
                     InscripcionDTO dto = new InscripcionDTO(
                         examen.getId(),
@@ -482,17 +486,17 @@ public class ExcelService {
                         fechaExamen
                     );
                     
-                    System.out.println("  - DTO creado exitosamente");
+                    logger.info("  - DTO creado exitosamente");
                     return dto;
                 })
                 .collect(Collectors.toList());
             
-            System.out.println("Total de DTOs creados: " + resultado.size());
-            System.out.println("=== FIN obtenerTodasLasInscripciones ===");
+            logger.info("Total de DTOs creados: " + resultado.size());
+            logger.info("=== FIN obtenerTodasLasInscripciones ===");
             
             return resultado;
         } catch (Exception e) {
-            System.err.println("Error en obtenerTodasLasInscripciones: " + e.getMessage());
+            logger.error("Error en obtenerTodasLasInscripciones: " + e.getMessage());
             e.printStackTrace();
             // Si hay error, devolver lista vacía
             return new ArrayList<>();

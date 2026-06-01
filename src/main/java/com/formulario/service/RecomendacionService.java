@@ -8,10 +8,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class RecomendacionService {
-    
+
+    private static final Logger logger = LoggerFactory.getLogger(RecomendacionService.class);
+
     @Autowired
     private PosicionLaboralRepository posicionLaboralRepository;
     
@@ -24,24 +28,24 @@ public class RecomendacionService {
     @Transactional(readOnly = true)
     public List<RecomendacionDTO> generarRecomendaciones(Long personaId) {
         try {
-            System.out.println("🔄 Iniciando generación de recomendaciones para persona ID: " + personaId);
+            logger.info("🔄 Iniciando generación de recomendaciones para persona ID: " + personaId);
             
             // Obtener el examen del candidato
             Optional<Examen> examenOpt = formularioService.obtenerResultadoCompleto(personaId);
             if (examenOpt.isEmpty()) {
-                System.out.println("❌ No se encontró examen para persona ID: " + personaId);
+                logger.info("❌ No se encontró examen para persona ID: " + personaId);
                 return new ArrayList<>();
             }
             
             Examen examen = examenOpt.get();
-            System.out.println("✅ Examen encontrado - ID: " + examen.getId());
+            logger.info("✅ Examen encontrado - ID: " + examen.getId());
             
             // Obtener todas las posiciones activas
             List<PosicionLaboral> posiciones = posicionLaboralRepository.findByActivaTrue();
-            System.out.println("📋 Posiciones laborales activas encontradas: " + posiciones.size());
+            logger.info("📋 Posiciones laborales activas encontradas: " + posiciones.size());
             
             if (posiciones.isEmpty()) {
-                System.out.println("❌ No hay posiciones laborales activas en la base de datos");
+                logger.info("❌ No hay posiciones laborales activas en la base de datos");
                 return new ArrayList<>();
             }
             
@@ -50,34 +54,34 @@ public class RecomendacionService {
             
             for (PosicionLaboral posicion : posiciones) {
                 try {
-                    System.out.println("🔄 Calculando compatibilidad para: " + posicion.getTitulo());
+                    logger.info("🔄 Calculando compatibilidad para: " + posicion.getTitulo());
                     double compatibilidad = posicion.calcularCompatibilidad(examen);
-                    System.out.println("📊 Compatibilidad calculada: " + compatibilidad);
+                    logger.info("📊 Compatibilidad calculada: " + compatibilidad);
                     
                     // Solo incluir posiciones con compatibilidad > 0
                     if (compatibilidad > 0) {
                         RecomendacionDTO recomendacion = new RecomendacionDTO(posicion, examen, compatibilidad);
                         recomendaciones.add(recomendacion);
-                        System.out.println("✅ Recomendación agregada: " + posicion.getTitulo() + " (" + compatibilidad + ")");
+                        logger.info("✅ Recomendación agregada: " + posicion.getTitulo() + " (" + compatibilidad + ")");
                     } else {
-                        System.out.println("❌ Compatibilidad insuficiente: " + posicion.getTitulo() + " (" + compatibilidad + ")");
+                        logger.info("❌ Compatibilidad insuficiente: " + posicion.getTitulo() + " (" + compatibilidad + ")");
                     }
                 } catch (Exception e) {
-                    System.err.println("❌ Error al calcular compatibilidad para " + posicion.getTitulo() + ": " + e.getMessage());
+                    logger.error("❌ Error al calcular compatibilidad para " + posicion.getTitulo() + ": " + e.getMessage());
                     e.printStackTrace();
                 }
             }
             
-            System.out.println("📊 Total de recomendaciones generadas: " + recomendaciones.size());
+            logger.info("📊 Total de recomendaciones generadas: " + recomendaciones.size());
             
             // Ordenar por compatibilidad descendente
             recomendaciones.sort((r1, r2) -> Double.compare(r2.getCompatibilidad(), r1.getCompatibilidad()));
             
-            System.out.println("✅ Generación de recomendaciones completada exitosamente");
+            logger.info("✅ Generación de recomendaciones completada exitosamente");
             return recomendaciones;
             
         } catch (Exception e) {
-            System.err.println("❌ Error al generar recomendaciones: " + e.getMessage());
+            logger.error("❌ Error al generar recomendaciones: " + e.getMessage());
             e.printStackTrace();
             return new ArrayList<>();
         }
@@ -111,7 +115,7 @@ public class RecomendacionService {
             return recomendaciones;
             
         } catch (Exception e) {
-            System.err.println("Error al generar recomendaciones por categoría: " + e.getMessage());
+            logger.error("Error al generar recomendaciones por categoría: " + e.getMessage());
             return new ArrayList<>();
         }
     }
@@ -144,7 +148,7 @@ public class RecomendacionService {
             return recomendaciones;
             
         } catch (Exception e) {
-            System.err.println("Error al generar recomendaciones por nivel: " + e.getMessage());
+            logger.error("Error al generar recomendaciones por nivel: " + e.getMessage());
             return new ArrayList<>();
         }
     }
@@ -216,7 +220,7 @@ public class RecomendacionService {
             }
             
         } catch (Exception e) {
-            System.err.println("Error al obtener estadísticas: " + e.getMessage());
+            logger.error("Error al obtener estadísticas: " + e.getMessage());
             estadisticas.put("error", e.getMessage());
         }
         
@@ -228,14 +232,14 @@ public class RecomendacionService {
      */
     public void inicializarPosicionesEjemplo() {
         try {
-            System.out.println("🔄 Iniciando inicialización de posiciones laborales...");
+            logger.info("🔄 Iniciando inicialización de posiciones laborales...");
             
             // Verificar si ya hay posiciones
             long count = posicionLaboralRepository.count();
-            System.out.println("Posiciones existentes: " + count);
+            logger.info("Posiciones existentes: " + count);
             
             if (count > 0) {
-                System.out.println("✅ Ya existen posiciones laborales, saltando inicialización");
+                logger.info("✅ Ya existen posiciones laborales, saltando inicialización");
                 return;
             }
             
@@ -570,10 +574,10 @@ public class RecomendacionService {
             // Guardar todas las posiciones
             posicionLaboralRepository.saveAll(posiciones);
             
-            System.out.println("✅ " + posiciones.size() + " posiciones laborales creadas exitosamente");
+            logger.info("✅ " + posiciones.size() + " posiciones laborales creadas exitosamente");
             
         } catch (Exception e) {
-            System.err.println("❌ Error al inicializar posiciones laborales: " + e.getMessage());
+            logger.error("❌ Error al inicializar posiciones laborales: " + e.getMessage());
             e.printStackTrace();
         }
     }

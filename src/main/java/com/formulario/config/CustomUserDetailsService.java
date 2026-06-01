@@ -11,39 +11,43 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
+
+    private static final Logger logger = LoggerFactory.getLogger(CustomUserDetailsService.class);
 
     @Autowired
     private AuthService authService;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        System.out.println("🔍 CustomUserDetailsService: Buscando usuario: " + username);
+        logger.info("🔍 CustomUserDetailsService: Buscando usuario: " + username);
         
         // Buscar el usuario por username
         var usuarioOpt = authService.buscarPorUsername(username);
         
         if (usuarioOpt.isEmpty()) {
-            System.out.println("❌ CustomUserDetailsService: Usuario no encontrado: " + username);
+            logger.info("❌ CustomUserDetailsService: Usuario no encontrado: " + username);
             throw new UsernameNotFoundException("Usuario no encontrado: " + username);
         }
         
         Usuario usuario = usuarioOpt.get();
-        System.out.println("✅ CustomUserDetailsService: Usuario encontrado: " + usuario.getUsername());
-        System.out.println("🔐 CustomUserDetailsService: Contraseña encriptada: " + usuario.getPassword().substring(0, 20) + "...");
-        System.out.println("👤 CustomUserDetailsService: Usuario activo: " + usuario.isActivo());
+        logger.info("✅ CustomUserDetailsService: Usuario encontrado: " + usuario.getUsername());
+        logger.info("🔐 CustomUserDetailsService: Contraseña encriptada: " + usuario.getPassword().substring(0, 20) + "...");
+        logger.info("👤 CustomUserDetailsService: Usuario activo: " + usuario.isActivo());
         
         // Verificar que el usuario esté activo
         if (!usuario.isActivo()) {
-            System.out.println("❌ CustomUserDetailsService: Usuario inactivo: " + username);
+            logger.info("❌ CustomUserDetailsService: Usuario inactivo: " + username);
             throw new UsernameNotFoundException("Usuario inactivo: " + username);
         }
         
         // Crear las autoridades basadas en el rol del usuario
         String rol = "ROLE_" + usuario.getRol().name();
-        System.out.println("🔑 CustomUserDetailsService: Rol asignado: " + rol);
+        logger.info("🔑 CustomUserDetailsService: Rol asignado: " + rol);
         
         UserDetails userDetails = User.builder()
                 .username(usuario.getUsername())
@@ -55,7 +59,7 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .disabled(!usuario.isActivo())
                 .build();
         
-        System.out.println("✅ CustomUserDetailsService: UserDetails creado exitosamente");
+        logger.info("✅ CustomUserDetailsService: UserDetails creado exitosamente");
         return userDetails;
     }
 } 

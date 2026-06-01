@@ -28,8 +28,8 @@ public class RecomendacionController {
     private static final Logger logger = LoggerFactory.getLogger(RecomendacionController.class);
     
     static {
-        System.out.println("=== RECOMENDACION CONTROLLER CARGADO ===");
-        System.out.println("Controlador de recomendaciones inicializado correctamente");
+        logger.info("=== RECOMENDACION CONTROLLER CARGADO ===");
+        logger.info("Controlador de recomendaciones inicializado correctamente");
     }
     
     @Autowired
@@ -49,7 +49,7 @@ public class RecomendacionController {
      */
     @GetMapping("/ping")
     public String ping(Model model) {
-        System.out.println("=== PING ENDPOINT ACCEDIDO ===");
+        logger.info("=== PING ENDPOINT ACCEDIDO ===");
         model.addAttribute("mensaje", "PING - Controlador de recomendaciones funcionando correctamente");
         return "error";
     }
@@ -59,7 +59,7 @@ public class RecomendacionController {
      */
     @GetMapping("/simple")
     public String simple(Model model) {
-        System.out.println("=== SIMPLE ENDPOINT ACCEDIDO ===");
+        logger.info("=== SIMPLE ENDPOINT ACCEDIDO ===");
         model.addAttribute("mensaje", "Endpoint simple funcionando correctamente");
         return "error";
     }
@@ -70,11 +70,11 @@ public class RecomendacionController {
     @GetMapping("/test")
     public String testEndpoint(Model model) {
         try {
-            System.out.println("=== TEST ENDPOINT ACCEDIDO ===");
+            logger.info("=== TEST ENDPOINT ACCEDIDO ===");
             model.addAttribute("mensaje", "Test endpoint funcionando correctamente");
             return "error";
         } catch (Exception e) {
-            System.err.println("Error en test endpoint: " + e.getMessage());
+            logger.error("Error en test endpoint: " + e.getMessage());
             model.addAttribute("mensaje", "Error en test endpoint: " + e.getMessage());
             return "error";
         }
@@ -86,7 +86,7 @@ public class RecomendacionController {
     @GetMapping("/debug")
     public String debugEndpoint(Model model) {
         try {
-            System.out.println("=== DEBUG ENDPOINT ACCEDIDO ===");
+            logger.info("=== DEBUG ENDPOINT ACCEDIDO ===");
             
             StringBuilder debugInfo = new StringBuilder();
             debugInfo.append("=== DIAGNÓSTICO DEL SISTEMA ===\n\n");
@@ -132,7 +132,7 @@ public class RecomendacionController {
             model.addAttribute("mensaje", debugInfo.toString());
             
         } catch (Exception e) {
-            System.err.println("Error en debug endpoint: " + e.getMessage());
+            logger.error("Error en debug endpoint: " + e.getMessage());
             model.addAttribute("mensaje", "Error en debug endpoint: " + e.getMessage());
         }
         
@@ -145,18 +145,18 @@ public class RecomendacionController {
     @GetMapping("/init")
     public String initRolesEndpoint(Model model) {
         try {
-            System.out.println("=== INIT ROLES ENDPOINT ACCEDIDO ===");
+            logger.info("=== INIT ROLES ENDPOINT ACCEDIDO ===");
             
             // Verificar roles existentes primero
             List<RolProfesional> rolesExistentes = rolProfesionalRepository.findByActivoTrue();
-            System.out.println("Roles existentes: " + rolesExistentes.size());
+            logger.info("Roles existentes: " + rolesExistentes.size());
             
             if (rolesExistentes.isEmpty()) {
-                System.out.println("No hay roles existentes, inicializando...");
+                logger.info("No hay roles existentes, inicializando...");
                 // Forzar inicialización de roles profesionales
                 rolProfesionalService.inicializarRolesEjemplo();
             } else {
-                System.out.println("Ya existen roles, saltando inicialización");
+                logger.info("Ya existen roles, saltando inicialización");
             }
             
             // Verificar que se crearon
@@ -179,7 +179,7 @@ public class RecomendacionController {
             model.addAttribute("titulo", "Inicialización Completada");
             
         } catch (Exception e) {
-            System.err.println("Error en init endpoint: " + e.getMessage());
+            logger.error("Error en init endpoint: " + e.getMessage());
             e.printStackTrace();
             model.addAttribute("mensaje", "Error en inicialización: " + e.getMessage());
             model.addAttribute("titulo", "Error en Inicialización");
@@ -193,8 +193,8 @@ public class RecomendacionController {
      */
     @GetMapping("/{personaId}")
     public String mostrarRecomendaciones(@PathVariable Long personaId, Model model) {
-        System.out.println("=== INICIO mostrarRecomendaciones ===");
-        System.out.println("Generando recomendaciones para persona ID: " + personaId);
+        logger.info("=== INICIO mostrarRecomendaciones ===");
+        logger.info("Generando recomendaciones para persona ID: " + personaId);
         
         try {
             // Paso 1: Verificar si existe la persona
@@ -205,7 +205,7 @@ public class RecomendacionController {
             }
             
             Persona persona = personaOpt.get();
-            System.out.println("Persona encontrada: " + persona.getEmail());
+            logger.info("Persona encontrada: " + persona.getEmail());
             
             // Paso 2: Verificar si existe el examen
             Optional<Examen> examenOpt = examenRepository.findByPersona(persona);
@@ -215,7 +215,7 @@ public class RecomendacionController {
             }
             
             Examen examen = examenOpt.get();
-            System.out.println("Examen encontrado - ID: " + examen.getId() + ", Completado: " + (examen.getFechaFin() != null ? "SÍ" : "NO"));
+            logger.info("Examen encontrado - ID: " + examen.getId() + ", Completado: " + (examen.getFechaFin() != null ? "SÍ" : "NO"));
             
             // Paso 3: Verificar que el examen esté completado
             if (examen.getFechaFin() == null) {
@@ -225,7 +225,7 @@ public class RecomendacionController {
             
             // Paso 4: Verificar roles profesionales
             List<RolProfesional> roles = rolProfesionalRepository.findByActivoTrue();
-            System.out.println("Roles profesionales activos encontrados: " + roles.size());
+            logger.info("Roles profesionales activos encontrados: " + roles.size());
             
             if (roles.isEmpty()) {
                 model.addAttribute("error", "No hay roles profesionales disponibles. Contacte al administrador.");
@@ -233,9 +233,9 @@ public class RecomendacionController {
             }
             
             // Paso 5: Obtener recomendaciones
-            System.out.println("Generando recomendaciones...");
+            logger.info("Generando recomendaciones...");
             List<RecomendacionRolDTO> recomendaciones = rolProfesionalService.generarRecomendacionesRoles(personaId);
-            System.out.println("Recomendaciones generadas: " + recomendaciones.size() + " roles");
+            logger.info("Recomendaciones generadas: " + recomendaciones.size() + " roles");
             
             // Paso 6: Obtener estadísticas
             Map<String, Object> estadisticas = rolProfesionalService.obtenerEstadisticasRecomendacionesRoles(personaId);
@@ -244,12 +244,12 @@ public class RecomendacionController {
             model.addAttribute("estadisticas", estadisticas);
             model.addAttribute("personaId", personaId);
             
-            System.out.println("Recomendaciones cargadas exitosamente para persona ID: " + personaId);
+            logger.info("Recomendaciones cargadas exitosamente para persona ID: " + personaId);
             return "recomendaciones";
             
         } catch (Exception e) {
-            System.err.println("Error al mostrar recomendaciones para persona ID: " + personaId);
-            System.err.println("Error detallado: " + e.getMessage());
+            logger.error("Error al mostrar recomendaciones para persona ID: " + personaId);
+            logger.error("Error detallado: " + e.getMessage());
             e.printStackTrace();
             model.addAttribute("error", "Error al generar recomendaciones: " + e.getMessage());
             return "error";
@@ -258,22 +258,22 @@ public class RecomendacionController {
 
     @GetMapping("/test-simple")
     public String testSimple(Model model) {
-        System.out.println("=== TEST SIMPLE ENDPOINT ACCEDIDO ===");
+        logger.info("=== TEST SIMPLE ENDPOINT ACCEDIDO ===");
         return "error";
     }
 
     @GetMapping("/test-ultra-simple")
     public String testUltraSimple(Model model) {
         try {
-            System.out.println("=== TEST ULTRA SIMPLE ENDPOINT ACCEDIDO ===");
+            logger.info("=== TEST ULTRA SIMPLE ENDPOINT ACCEDIDO ===");
             
             model.addAttribute("mensaje", "¡Funciona! El servidor está respondiendo correctamente.");
             model.addAttribute("titulo", "Test Ultra Simple");
             
-            System.out.println("Test ultra simple completado exitosamente");
+            logger.info("Test ultra simple completado exitosamente");
             
         } catch (Exception e) {
-            System.err.println("Error en test-ultra-simple: " + e.getMessage());
+            logger.error("Error en test-ultra-simple: " + e.getMessage());
             e.printStackTrace();
             model.addAttribute("mensaje", "Error: " + e.getMessage());
             model.addAttribute("titulo", "Error");
@@ -285,7 +285,7 @@ public class RecomendacionController {
     @GetMapping("/test-init")
     public String testInit(Model model) {
         try {
-            System.out.println("=== TEST INIT ENDPOINT ACCEDIDO ===");
+            logger.info("=== TEST INIT ENDPOINT ACCEDIDO ===");
             
             // Solo verificar roles existentes sin inicializar
             List<RolProfesional> roles = rolProfesionalRepository.findByActivoTrue();
@@ -309,7 +309,7 @@ public class RecomendacionController {
             model.addAttribute("titulo", "Estado de Roles");
             
         } catch (Exception e) {
-            System.err.println("Error en test-init: " + e.getMessage());
+            logger.error("Error en test-init: " + e.getMessage());
             e.printStackTrace();
             model.addAttribute("mensaje", "Error: " + e.getMessage());
             model.addAttribute("titulo", "Error");
@@ -321,7 +321,7 @@ public class RecomendacionController {
     @GetMapping("/test-template")
     public String testTemplate(Model model) {
         try {
-            System.out.println("=== TEST TEMPLATE ENDPOINT ACCEDIDO ===");
+            logger.info("=== TEST TEMPLATE ENDPOINT ACCEDIDO ===");
             
             // Crear datos de prueba mínimos
             List<RecomendacionRolDTO> recomendaciones = new ArrayList<>();
@@ -347,7 +347,7 @@ public class RecomendacionController {
             testRec1.setMinProgramacion(70);
             recomendaciones.add(testRec1);
             
-            System.out.println("Recomendación de prueba creada: " + testRec1.getTitulo());
+            logger.info("Recomendación de prueba creada: " + testRec1.getTitulo());
             
             Map<String, Object> estadisticas = new HashMap<>();
             estadisticas.put("totalRecomendaciones", 1);
@@ -357,19 +357,19 @@ public class RecomendacionController {
             estadisticas.put("porNivel", new HashMap<>());
             estadisticas.put("porNivelCompatibilidad", new HashMap<>());
             
-            System.out.println("Estadísticas creadas");
+            logger.info("Estadísticas creadas");
             
             model.addAttribute("recomendaciones", recomendaciones);
             model.addAttribute("estadisticas", estadisticas);
             model.addAttribute("personaId", 999L);
             
-            System.out.println("Atributos agregados al modelo");
-            System.out.println("Retornando template 'recomendaciones'");
+            logger.info("Atributos agregados al modelo");
+            logger.info("Retornando template 'recomendaciones'");
             
             return "recomendaciones";
             
         } catch (Exception e) {
-            System.err.println("Error en test-template: " + e.getMessage());
+            logger.error("Error en test-template: " + e.getMessage());
             e.printStackTrace();
             model.addAttribute("error", "Error en test-template: " + e.getMessage());
             return "error";
@@ -379,7 +379,7 @@ public class RecomendacionController {
     @GetMapping("/test-calculo")
     public String testCalculo(Model model) {
         try {
-            System.out.println("=== TEST CÁLCULO DE COMPATIBILIDAD ===");
+            logger.info("=== TEST CÁLCULO DE COMPATIBILIDAD ===");
             
             // Crear un examen de prueba con puntuaciones específicas
             Examen examenTest = new Examen();
@@ -390,12 +390,12 @@ public class RecomendacionController {
             examenTest.setProgramacion(70);
             // El promedio se calcula automáticamente: (75+60+80+70)/4 = 71.25
             
-            System.out.println("Examen de prueba creado:");
-            System.out.println("- Lógica: " + examenTest.getLogica());
-            System.out.println("- Matemática: " + examenTest.getMatematica());
-            System.out.println("- Creatividad: " + examenTest.getCreatividad());
-            System.out.println("- Programación: " + examenTest.getProgramacion());
-            System.out.println("- Promedio: " + examenTest.getPromedio());
+            logger.info("Examen de prueba creado:");
+            logger.info("- Lógica: " + examenTest.getLogica());
+            logger.info("- Matemática: " + examenTest.getMatematica());
+            logger.info("- Creatividad: " + examenTest.getCreatividad());
+            logger.info("- Programación: " + examenTest.getProgramacion());
+            logger.info("- Promedio: " + examenTest.getPromedio());
             
             // Crear roles de prueba para verificar cálculos
             List<RecomendacionRolDTO> recomendaciones = new ArrayList<>();
@@ -413,7 +413,7 @@ public class RecomendacionController {
             frontend.setPesoProgramacion(50);
             
             double compatFrontend = frontend.calcularCompatibilidad(examenTest);
-            System.out.println("Frontend - Compatibilidad calculada: " + compatFrontend);
+            logger.info("Frontend - Compatibilidad calculada: " + compatFrontend);
             
             RecomendacionRolDTO recFrontend = new RecomendacionRolDTO(frontend, examenTest, compatFrontend);
             recomendaciones.add(recFrontend);
@@ -431,7 +431,7 @@ public class RecomendacionController {
             dataScientist.setPesoProgramacion(20);
             
             double compatDataScientist = dataScientist.calcularCompatibilidad(examenTest);
-            System.out.println("Data Scientist - Compatibilidad calculada: " + compatDataScientist);
+            logger.info("Data Scientist - Compatibilidad calculada: " + compatDataScientist);
             
             if (compatDataScientist > 0) {
                 RecomendacionRolDTO recDataScientist = new RecomendacionRolDTO(dataScientist, examenTest, compatDataScientist);
@@ -451,7 +451,7 @@ public class RecomendacionController {
             juniorDev.setPesoProgramacion(40);
             
             double compatJuniorDev = juniorDev.calcularCompatibilidad(examenTest);
-            System.out.println("Junior Developer - Compatibilidad calculada: " + compatJuniorDev);
+            logger.info("Junior Developer - Compatibilidad calculada: " + compatJuniorDev);
             
             RecomendacionRolDTO recJuniorDev = new RecomendacionRolDTO(juniorDev, examenTest, compatJuniorDev);
             recomendaciones.add(recJuniorDev);
@@ -471,12 +471,12 @@ public class RecomendacionController {
             model.addAttribute("personaId", 999L);
             model.addAttribute("testMode", true);
             
-            System.out.println("Test de cálculo completado. Recomendaciones generadas: " + recomendaciones.size());
+            logger.info("Test de cálculo completado. Recomendaciones generadas: " + recomendaciones.size());
             
             return "recomendaciones";
             
         } catch (Exception e) {
-            System.err.println("Error en test-calculo: " + e.getMessage());
+            logger.error("Error en test-calculo: " + e.getMessage());
             e.printStackTrace();
             model.addAttribute("error", "Error en test-calculo: " + e.getMessage());
             return "error";
@@ -486,7 +486,7 @@ public class RecomendacionController {
     @GetMapping("/test-calculo-detallado")
     public String testCalculoDetallado(Model model) {
         try {
-            System.out.println("=== TEST CÁLCULO DETALLADO ===");
+            logger.info("=== TEST CÁLCULO DETALLADO ===");
             
             // Crear diferentes exámenes de prueba
             List<Examen> examenes = new ArrayList<>();
@@ -566,8 +566,8 @@ public class RecomendacionController {
             
             for (int i = 0; i < examenes.size(); i++) {
                 Examen examen = examenes.get(i);
-                System.out.println("\n--- EXAMEN " + (i+1) + " ---");
-                System.out.println("Lógica: " + examen.getLogica() + ", Matemática: " + examen.getMatematica() + 
+                logger.info("\n--- EXAMEN " + (i+1) + " ---");
+                logger.info("Lógica: " + examen.getLogica() + ", Matemática: " + examen.getMatematica() + 
                                  ", Creatividad: " + examen.getCreatividad() + ", Programación: " + examen.getProgramacion() + 
                                  ", Promedio: " + examen.getPromedio());
                 
@@ -583,7 +583,7 @@ public class RecomendacionController {
                     
                     resultados.add(resultado);
                     
-                    System.out.println(rol.getTitulo() + ": " + compatibilidad + "% (" + 
+                    logger.info(rol.getTitulo() + ": " + compatibilidad + "% (" + 
                                      (compatibilidad > 0 ? "CUMPLE" : "NO CUMPLE") + ")");
                 }
             }
@@ -594,7 +594,7 @@ public class RecomendacionController {
             return "test_calculo";
             
         } catch (Exception e) {
-            System.err.println("Error en test-calculo-detallado: " + e.getMessage());
+            logger.error("Error en test-calculo-detallado: " + e.getMessage());
             e.printStackTrace();
             model.addAttribute("error", "Error en test-calculo-detallado: " + e.getMessage());
             return "error";

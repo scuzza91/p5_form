@@ -21,9 +21,13 @@ import java.time.format.DateTimeFormatter;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class FormularioService {
+
+    private static final Logger logger = LoggerFactory.getLogger(FormularioService.class);
     private static final int TIEMPO_LIMITE_EXAMEN_MINUTOS = 60;
     
     @Autowired
@@ -179,23 +183,23 @@ public class FormularioService {
             // Buscar la persona primero
             Optional<Persona> persona = buscarPersonaPorId(personaId);
             if (persona.isEmpty()) {
-                System.out.println("Persona no encontrada con ID: " + personaId);
+                logger.info("Persona no encontrada con ID: " + personaId);
                 return Optional.empty();
             }
             
             // Buscar el examen para esa persona
             Optional<Examen> examenOpt = buscarExamenPorPersona(persona.get());
             if (examenOpt.isEmpty()) {
-                System.out.println("Examen no encontrado para persona ID: " + personaId);
+                logger.info("Examen no encontrado para persona ID: " + personaId);
                 return Optional.empty();
             }
             
             Examen examen = examenOpt.get();
-            System.out.println("Examen encontrado - ID: " + examen.getId());
+            logger.info("Examen encontrado - ID: " + examen.getId());
             
             // Verificar que el examen esté completado
             if (examen.getFechaFin() == null) {
-                System.out.println("Examen no completado - ID: " + examen.getId());
+                logger.info("Examen no completado - ID: " + examen.getId());
                 return Optional.empty();
             }
             
@@ -204,18 +208,18 @@ public class FormularioService {
                 examen.getMatematica() == null || 
                 examen.getCreatividad() == null || 
                 examen.getProgramacion() == null) {
-                System.out.println("Puntuaciones no calculadas - recalculando...");
+                logger.info("Puntuaciones no calculadas - recalculando...");
                 // Recalcular puntuaciones si es necesario
                 examen.calcularPuntuaciones();
                 examenRepository.save(examen);
-                System.out.println("Puntuaciones recalculadas");
+                logger.info("Puntuaciones recalculadas");
             }
             
-            System.out.println("Resultado cargado exitosamente");
+            logger.info("Resultado cargado exitosamente");
             return Optional.of(examen);
             
         } catch (Exception e) {
-            System.err.println("Error al obtener resultado completo: " + e.getMessage());
+            logger.error("Error al obtener resultado completo: " + e.getMessage());
             e.printStackTrace();
             return Optional.empty();
         }
@@ -232,7 +236,7 @@ public class FormularioService {
             }
             return Optional.empty();
         } catch (Exception e) {
-            System.err.println("Error al obtener resultado DTO: " + e.getMessage());
+            logger.error("Error al obtener resultado DTO: " + e.getMessage());
             e.printStackTrace();
             return Optional.empty();
         }
@@ -241,11 +245,11 @@ public class FormularioService {
     // Método para obtener todas las inscripciones con resultados
     public List<InscripcionDTO> obtenerTodasLasInscripciones() {
         try {
-            System.out.println("=== INICIO obtenerTodasLasInscripciones ===");
+            logger.info("=== INICIO obtenerTodasLasInscripciones ===");
             
             // Usar el método estándar primero para evitar problemas con JOIN FETCH
             List<Examen> examenes = examenRepository.findAll();
-            System.out.println("Total de exámenes encontrados: " + examenes.size());
+            logger.info("Total de exámenes encontrados: " + examenes.size());
             
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
             
@@ -253,7 +257,7 @@ public class FormularioService {
                 .filter(examen -> {
                     boolean tienePersona = examen.getPersona() != null;
                     if (!tienePersona) {
-                        System.out.println("Examen ID " + examen.getId() + " sin persona asociada");
+                        logger.info("Examen ID " + examen.getId() + " sin persona asociada");
                     }
                     return tienePersona;
                 })
@@ -262,12 +266,12 @@ public class FormularioService {
                     String fechaExamen = examen.getFechaFin() != null ? 
                         examen.getFechaFin().format(formatter) : "No completado";
                     
-                    System.out.println("Procesando examen ID: " + examen.getId() + " para persona: " + persona.getEmail());
+                    logger.info("Procesando examen ID: " + examen.getId() + " para persona: " + persona.getEmail());
                     
                     // Forzar la carga de las respuestas para asegurar que las puntuaciones estén calculadas
                     if (examen.getRespuestas() != null) {
                         int respuestasCount = examen.getRespuestas().size();
-                        System.out.println("  - Respuestas cargadas: " + respuestasCount);
+                        logger.info("  - Respuestas cargadas: " + respuestasCount);
                         
                         // Si el examen está completado pero las puntuaciones son null, recalcular
                         if (examen.getFechaFin() != null && 
@@ -275,21 +279,21 @@ public class FormularioService {
                              examen.getMatematica() == null || 
                              examen.getCreatividad() == null || 
                              examen.getProgramacion() == null)) {
-                            System.out.println("  - Recalculando puntuaciones para examen ID: " + examen.getId());
+                            logger.info("  - Recalculando puntuaciones para examen ID: " + examen.getId());
                             examen.calcularPuntuaciones();
                             examenRepository.save(examen);
                         }
                     } else {
-                        System.out.println("  - No hay respuestas asociadas");
+                        logger.info("  - No hay respuestas asociadas");
                     }
                     
                     // Log de puntuaciones
-                    System.out.println("  - Lógica: " + examen.getLogica());
-                    System.out.println("  - Matemática: " + examen.getMatematica());
-                    System.out.println("  - Creatividad: " + examen.getCreatividad());
-                    System.out.println("  - Programación: " + examen.getProgramacion());
-                    System.out.println("  - Promedio: " + examen.getPromedio());
-                    System.out.println("  - Aprobado: " + examen.isAprobado());
+                    logger.info("  - Lógica: " + examen.getLogica());
+                    logger.info("  - Matemática: " + examen.getMatematica());
+                    logger.info("  - Creatividad: " + examen.getCreatividad());
+                    logger.info("  - Programación: " + examen.getProgramacion());
+                    logger.info("  - Promedio: " + examen.getPromedio());
+                    logger.info("  - Aprobado: " + examen.isAprobado());
                     
                     InscripcionDTO dto = new InscripcionDTO(
                         examen.getId(),
@@ -315,17 +319,17 @@ public class FormularioService {
                             LocalDateTime f = intento.getFechaHora();
                             dto.setIntentoFallidoGuardarRecomendacionFecha(f != null ? f.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : null);
                         });
-                    System.out.println("  - DTO creado exitosamente");
+                    logger.info("  - DTO creado exitosamente");
                     return dto;
                 })
                 .collect(Collectors.toList());
             
-            System.out.println("Total de DTOs creados: " + resultado.size());
-            System.out.println("=== FIN obtenerTodasLasInscripciones ===");
+            logger.info("Total de DTOs creados: " + resultado.size());
+            logger.info("=== FIN obtenerTodasLasInscripciones ===");
             
             return resultado;
         } catch (Exception e) {
-            System.err.println("Error en obtenerTodasLasInscripciones: " + e.getMessage());
+            logger.error("Error en obtenerTodasLasInscripciones: " + e.getMessage());
             e.printStackTrace();
             // Si hay error, devolver lista vacía
             return new ArrayList<>();

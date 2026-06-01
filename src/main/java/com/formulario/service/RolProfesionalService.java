@@ -8,10 +8,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class RolProfesionalService {
-    
+
+    private static final Logger logger = LoggerFactory.getLogger(RolProfesionalService.class);
+
     @Autowired
     private RolProfesionalRepository rolProfesionalRepository;
     
@@ -30,17 +34,17 @@ public class RolProfesionalService {
     @Transactional(readOnly = true)
     public List<RecomendacionRolDTO> generarRecomendacionesRoles(Long personaId) {
         try {
-            System.out.println("🔄 Iniciando generación de recomendaciones de roles para persona ID: " + personaId);
+            logger.info("🔄 Iniciando generación de recomendaciones de roles para persona ID: " + personaId);
             
             // Obtener el examen del candidato
             Optional<Examen> examenOpt = formularioService.obtenerResultadoCompleto(personaId);
             if (examenOpt.isEmpty()) {
-                System.out.println("❌ No se encontró examen para persona ID: " + personaId);
+                logger.info("❌ No se encontró examen para persona ID: " + personaId);
                 return new ArrayList<>();
             }
             
             Examen examen = examenOpt.get();
-            System.out.println("✅ Examen encontrado - ID: " + examen.getId());
+            logger.info("✅ Examen encontrado - ID: " + examen.getId());
             
             // Recomendaciones universales: se muestran a todos sin importar el resultado del test
             List<RecomendacionEstudiosDTO> recomendacionesUniversales = recomendacionEstudiosRepository
@@ -49,14 +53,14 @@ public class RolProfesionalService {
                     .filter(RecomendacionEstudios::isActiva)
                     .map(RecomendacionEstudiosDTO::new)
                     .collect(Collectors.toList());
-            System.out.println("📚 Recomendaciones universales: " + recomendacionesUniversales.size());
+            logger.info("📚 Recomendaciones universales: " + recomendacionesUniversales.size());
             
             // Obtener todos los roles activos con posición laboral cargada (JOIN FETCH)
             List<RolProfesional> roles = rolProfesionalRepository.findByActivoTrueWithPosicionLaboral();
-            System.out.println("📋 Roles profesionales activos encontrados: " + roles.size());
+            logger.info("📋 Roles profesionales activos encontrados: " + roles.size());
             
             if (roles.isEmpty() && recomendacionesUniversales.isEmpty()) {
-                System.out.println("❌ No hay roles profesionales activos ni recomendaciones universales en la base de datos");
+                logger.info("❌ No hay roles profesionales activos ni recomendaciones universales en la base de datos");
                 return new ArrayList<>();
             }
             
@@ -79,13 +83,13 @@ public class RolProfesionalService {
                     if (posicionCorrespondiente != null) {
                         rol.setPosicionLaboral(posicionCorrespondiente);
                         rolProfesionalRepository.save(rol);
-                        System.out.println("🔗 Rol '" + rol.getTitulo() + "' vinculado automáticamente a posición laboral ID: " + posicionCorrespondiente.getId());
+                        logger.info("🔗 Rol '" + rol.getTitulo() + "' vinculado automáticamente a posición laboral ID: " + posicionCorrespondiente.getId());
                     }
                 }
                 try {
-                    System.out.println("🔄 Calculando compatibilidad para rol: " + rol.getTitulo());
+                    logger.info("🔄 Calculando compatibilidad para rol: " + rol.getTitulo());
                     double compatibilidad = rol.calcularCompatibilidad(examen);
-                    System.out.println("📊 Compatibilidad calculada: " + compatibilidad);
+                    logger.info("📊 Compatibilidad calculada: " + compatibilidad);
                     
                     // Solo incluir roles con compatibilidad > 0
                     if (compatibilidad > 0) {
@@ -97,17 +101,17 @@ public class RolProfesionalService {
                         recomendacion.setRecomendacionesEstudios(estudiosConUniversales);
                         
                         recomendaciones.add(recomendacion);
-                        System.out.println("✅ Recomendación agregada: " + rol.getTitulo() + " (" + compatibilidad + ") con " + estudiosConUniversales.size() + " estudios (incl. universales)");
+                        logger.info("✅ Recomendación agregada: " + rol.getTitulo() + " (" + compatibilidad + ") con " + estudiosConUniversales.size() + " estudios (incl. universales)");
                     } else {
-                        System.out.println("❌ Compatibilidad insuficiente: " + rol.getTitulo() + " (" + compatibilidad + ")");
+                        logger.info("❌ Compatibilidad insuficiente: " + rol.getTitulo() + " (" + compatibilidad + ")");
                     }
                 } catch (Exception e) {
-                    System.err.println("❌ Error al calcular compatibilidad para " + rol.getTitulo() + ": " + e.getMessage());
+                    logger.error("❌ Error al calcular compatibilidad para " + rol.getTitulo() + ": " + e.getMessage());
                     e.printStackTrace();
                 }
             }
             
-            System.out.println("📊 Total de recomendaciones de roles generadas: " + recomendaciones.size());
+            logger.info("📊 Total de recomendaciones de roles generadas: " + recomendaciones.size());
             
             // Si no hay roles que coincidan pero sí hay recomendaciones universales, mostrar solo estas (rol "virtual")
             if (recomendaciones.isEmpty() && !recomendacionesUniversales.isEmpty()) {
@@ -116,17 +120,17 @@ public class RolProfesionalService {
                 rolUniversal.setDescripcion("Las siguientes opciones están disponibles para todos los perfiles, sin importar el resultado del test.");
                 rolUniversal.setRecomendacionesEstudios(recomendacionesUniversales);
                 recomendaciones.add(rolUniversal);
-                System.out.println("✅ Mostrando bloque de Recomendación Universal con " + recomendacionesUniversales.size() + " opciones");
+                logger.info("✅ Mostrando bloque de Recomendación Universal con " + recomendacionesUniversales.size() + " opciones");
             }
             
             // Ordenar por compatibilidad descendente (el rol virtual no tiene compatibilidad, queda al final)
             recomendaciones.sort((r1, r2) -> Double.compare(r2.getCompatibilidad(), r1.getCompatibilidad()));
             
-            System.out.println("✅ Generación de recomendaciones de roles completada exitosamente");
+            logger.info("✅ Generación de recomendaciones de roles completada exitosamente");
             return recomendaciones;
             
         } catch (Exception e) {
-            System.err.println("❌ Error al generar recomendaciones de roles: " + e.getMessage());
+            logger.error("❌ Error al generar recomendaciones de roles: " + e.getMessage());
             e.printStackTrace();
             return new ArrayList<>();
         }
@@ -160,7 +164,7 @@ public class RolProfesionalService {
             return recomendaciones;
             
         } catch (Exception e) {
-            System.err.println("Error al generar recomendaciones de roles por categoría: " + e.getMessage());
+            logger.error("Error al generar recomendaciones de roles por categoría: " + e.getMessage());
             return new ArrayList<>();
         }
     }
@@ -193,7 +197,7 @@ public class RolProfesionalService {
             return recomendaciones;
             
         } catch (Exception e) {
-            System.err.println("Error al generar recomendaciones de roles por nivel: " + e.getMessage());
+            logger.error("Error al generar recomendaciones de roles por nivel: " + e.getMessage());
             return new ArrayList<>();
         }
     }
@@ -254,7 +258,7 @@ public class RolProfesionalService {
             }
             
         } catch (Exception e) {
-            System.err.println("Error al obtener estadísticas de roles: " + e.getMessage());
+            logger.error("Error al obtener estadísticas de roles: " + e.getMessage());
             estadisticas.put("error", e.getMessage());
         }
         
@@ -266,14 +270,14 @@ public class RolProfesionalService {
      */
     public void inicializarRolesEjemplo() {
         try {
-            System.out.println("🔄 Iniciando inicialización de roles profesionales...");
+            logger.info("🔄 Iniciando inicialización de roles profesionales...");
             
             // Verificar si ya hay roles
             long count = rolProfesionalRepository.count();
-            System.out.println("Roles existentes: " + count);
+            logger.info("Roles existentes: " + count);
             
             if (count > 0) {
-                System.out.println("✅ Ya existen roles profesionales, saltando inicialización");
+                logger.info("✅ Ya existen roles profesionales, saltando inicialización");
                 return;
             }
             
@@ -570,7 +574,7 @@ public class RolProfesionalService {
             rolProfesionalRepository.saveAll(roles);
             
             // Ahora vincular las posiciones laborales (después de guardar para asegurar que los IDs estén disponibles)
-            System.out.println("🔗 Vinculando roles con posiciones laborales...");
+            logger.info("🔗 Vinculando roles con posiciones laborales...");
             List<PosicionLaboral> todasLasPosiciones = posicionLaboralRepository.findByActivaTrue();
             
             for (RolProfesional rol : roles) {
@@ -582,16 +586,16 @@ public class RolProfesionalService {
                 if (posicionOpt.isPresent()) {
                     rol.setPosicionLaboral(posicionOpt.get());
                     rolProfesionalRepository.save(rol);
-                    System.out.println("✅ Rol '" + rol.getTitulo() + "' vinculado a posición laboral ID: " + posicionOpt.get().getId());
+                    logger.info("✅ Rol '" + rol.getTitulo() + "' vinculado a posición laboral ID: " + posicionOpt.get().getId());
                 } else {
-                    System.out.println("⚠️ No se encontró posición laboral para el rol: " + rol.getTitulo());
+                    logger.info("⚠️ No se encontró posición laboral para el rol: " + rol.getTitulo());
                 }
             }
             
-            System.out.println("✅ " + roles.size() + " roles profesionales creados y vinculados exitosamente");
+            logger.info("✅ " + roles.size() + " roles profesionales creados y vinculados exitosamente");
             
         } catch (Exception e) {
-            System.err.println("❌ Error al inicializar roles profesionales: " + e.getMessage());
+            logger.error("❌ Error al inicializar roles profesionales: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -635,7 +639,7 @@ public class RolProfesionalService {
             
             // Si es null, intentar recargar el rol desde la base de datos para forzar la carga
             if (posicion == null) {
-                System.out.println("⚠️ El rol " + rol.getTitulo() + " no tiene posición laboral cargada, intentando recargar...");
+                logger.info("⚠️ El rol " + rol.getTitulo() + " no tiene posición laboral cargada, intentando recargar...");
                 Optional<RolProfesional> rolRecargado = rolProfesionalRepository.findById(rol.getId());
                 if (rolRecargado.isPresent()) {
                     posicion = rolRecargado.get().getPosicionLaboral();
@@ -643,17 +647,17 @@ public class RolProfesionalService {
             }
             
             if (posicion == null) {
-                System.out.println("⚠️ El rol " + rol.getTitulo() + " (ID: " + rol.getId() + ") no tiene una posición laboral vinculada en la base de datos");
+                logger.info("⚠️ El rol " + rol.getTitulo() + " (ID: " + rol.getId() + ") no tiene una posición laboral vinculada en la base de datos");
                 return new ArrayList<>();
             }
             
             // Forzar la inicialización de la posición (para evitar LazyInitializationException)
             if (posicion.getId() != null) {
-                System.out.println("🔍 Rol " + rol.getTitulo() + " vinculado a posición laboral: " + posicion.getTitulo() + " (ID: " + posicion.getId() + ")");
+                logger.info("🔍 Rol " + rol.getTitulo() + " vinculado a posición laboral: " + posicion.getTitulo() + " (ID: " + posicion.getId() + ")");
             }
             
             if (!posicion.isActiva()) {
-                System.out.println("⚠️ La posición laboral vinculada al rol " + rol.getTitulo() + " no está activa");
+                logger.info("⚠️ La posición laboral vinculada al rol " + rol.getTitulo() + " no está activa");
                 return new ArrayList<>();
             }
             
@@ -661,7 +665,7 @@ public class RolProfesionalService {
             // en la sección "Posiciones Laborales Vinculadas" de la edición de recomendaciones de estudios
             List<RecomendacionEstudios> estudios = recomendacionEstudiosRepository.findByPosicionLaboralId(posicion.getId());
             
-            System.out.println("📚 Posición " + posicion.getTitulo() + " (ID: " + posicion.getId() + ") tiene " + estudios.size() + " recomendaciones de estudios vinculadas (checkboxes marcados)");
+            logger.info("📚 Posición " + posicion.getTitulo() + " (ID: " + posicion.getId() + ") tiene " + estudios.size() + " recomendaciones de estudios vinculadas (checkboxes marcados)");
             
             // Convertir a DTO y retornar solo las activas
             List<RecomendacionEstudiosDTO> estudiosDTO = estudios.stream()
@@ -669,11 +673,11 @@ public class RolProfesionalService {
                     .map(RecomendacionEstudiosDTO::new)
                     .collect(Collectors.toList());
             
-            System.out.println("✅ Total de " + estudiosDTO.size() + " recomendaciones de estudios activas para el rol: " + rol.getTitulo());
+            logger.info("✅ Total de " + estudiosDTO.size() + " recomendaciones de estudios activas para el rol: " + rol.getTitulo());
             return estudiosDTO;
             
         } catch (Exception e) {
-            System.err.println("❌ Error al obtener recomendaciones de estudios para el rol " + rol.getTitulo() + ": " + e.getMessage());
+            logger.error("❌ Error al obtener recomendaciones de estudios para el rol " + rol.getTitulo() + ": " + e.getMessage());
             e.printStackTrace();
             return new ArrayList<>();
         }

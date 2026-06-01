@@ -8,10 +8,14 @@ import jakarta.validation.constraints.Max;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.HashSet;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Entity
 @Table(name = "posiciones_laborales")
 public class PosicionLaboral {
+
+    private static final Logger logger = LoggerFactory.getLogger(PosicionLaboral.class);
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -86,13 +90,13 @@ public class PosicionLaboral {
     public double calcularCompatibilidad(Examen examen) {
         try {
             if (examen == null) {
-                System.out.println("Examen es null");
+                logger.info("Examen es null");
                 return 0.0;
             }
             
-            System.out.println("Calculando compatibilidad para posición: " + this.titulo);
-            System.out.println("Examen ID: " + examen.getId());
-            System.out.println("Puntuaciones del examen - Lógica: " + examen.getLogica() + 
+            logger.info("Calculando compatibilidad para posición: " + this.titulo);
+            logger.info("Examen ID: " + examen.getId());
+            logger.info("Puntuaciones del examen - Lógica: " + examen.getLogica() + 
                              ", Matemática: " + examen.getMatematica() + 
                              ", Creatividad: " + examen.getCreatividad() + 
                              ", Programación: " + examen.getProgramacion() + 
@@ -103,31 +107,31 @@ public class PosicionLaboral {
             
             // Verificar requisitos mínimos
             if (minPromedio != null && examen.getPromedio() < minPromedio) {
-                System.out.println("No cumple promedio mínimo: " + examen.getPromedio() + " < " + minPromedio);
+                logger.info("No cumple promedio mínimo: " + examen.getPromedio() + " < " + minPromedio);
                 return 0.0; // No cumple el promedio mínimo
             }
             
             if (minLogica != null && 
                 (examen.getLogica() == null || examen.getLogica() < minLogica)) {
-                System.out.println("No cumple lógica mínima: " + examen.getLogica() + " < " + minLogica);
+                logger.info("No cumple lógica mínima: " + examen.getLogica() + " < " + minLogica);
                 return 0.0;
             }
             
             if (minMatematica != null && 
                 (examen.getMatematica() == null || examen.getMatematica() < minMatematica)) {
-                System.out.println("No cumple matemática mínima: " + examen.getMatematica() + " < " + minMatematica);
+                logger.info("No cumple matemática mínima: " + examen.getMatematica() + " < " + minMatematica);
                 return 0.0;
             }
             
             if (minCreatividad != null && 
                 (examen.getCreatividad() == null || examen.getCreatividad() < minCreatividad)) {
-                System.out.println("No cumple creatividad mínima: " + examen.getCreatividad() + " < " + minCreatividad);
+                logger.info("No cumple creatividad mínima: " + examen.getCreatividad() + " < " + minCreatividad);
                 return 0.0;
             }
             
             if (minProgramacion != null && 
                 (examen.getProgramacion() == null || examen.getProgramacion() < minProgramacion)) {
-                System.out.println("No cumple programación mínima: " + examen.getProgramacion() + " < " + minProgramacion);
+                logger.info("No cumple programación mínima: " + examen.getProgramacion() + " < " + minProgramacion);
                 return 0.0;
             }
             
@@ -135,34 +139,34 @@ public class PosicionLaboral {
             if (pesoLogica != null && examen.getLogica() != null) {
                 compatibilidad += (examen.getLogica() * pesoLogica);
                 pesoTotal += pesoLogica;
-                System.out.println("Lógica: " + examen.getLogica() + " * " + pesoLogica + " = " + (examen.getLogica() * pesoLogica));
+                logger.info("Lógica: " + examen.getLogica() + " * " + pesoLogica + " = " + (examen.getLogica() * pesoLogica));
             }
             
             if (pesoMatematica != null && examen.getMatematica() != null) {
                 compatibilidad += (examen.getMatematica() * pesoMatematica);
                 pesoTotal += pesoMatematica;
-                System.out.println("Matemática: " + examen.getMatematica() + " * " + pesoMatematica + " = " + (examen.getMatematica() * pesoMatematica));
+                logger.info("Matemática: " + examen.getMatematica() + " * " + pesoMatematica + " = " + (examen.getMatematica() * pesoMatematica));
             }
             
             if (pesoCreatividad != null && examen.getCreatividad() != null) {
                 compatibilidad += (examen.getCreatividad() * pesoCreatividad);
                 pesoTotal += pesoCreatividad;
-                System.out.println("Creatividad: " + examen.getCreatividad() + " * " + pesoCreatividad + " = " + (examen.getCreatividad() * pesoCreatividad));
+                logger.info("Creatividad: " + examen.getCreatividad() + " * " + pesoCreatividad + " = " + (examen.getCreatividad() * pesoCreatividad));
             }
             
             if (pesoProgramacion != null && examen.getProgramacion() != null) {
                 compatibilidad += (examen.getProgramacion() * pesoProgramacion);
                 pesoTotal += pesoProgramacion;
-                System.out.println("Programación: " + examen.getProgramacion() + " * " + pesoProgramacion + " = " + (examen.getProgramacion() * pesoProgramacion));
+                logger.info("Programación: " + examen.getProgramacion() + " * " + pesoProgramacion + " = " + (examen.getProgramacion() * pesoProgramacion));
             }
             
             double resultado = pesoTotal > 0 ? compatibilidad / pesoTotal : 0.0;
-            System.out.println("Compatibilidad final: " + compatibilidad + " / " + pesoTotal + " = " + resultado);
+            logger.info("Compatibilidad final: " + compatibilidad + " / " + pesoTotal + " = " + resultado);
             
             return resultado;
             
         } catch (Exception e) {
-            System.err.println("Error al calcular compatibilidad: " + e.getMessage());
+            logger.error("Error al calcular compatibilidad: " + e.getMessage());
             e.printStackTrace();
             return 0.0;
         }

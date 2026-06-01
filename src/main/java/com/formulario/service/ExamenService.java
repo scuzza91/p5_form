@@ -11,10 +11,14 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class ExamenService {
-    
+
+    private static final Logger logger = LoggerFactory.getLogger(ExamenService.class);
+
     @Autowired
     private PreguntaRepository preguntaRepository;
     
@@ -39,10 +43,10 @@ public class ExamenService {
         try {
             // Verificar si hay preguntas en la base de datos
             long totalPreguntas = preguntaRepository.count();
-            System.out.println("Total de preguntas en BD: " + totalPreguntas);
+            logger.info("Total de preguntas en BD: " + totalPreguntas);
             
             if (totalPreguntas == 0) {
-                System.out.println("No hay preguntas en la base de datos. Inicializando preguntas de ejemplo...");
+                logger.info("No hay preguntas en la base de datos. Inicializando preguntas de ejemplo...");
                 inicializarPreguntasEjemplo();
             }
             
@@ -53,7 +57,7 @@ public class ExamenService {
             List<Pregunta> preguntasLogica = todasPreguntasLogica.stream()
                 .limit(PREGUNTAS_POR_AREA)
                 .collect(Collectors.toList());
-            System.out.println("Preguntas lógica: " + preguntasLogica.size());
+            logger.info("Preguntas lógica: " + preguntasLogica.size());
             
             List<Pregunta> todasPreguntasMatematica = preguntaRepository.findByAreaConocimientoWithOpciones(
                 Pregunta.AreaConocimiento.MATEMATICA);
@@ -61,7 +65,7 @@ public class ExamenService {
             List<Pregunta> preguntasMatematica = todasPreguntasMatematica.stream()
                 .limit(PREGUNTAS_POR_AREA)
                 .collect(Collectors.toList());
-            System.out.println("Preguntas matemática: " + preguntasMatematica.size());
+            logger.info("Preguntas matemática: " + preguntasMatematica.size());
             
             List<Pregunta> todasPreguntasCreatividad = preguntaRepository.findByAreaConocimientoWithOpciones(
                 Pregunta.AreaConocimiento.CREATIVIDAD);
@@ -69,7 +73,7 @@ public class ExamenService {
             List<Pregunta> preguntasCreatividad = todasPreguntasCreatividad.stream()
                 .limit(PREGUNTAS_POR_AREA)
                 .collect(Collectors.toList());
-            System.out.println("Preguntas creatividad: " + preguntasCreatividad.size());
+            logger.info("Preguntas creatividad: " + preguntasCreatividad.size());
             
             List<Pregunta> todasPreguntasProgramacion = preguntaRepository.findByAreaConocimientoWithOpciones(
                 Pregunta.AreaConocimiento.PROGRAMACION);
@@ -77,7 +81,7 @@ public class ExamenService {
             List<Pregunta> preguntasProgramacion = todasPreguntasProgramacion.stream()
                 .limit(PREGUNTAS_POR_AREA)
                 .collect(Collectors.toList());
-            System.out.println("Preguntas programación: " + preguntasProgramacion.size());
+            logger.info("Preguntas programación: " + preguntasProgramacion.size());
             
             // Combinar todas las preguntas
             todasLasPreguntas.addAll(preguntasLogica);
@@ -85,7 +89,7 @@ public class ExamenService {
             todasLasPreguntas.addAll(preguntasCreatividad);
             todasLasPreguntas.addAll(preguntasProgramacion);
             
-            System.out.println("Total de preguntas combinadas: " + todasLasPreguntas.size());
+            logger.info("Total de preguntas combinadas: " + todasLasPreguntas.size());
             
             // Mezclar las preguntas para que no estén agrupadas por área
             Collections.shuffle(todasLasPreguntas);
@@ -93,7 +97,7 @@ public class ExamenService {
             return todasLasPreguntas;
             
         } catch (Exception e) {
-            System.err.println("Error al generar preguntas del examen: " + e.getMessage());
+            logger.error("Error al generar preguntas del examen: " + e.getMessage());
             e.printStackTrace();
             throw e;
         }
@@ -104,14 +108,14 @@ public class ExamenService {
      */
     @Transactional
     public Examen procesarRespuestas(Long examenId, Map<Long, Integer> respuestas) {
-        System.out.println("=== INICIO PROCESAR RESPUESTAS ===");
-        System.out.println("Procesando respuestas para examen ID: " + examenId);
-        System.out.println("Respuestas recibidas: " + respuestas);
+        logger.info("=== INICIO PROCESAR RESPUESTAS ===");
+        logger.info("Procesando respuestas para examen ID: " + examenId);
+        logger.info("Respuestas recibidas: " + respuestas);
         
         Examen examen = examenRepository.findById(examenId)
             .orElseThrow(() -> new RuntimeException("Examen no encontrado"));
         
-        System.out.println("Examen encontrado para persona: " + examen.getPersona().getEmail());
+        logger.info("Examen encontrado para persona: " + examen.getPersona().getEmail());
         
         // Marcar fin del examen
         examen.setFechaFin(LocalDateTime.now());
@@ -128,45 +132,45 @@ public class ExamenService {
             Long preguntaId = entry.getKey();
             Integer respuestaSeleccionada = entry.getValue();
             
-            System.out.println("Procesando pregunta ID: " + preguntaId + ", respuesta: " + respuestaSeleccionada);
+            logger.info("Procesando pregunta ID: " + preguntaId + ", respuesta: " + respuestaSeleccionada);
             
             Pregunta pregunta = preguntaRepository.findById(preguntaId)
                 .orElseThrow(() -> new RuntimeException("Pregunta no encontrada: " + preguntaId));
             
-            System.out.println("Pregunta encontrada: " + pregunta.getEnunciado());
-            System.out.println("Opción correcta de la pregunta: " + pregunta.getOpcionCorrecta());
+            logger.info("Pregunta encontrada: " + pregunta.getEnunciado());
+            logger.info("Opción correcta de la pregunta: " + pregunta.getOpcionCorrecta());
             
             RespuestaExamen respuestaExamen = new RespuestaExamen(examen, pregunta, respuestaSeleccionada);
-            System.out.println("Respuesta creada - Es correcta: " + respuestaExamen.isEsCorrecta());
+            logger.info("Respuesta creada - Es correcta: " + respuestaExamen.isEsCorrecta());
             respuestasExamen.add(respuestaExamen);
         }
         
-        System.out.println("Total de respuestas a guardar: " + respuestasExamen.size());
+        logger.info("Total de respuestas a guardar: " + respuestasExamen.size());
         
         // Guardar respuestas
         List<RespuestaExamen> respuestasGuardadas = respuestaExamenRepository.saveAll(respuestasExamen);
-        System.out.println("Respuestas guardadas exitosamente: " + respuestasGuardadas.size());
+        logger.info("Respuestas guardadas exitosamente: " + respuestasGuardadas.size());
         
         // Asignar las respuestas al examen
         examen.setRespuestas(respuestasGuardadas);
         
         // Calcular puntuaciones
-        System.out.println("Calculando puntuaciones...");
+        logger.info("Calculando puntuaciones...");
         examen.calcularPuntuaciones();
         
-        System.out.println("Puntuaciones calculadas:");
-        System.out.println("  - Programación Básica: " + examen.getProgramacionBasica());
-        System.out.println("  - Estructuras Datos: " + examen.getEstructurasDatos());
-        System.out.println("  - Algoritmos: " + examen.getAlgoritmos());
-        System.out.println("  - Base Datos: " + examen.getBaseDatos());
-        System.out.println("  - Total Preguntas: " + examen.getTotalPreguntas());
-        System.out.println("  - Respuestas Correctas: " + examen.getRespuestasCorrectas());
-        System.out.println("  - Promedio: " + examen.getPromedio());
+        logger.info("Puntuaciones calculadas:");
+        logger.info("  - Programación Básica: " + examen.getProgramacionBasica());
+        logger.info("  - Estructuras Datos: " + examen.getEstructurasDatos());
+        logger.info("  - Algoritmos: " + examen.getAlgoritmos());
+        logger.info("  - Base Datos: " + examen.getBaseDatos());
+        logger.info("  - Total Preguntas: " + examen.getTotalPreguntas());
+        logger.info("  - Respuestas Correctas: " + examen.getRespuestasCorrectas());
+        logger.info("  - Promedio: " + examen.getPromedio());
         
         // Guardar el examen actualizado
         Examen examenGuardado = examenRepository.save(examen);
-        System.out.println("Examen guardado exitosamente");
-        System.out.println("=== FIN PROCESAR RESPUESTAS ===");
+        logger.info("Examen guardado exitosamente");
+        logger.info("=== FIN PROCESAR RESPUESTAS ===");
         
         return examenGuardado;
     }

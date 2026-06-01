@@ -1,10 +1,14 @@
 package com.formulario.model;
 
 import jakarta.persistence.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Entity
 @Table(name = "roles_profesionales")
 public class RolProfesional {
+
+    private static final Logger logger = LoggerFactory.getLogger(RolProfesional.class);
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -69,13 +73,13 @@ public class RolProfesional {
     public double calcularCompatibilidad(Examen examen) {
         try {
             if (examen == null) {
-                System.out.println("Examen es null");
+                logger.info("Examen es null");
                 return 0.0;
             }
             
-            System.out.println("Calculando compatibilidad para rol: " + this.titulo);
-            System.out.println("Examen ID: " + examen.getId());
-            System.out.println("Puntuaciones del examen - Lógica: " + examen.getLogica() + 
+            logger.info("Calculando compatibilidad para rol: " + this.titulo);
+            logger.info("Examen ID: " + examen.getId());
+            logger.info("Puntuaciones del examen - Lógica: " + examen.getLogica() + 
                              ", Matemática: " + examen.getMatematica() + 
                              ", Creatividad: " + examen.getCreatividad() + 
                              ", Programación: " + examen.getProgramacion() + 
@@ -86,31 +90,31 @@ public class RolProfesional {
             
             // Verificar requisitos mínimos
             if (minPromedio != null && examen.getPromedio() < minPromedio) {
-                System.out.println("No cumple promedio mínimo: " + examen.getPromedio() + " < " + minPromedio);
+                logger.info("No cumple promedio mínimo: " + examen.getPromedio() + " < " + minPromedio);
                 return 0.0; // No cumple el promedio mínimo
             }
             
             if (minLogica != null && 
                 (examen.getLogica() == null || examen.getLogica() < minLogica)) {
-                System.out.println("No cumple lógica mínima: " + examen.getLogica() + " < " + minLogica);
+                logger.info("No cumple lógica mínima: " + examen.getLogica() + " < " + minLogica);
                 return 0.0;
             }
             
             if (minMatematica != null && 
                 (examen.getMatematica() == null || examen.getMatematica() < minMatematica)) {
-                System.out.println("No cumple matemática mínima: " + examen.getMatematica() + " < " + minMatematica);
+                logger.info("No cumple matemática mínima: " + examen.getMatematica() + " < " + minMatematica);
                 return 0.0;
             }
             
             if (minCreatividad != null && 
                 (examen.getCreatividad() == null || examen.getCreatividad() < minCreatividad)) {
-                System.out.println("No cumple creatividad mínima: " + examen.getCreatividad() + " < " + minCreatividad);
+                logger.info("No cumple creatividad mínima: " + examen.getCreatividad() + " < " + minCreatividad);
                 return 0.0;
             }
             
             if (minProgramacion != null && 
                 (examen.getProgramacion() == null || examen.getProgramacion() < minProgramacion)) {
-                System.out.println("No cumple programación mínima: " + examen.getProgramacion() + " < " + minProgramacion);
+                logger.info("No cumple programación mínima: " + examen.getProgramacion() + " < " + minProgramacion);
                 return 0.0;
             }
             
@@ -126,7 +130,7 @@ public class RolProfesional {
                 }
                 compatibilidad += scoreLogica * pesoLogica;
                 pesoTotal += pesoLogica;
-                System.out.println("Lógica - Score: " + scoreLogica + ", Peso: " + pesoLogica);
+                logger.info("Lógica - Score: " + scoreLogica + ", Peso: " + pesoLogica);
             }
             
             if (pesoMatematica != null && pesoMatematica > 0 && examen.getMatematica() != null) {
@@ -138,7 +142,7 @@ public class RolProfesional {
                 }
                 compatibilidad += scoreMatematica * pesoMatematica;
                 pesoTotal += pesoMatematica;
-                System.out.println("Matemática - Score: " + scoreMatematica + ", Peso: " + pesoMatematica);
+                logger.info("Matemática - Score: " + scoreMatematica + ", Peso: " + pesoMatematica);
             }
             
             if (pesoCreatividad != null && pesoCreatividad > 0 && examen.getCreatividad() != null) {
@@ -150,7 +154,7 @@ public class RolProfesional {
                 }
                 compatibilidad += scoreCreatividad * pesoCreatividad;
                 pesoTotal += pesoCreatividad;
-                System.out.println("Creatividad - Score: " + scoreCreatividad + ", Peso: " + pesoCreatividad);
+                logger.info("Creatividad - Score: " + scoreCreatividad + ", Peso: " + pesoCreatividad);
             }
             
             if (pesoProgramacion != null && pesoProgramacion > 0 && examen.getProgramacion() != null) {
@@ -162,20 +166,20 @@ public class RolProfesional {
                 }
                 compatibilidad += scoreProgramacion * pesoProgramacion;
                 pesoTotal += pesoProgramacion;
-                System.out.println("Programación - Score: " + scoreProgramacion + ", Peso: " + pesoProgramacion);
+                logger.info("Programación - Score: " + scoreProgramacion + ", Peso: " + pesoProgramacion);
             }
             
             if (pesoTotal > 0) {
                 compatibilidad = compatibilidad / pesoTotal;
-                System.out.println("Compatibilidad final: " + compatibilidad);
+                logger.info("Compatibilidad final: " + compatibilidad);
                 return Math.min(100.0, compatibilidad);
             } else {
-                System.out.println("No hay pesos definidos, retornando 0");
+                logger.info("No hay pesos definidos, retornando 0");
                 return 0.0;
             }
             
         } catch (Exception e) {
-            System.err.println("Error al calcular compatibilidad: " + e.getMessage());
+            logger.error("Error al calcular compatibilidad: " + e.getMessage());
             e.printStackTrace();
             return 0.0;
         }

@@ -16,6 +16,8 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.io.FileInputStream;
@@ -25,6 +27,8 @@ import java.util.List;
 
 @Component
 public class DataInitializer implements CommandLineRunner {
+
+    private static final Logger logger = LoggerFactory.getLogger(DataInitializer.class);
 
     @Autowired
     private ProvinciaRepository provinciaRepository;
@@ -67,30 +71,30 @@ public class DataInitializer implements CommandLineRunner {
         
         // Forzar carga de localidades básicas si no hay ninguna
         if (localidadRepository.count() == 0) {
-            System.out.println("🔄 Forzando carga de localidades básicas...");
+            logger.info("🔄 Forzando carga de localidades básicas...");
             cargarLocalidadesBasicas();
         }
         
         // Inicializar preguntas de ejemplo si no existen
         if (preguntaRepository.count() == 0) {
-            System.out.println("🔄 Inicializando preguntas de ejemplo...");
+            logger.info("🔄 Inicializando preguntas de ejemplo...");
             examenService.inicializarPreguntasEjemplo();
         }
         
         // Inicializar posiciones laborales de ejemplo
-        System.out.println("🔄 Inicializando posiciones laborales de ejemplo...");
+        logger.info("🔄 Inicializando posiciones laborales de ejemplo...");
         recomendacionService.inicializarPosicionesEjemplo();
         
         // Inicializar roles profesionales de ejemplo
-        System.out.println("🔄 Inicializando roles profesionales de ejemplo...");
+        logger.info("🔄 Inicializando roles profesionales de ejemplo...");
         rolProfesionalService.inicializarRolesEjemplo();
         
         // Crear usuario administrador por defecto (siempre recrear para debug)
-        System.out.println("🔄 Forzando recreación del usuario administrador...");
+        logger.info("🔄 Forzando recreación del usuario administrador...");
         crearUsuarioAdministrador();
         
         // Inicializar configuraciones del sistema
-        System.out.println("🔄 Inicializando configuraciones del sistema...");
+        logger.info("🔄 Inicializando configuraciones del sistema...");
         configuracionService.inicializarConfiguracionesPorDefecto();
     }
 
@@ -127,13 +131,13 @@ public class DataInitializer implements CommandLineRunner {
             provinciaRepository.save(provincia);
         }
 
-        System.out.println("✅ Provincias argentinas cargadas correctamente: " + provincias.size() + " provincias");
+        logger.info("✅ Provincias argentinas cargadas correctamente: " + provincias.size() + " provincias");
     }
     
     private void cargarLocalidadesDesdeExcel() {
         try {
             String rutaArchivo = "Localidades.xlsx";
-            System.out.println("🔄 Cargando localidades desde: " + rutaArchivo);
+            logger.info("🔄 Cargando localidades desde: " + rutaArchivo);
             
             try (FileInputStream fis = new FileInputStream(rutaArchivo);
                  Workbook workbook = new XSSFWorkbook(fis)) {
@@ -167,22 +171,22 @@ public class DataInitializer implements CommandLineRunner {
                     }
                 }
                 
-                System.out.println("✅ Localidades cargadas correctamente: " + localidadesCargadas + " localidades");
+                logger.info("✅ Localidades cargadas correctamente: " + localidadesCargadas + " localidades");
                 
             } catch (IOException e) {
-                System.err.println("❌ Error al cargar localidades desde Excel: " + e.getMessage());
+                logger.error("❌ Error al cargar localidades desde Excel: " + e.getMessage());
                 // Si no se puede cargar desde Excel, intentar cargar algunas localidades básicas
                 cargarLocalidadesBasicas();
             }
             
         } catch (Exception e) {
-            System.err.println("❌ Error general al cargar localidades: " + e.getMessage());
+            logger.error("❌ Error general al cargar localidades: " + e.getMessage());
             cargarLocalidadesBasicas();
         }
     }
     
     private void cargarLocalidadesBasicas() {
-        System.out.println("🔄 Cargando localidades básicas...");
+        logger.info("🔄 Cargando localidades básicas...");
         
         // Cargar algunas localidades básicas para cada provincia
         Provincia buenosAires = provinciaRepository.findByNombre("Buenos Aires");
@@ -231,7 +235,7 @@ public class DataInitializer implements CommandLineRunner {
             cargarLocalidad("Tafí Viejo", tucuman);
         }
         
-        System.out.println("✅ Localidades básicas cargadas");
+        logger.info("✅ Localidades básicas cargadas");
     }
     
     private void cargarLocalidad(String nombreLocalidad, Provincia provincia) {
@@ -243,13 +247,13 @@ public class DataInitializer implements CommandLineRunner {
     }
     
     private void crearUsuarioAdministrador() {
-        System.out.println("🔄 Creando usuario administrador por defecto...");
+        logger.info("🔄 Creando usuario administrador por defecto...");
         
         try {
             // Primero, eliminar el usuario admin si existe
             var usuarioExistente = usuarioRepository.findByUsername("admin");
             if (usuarioExistente.isPresent()) {
-                System.out.println("🗑️ Eliminando usuario admin existente...");
+                logger.info("🗑️ Eliminando usuario admin existente...");
                 usuarioRepository.delete(usuarioExistente.get());
             }
             
@@ -263,14 +267,14 @@ public class DataInitializer implements CommandLineRunner {
             
             Usuario usuarioCreado = authService.crearUsuario(admin);
             
-            System.out.println("✅ Usuario administrador creado correctamente");
-            System.out.println("📧 Usuario: " + usuarioCreado.getUsername());
-            System.out.println("🔑 Contraseña: admin123");
-            System.out.println("🔐 Contraseña encriptada: " + usuarioCreado.getPassword());
-            System.out.println("⚠️  IMPORTANTE: Cambie la contraseña después del primer inicio de sesión");
+            logger.info("✅ Usuario administrador creado correctamente");
+            logger.info("📧 Usuario: " + usuarioCreado.getUsername());
+            logger.info("🔑 Contraseña: admin123");
+            logger.info("🔐 Contraseña encriptada: " + usuarioCreado.getPassword());
+            logger.info("⚠️  IMPORTANTE: Cambie la contraseña después del primer inicio de sesión");
             
         } catch (Exception e) {
-            System.err.println("❌ Error al crear usuario administrador: " + e.getMessage());
+            logger.error("❌ Error al crear usuario administrador: " + e.getMessage());
             e.printStackTrace();
         }
     }
