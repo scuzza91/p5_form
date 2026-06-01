@@ -1259,21 +1259,24 @@ public class FormularioController {
         try {
             Long examenId = ExamenTokenUtil.validarYExtraerId(examenToken);
             if (examenId == null) {
-                redirectAttributes.addFlashAttribute("error", "Link de reintento inválido o vencido");
-                return "redirect:/inscripciones";
+                logger.warn("Link de reintento inválido o vencido: {}", examenToken);
+                redirectAttributes.addFlashAttribute("error", "El link de reintento es inválido o ha vencido");
+                return "redirect:/";
             }
 
             Optional<Examen> examenOpt = formularioService.buscarExamenPorId(examenId);
             if (examenOpt.isEmpty()) {
-                redirectAttributes.addFlashAttribute("error", "Examen no encontrado para reintento");
-                return "redirect:/inscripciones";
+                logger.warn("Examen no encontrado para reintento con token: {}", examenToken);
+                redirectAttributes.addFlashAttribute("error", "No se encontró el examen asociado a este link");
+                return "redirect:/";
             }
 
             Examen examenAnterior = examenOpt.get();
             if (!estaTiempoAgotadoSinFinalizar(examenAnterior)) {
+                logger.warn("Reintento solicitado para examen que no está en estado de tiempo agotado: {}", examenId);
                 redirectAttributes.addFlashAttribute("error",
-                    "El examen no está en estado de tiempo agotado sin finalizar");
-                return "redirect:/inscripciones";
+                    "Este link de reintento no está disponible. El examen puede haber sido completado o aún no ha vencido.");
+                return "redirect:/";
             }
 
             Examen nuevoExamen = formularioService.recrearExamenParaPersona(examenAnterior);
@@ -1285,8 +1288,8 @@ public class FormularioController {
             return "redirect:" + nuevoExamenUrl;
         } catch (Exception e) {
             logger.error("Error al generar reintento automático - examenToken: {}", examenToken, e);
-            redirectAttributes.addFlashAttribute("error", "No se pudo generar el reintento: " + e.getMessage());
-            return "redirect:/inscripciones";
+            redirectAttributes.addFlashAttribute("error", "No se pudo generar el reintento. Por favor contacte al administrador.");
+            return "redirect:/";
         }
     }
 
