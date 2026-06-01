@@ -75,6 +75,11 @@ Thumbs.db
 
 # Application specific
 application-local.properties
+
+# Variables de entorno - NUNCA subir a git
+.env
+.env.local
+.env.production
 *.db
 *.sqlite
 

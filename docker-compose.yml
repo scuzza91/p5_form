@@ -16,7 +16,7 @@ services:
       # Scripts de inicialización (opcional)
       - ./database:/docker-entrypoint-initdb.d:ro
     ports:
-      - "${POSTGRES_PORT:-5434}:50000"
+      - "${POSTGRES_PORT:-5433}:5432"
     networks:
       - p5_form_network
     healthcheck:
@@ -35,8 +35,9 @@ services:
     environment:
       # Perfil de Spring Boot
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
-      # Configuración de base de datos (usando el nombre del servicio de Docker)
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-p5_form_prod}
+      # Configuración de base de datos
+      # Local: usa el contenedor postgres; Producción: apunta a RDS via SPRING_DATASOURCE_URL en .env
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL:-jdbc:postgresql://postgres:5432/${POSTGRES_DB:-p5_form_prod}}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
       # Configuración del servidor
@@ -46,6 +47,8 @@ services:
       SPRING_JPA_SHOW_SQL: ${SPRING_JPA_SHOW_SQL:-false}
       # Logging
       LOGGING_LEVEL_COM_FORMULARIO: ${LOGGING_LEVEL:-INFO}
+      # Clave secreta para generacion de tokens de examen (OBLIGATORIO en produccion)
+      EXAMEN_TOKEN_SECRET: ${EXAMEN_TOKEN_SECRET}
       # Token de API de Bondarea (opcional - también se puede configurar desde la UI)
       # API_TOKEN_BONDAREA: ${API_TOKEN_BONDAREA:-}
     ports:
@@ -57,6 +60,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+        required: false
     networks:
       - p5_form_network
     restart: unless-stopped
