@@ -93,7 +93,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-gray-600 text-sm font-medium">Total Inscripciones</p>
-                        <p class="text-3xl font-bold text-gray-800" th:text="${#lists.size(inscripciones)}">0</p>
+                        <p class="text-3xl font-bold text-gray-800" th:text="${totalInscripciones}">0</p>
                     </div>
                     <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                         <i class="fas fa-users text-blue-600 text-xl"></i>
@@ -105,7 +105,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-gray-600 text-sm font-medium">Aprobados</p>
-                        <p class="text-3xl font-bold text-green-600" th:text="${#lists.size(inscripciones.?[aprobado == true])}">0</p>
+                        <p class="text-3xl font-bold text-green-600" th:text="${totalAprobados}">0</p>
                     </div>
                     <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                         <i class="fas fa-check-circle text-green-600 text-xl"></i>
@@ -117,7 +117,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-gray-600 text-sm font-medium">Desaprobados</p>
-                        <p class="text-3xl font-bold text-red-600" th:text="${#lists.size(inscripciones.?[aprobado == false])}">0</p>
+                        <p class="text-3xl font-bold text-red-600" th:text="${totalDesaprobados}">0</p>
                     </div>
                     <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
                         <i class="fas fa-times-circle text-red-600 text-xl"></i>
@@ -477,6 +477,66 @@
                 </table>
             </div>
             
+            <!-- Paginación -->
+            <div class="p-4 border-t border-gray-200 flex items-center justify-between bg-white">
+                <!-- Info de registros -->
+                <div class="text-sm text-gray-600">
+                    <span th:if="${totalInscripciones > 0}">
+                        Mostrando <span class="font-medium" th:text="${fromIndex}">1</span>–<span class="font-medium" th:text="${toIndex}">20</span>
+                        de <span class="font-medium" th:text="${totalInscripciones}">0</span> registros
+                    </span>
+                    <span th:if="${totalInscripciones == 0}">Sin registros</span>
+                </div>
+
+                <!-- Controles -->
+                <div class="flex items-center space-x-1" th:if="${totalPages > 1}">
+                    <!-- Anterior -->
+                    <a th:if="${currentPage > 0}"
+                       th:href="@{/inscripciones(page=${currentPage - 1}, size=${pageSize}, dni=${dni}, cuil=${cuil}, email=${email}, estadoTiempo=${estadoTiempo})}"
+                       class="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
+                        <i class="fas fa-chevron-left mr-1"></i>Anterior
+                    </a>
+                    <span th:if="${currentPage == 0}"
+                          class="px-3 py-1.5 text-sm font-medium text-gray-400 bg-gray-100 border border-gray-200 rounded-md cursor-not-allowed">
+                        <i class="fas fa-chevron-left mr-1"></i>Anterior
+                    </span>
+
+                    <!-- Páginas -->
+                    <th:block th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+                        <a th:if="${i != currentPage}"
+                           th:href="@{/inscripciones(page=${i}, size=${pageSize}, dni=${dni}, cuil=${cuil}, email=${email}, estadoTiempo=${estadoTiempo})}"
+                           th:text="${i + 1}"
+                           class="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">1</a>
+                        <span th:if="${i == currentPage}"
+                              th:text="${i + 1}"
+                              class="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-md">1</span>
+                    </th:block>
+
+                    <!-- Siguiente -->
+                    <a th:if="${currentPage < totalPages - 1}"
+                       th:href="@{/inscripciones(page=${currentPage + 1}, size=${pageSize}, dni=${dni}, cuil=${cuil}, email=${email}, estadoTiempo=${estadoTiempo})}"
+                       class="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
+                        Siguiente<i class="fas fa-chevron-right ml-1"></i>
+                    </a>
+                    <span th:if="${currentPage >= totalPages - 1}"
+                          class="px-3 py-1.5 text-sm font-medium text-gray-400 bg-gray-100 border border-gray-200 rounded-md cursor-not-allowed">
+                        Siguiente<i class="fas fa-chevron-right ml-1"></i>
+                    </span>
+                </div>
+
+                <!-- Selector de tamaño de página -->
+                <div class="flex items-center space-x-2 text-sm text-gray-600">
+                    <span>Filas por página:</span>
+                    <select onchange="cambiarTamanoPagina(this.value)"
+                            class="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option th:each="s : ${#arrays.toIntArray({10, 20, 50, 100})}"
+                                th:value="${s}"
+                                th:text="${s}"
+                                th:selected="${s == pageSize}">20</option>
+                    </select>
+                </div>
+            </div>
+
             <!-- PDF Legend -->
             <div class="p-6 bg-gray-50 border-t border-gray-200">
                 <h5 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
@@ -598,6 +658,13 @@
             document.getElementById('email').value = '';
             document.getElementById('estadoTiempo').value = '';
             window.location.href = '/inscripciones';
+        }
+
+        function cambiarTamanoPagina(size) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('size', size);
+            url.searchParams.set('page', '0');
+            window.location.href = url.toString();
         }
 
         function confirmarEliminar(form) {

@@ -1140,14 +1140,16 @@ public class FormularioController {
             @RequestParam(required = false) String cuil,
             @RequestParam(required = false) String email,
             @RequestParam(required = false) String estadoTiempo,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
             HttpServletRequest request,
             Model model) {
         try {
-            // Obtener datos reales de la base de datos
+            // Obtener todos los datos de la base de datos
             List<InscripcionDTO> inscripciones = formularioService.obtenerTodasLasInscripciones();
             logger.info("Inscripciones obtenidas de BD: {}", inscripciones.size());
 
-            // Generar automáticamente link de reintento para exámenes con tiempo agotado sin finalizar
+            // Generar link de reintento para exámenes con tiempo agotado sin finalizar
             String baseUrl = obtenerBaseUrl(request);
             inscripciones.forEach(inscripcion -> {
                 if (InscripcionDTO.ESTADO_TIEMPO_TIEMPO_AGOTADO_SIN_FINALIZAR.equals(inscripcion.getEstadoTiempo())) {
@@ -1155,78 +1157,78 @@ public class FormularioController {
                     inscripcion.setLinkReintentoAutomatico(baseUrl + "/examen/reintento/" + tokenReintento);
                 }
             });
-            
-            // Aplicar filtros si están presentes
+
+            // Aplicar filtros
             List<InscripcionDTO> inscripcionesFiltradas = inscripciones.stream()
                 .filter(inscripcion -> {
                     boolean cumpleFiltros = true;
-                    
-                    // Filtro por DNI
-                    if (dni != null && !dni.trim().isEmpty()) {
-                        cumpleFiltros = cumpleFiltros && inscripcion.getDni() != null && 
+                    if (dni != null && !dni.trim().isEmpty())
+                        cumpleFiltros = cumpleFiltros && inscripcion.getDni() != null &&
                                        inscripcion.getDni().contains(dni.trim());
-                    }
-                    
-                    // Filtro por CUIL
-                    if (cuil != null && !cuil.trim().isEmpty()) {
-                        cumpleFiltros = cumpleFiltros && inscripcion.getCuil() != null && 
+                    if (cuil != null && !cuil.trim().isEmpty())
+                        cumpleFiltros = cumpleFiltros && inscripcion.getCuil() != null &&
                                        inscripcion.getCuil().contains(cuil.trim());
-                    }
-                    
-                    // Filtro por email
-                    if (email != null && !email.trim().isEmpty()) {
-                        cumpleFiltros = cumpleFiltros && inscripcion.getEmail() != null && 
+                    if (email != null && !email.trim().isEmpty())
+                        cumpleFiltros = cumpleFiltros && inscripcion.getEmail() != null &&
                                        inscripcion.getEmail().toLowerCase().contains(email.trim().toLowerCase());
-                    }
-
-                    // Filtro por estado temporal del examen
-                    if (estadoTiempo != null && !estadoTiempo.trim().isEmpty()) {
+                    if (estadoTiempo != null && !estadoTiempo.trim().isEmpty())
                         cumpleFiltros = cumpleFiltros && estadoTiempo.trim().equals(inscripcion.getEstadoTiempo());
-                    }
-                    
                     return cumpleFiltros;
                 })
                 .collect(Collectors.toList());
-            
-            // Calcular promedio general de las inscripciones filtradas
-            double promedioGeneral = 0.0;
-            if (!inscripcionesFiltradas.isEmpty()) {
-                double sumaPromedios = inscripcionesFiltradas.stream()
-                    .mapToDouble(i -> i.getPromedio() != null ? i.getPromedio() : 0.0)
-                    .sum();
-                promedioGeneral = sumaPromedios / inscripcionesFiltradas.size();
-                
-                // Log para verificar cálculos
-                logger.info("Cálculo de promedio general:");
-                logger.info("Suma de promedios: {}", sumaPromedios);
-                logger.info("Cantidad de inscripciones: {}", inscripcionesFiltradas.size());
-                logger.info("Promedio general calculado: {}", promedioGeneral);
-                
-                // Verificar cálculos individuales
-                for (InscripcionDTO inscripcion : inscripcionesFiltradas) {
-                    Double promedioCalculado = inscripcion.getPromedioCalculado();
-                    logger.info("{} {}: Promedio en DTO={}, Calculado={}", 
-                               inscripcion.getNombre(), inscripcion.getApellido(),
-                               inscripcion.getPromedio(), promedioCalculado);
-                }
-            }
-            
-            model.addAttribute("inscripciones", inscripcionesFiltradas);
+
+            // Calcular stats sobre el total filtrado (no sobre la página)
+            double promedioGeneral = inscripcionesFiltradas.stream()
+                .mapToDouble(i -> i.getPromedio() != null ? i.getPromedio() : 0.0)
+                .average().orElse(0.0);
+            long totalAprobados   = inscripcionesFiltradas.stream().filter(i -> Boolean.TRUE.equals(i.getAprobado())).count();
+            long totalDesaprobados = inscripcionesFiltradas.stream().filter(i -> Boolean.FALSE.equals(i.getAprobado())).count();
+
+            // Paginación sobre los resultados filtrados
+            int totalItems = inscripcionesFiltradas.size();
+            int totalPages = totalItems == 0 ? 1 : (int) Math.ceil((double) totalItems / size);
+            int currentPage = Math.max(0, Math.min(page, totalPages - 1));
+            int fromIndex = currentPage * size;
+            int toIndex = Math.min(fromIndex + size, totalItems);
+            List<InscripcionDTO> inscripcionesPagina = totalItems > 0
+                ? inscripcionesFiltradas.subList(fromIndex, toIndex)
+                : new ArrayList<>();
+
+            logger.info("Paginación: página {}/{}, mostrando {}-{} de {} registros",
+                currentPage + 1, totalPages, fromIndex + 1, toIndex, totalItems);
+
+            // Modelo
+            model.addAttribute("inscripciones", inscripcionesPagina);
             model.addAttribute("promedioGeneral", promedioGeneral);
-            
-            // Agregar parámetros de filtro para mantener los valores en el formulario
+            model.addAttribute("totalInscripciones", totalItems);
+            model.addAttribute("totalAprobados", totalAprobados);
+            model.addAttribute("totalDesaprobados", totalDesaprobados);
+            model.addAttribute("currentPage", currentPage);
+            model.addAttribute("totalPages", totalPages);
+            model.addAttribute("pageSize", size);
+            model.addAttribute("fromIndex", fromIndex + 1);
+            model.addAttribute("toIndex", toIndex);
+
+            // Preservar filtros activos
             if (dni != null) model.addAttribute("dni", dni);
             if (cuil != null) model.addAttribute("cuil", cuil);
             if (email != null) model.addAttribute("email", email);
             if (estadoTiempo != null) model.addAttribute("estadoTiempo", estadoTiempo);
-            
-            logger.info("Inscripciones filtradas cargadas: {} de {} total", inscripcionesFiltradas.size(), inscripciones.size());
+
             return "inscripciones";
         } catch (Exception e) {
             logger.error("Error al cargar inscripciones", e);
             model.addAttribute("error", "Error al cargar las inscripciones: " + e.getMessage());
             model.addAttribute("inscripciones", new ArrayList<>());
             model.addAttribute("promedioGeneral", 0.0);
+            model.addAttribute("totalInscripciones", 0);
+            model.addAttribute("totalAprobados", 0L);
+            model.addAttribute("totalDesaprobados", 0L);
+            model.addAttribute("currentPage", 0);
+            model.addAttribute("totalPages", 1);
+            model.addAttribute("pageSize", size);
+            model.addAttribute("fromIndex", 0);
+            model.addAttribute("toIndex", 0);
             return "inscripciones";
         }
     }
