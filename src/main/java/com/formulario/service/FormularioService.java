@@ -150,6 +150,32 @@ public class FormularioService {
     }
     
     /**
+     * Elimina un registro completo (examen + persona) de la base de datos local.
+     * NO realiza ninguna llamada a Bondarea ni a ninguna API externa.
+     */
+    @Transactional
+    public void eliminarRegistroLocal(Long examenId) {
+        Optional<Examen> examenOpt = examenRepository.findById(examenId);
+        if (examenOpt.isEmpty()) {
+            throw new RuntimeException("No se encontró el examen con ID: " + examenId);
+        }
+        Examen examen = examenOpt.get();
+        Persona persona = examen.getPersona();
+
+        // Eliminar intentos fallidos vinculados al examen
+        intentoFallidoGuardarRecomendacionRepository.deleteByExamenId(examenId);
+
+        // Eliminar examen (las respuestas se eliminan por cascade)
+        examenRepository.delete(examen);
+        examenRepository.flush();
+
+        // Eliminar persona
+        if (persona != null) {
+            personaRepository.delete(persona);
+        }
+    }
+
+    /**
      * Elimina el examen asociado a un caso de Bondarea cuando el caso es eliminado allí.
      * Usado por el webhook /api/bondarea/caso-eliminado.
      * @param idCaso ID del caso en Bondarea (idCasoBondarea de la persona)

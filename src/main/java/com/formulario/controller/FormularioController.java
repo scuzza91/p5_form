@@ -1118,6 +1118,21 @@ public class FormularioController {
         return "lista";
     }
     
+    // Eliminar registro de la base local (sin tocar Bondarea ni ninguna API externa)
+    @PostMapping("/inscripciones/eliminar/{examenId}")
+    public String eliminarRegistro(@PathVariable Long examenId,
+                                   RedirectAttributes redirectAttributes) {
+        try {
+            formularioService.eliminarRegistroLocal(examenId);
+            logger.info("Registro eliminado de la base local - Examen ID: {}", examenId);
+            redirectAttributes.addFlashAttribute("mensaje", "Registro eliminado correctamente de la base de datos local.");
+        } catch (Exception e) {
+            logger.error("Error al eliminar registro con examen ID: {}", examenId, e);
+            redirectAttributes.addFlashAttribute("error", "Error al eliminar el registro: " + e.getMessage());
+        }
+        return "redirect:/inscripciones";
+    }
+
     // Vista de todas las inscripciones con resultados
     @GetMapping("/inscripciones")
     public String mostrarInscripciones(

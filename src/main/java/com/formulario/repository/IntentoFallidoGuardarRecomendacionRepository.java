@@ -10,4 +10,6 @@ import java.util.Optional;
 public interface IntentoFallidoGuardarRecomendacionRepository extends JpaRepository<IntentoFallidoGuardarRecomendacion, Long> {
 
     Optional<IntentoFallidoGuardarRecomendacion> findFirstByExamenIdOrderByFechaHoraDesc(Long examenId);
+
+    void deleteByExamenId(Long examenId);
 }
