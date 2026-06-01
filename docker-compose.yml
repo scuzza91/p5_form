@@ -47,6 +47,8 @@ services:
       LOGGING_LEVEL_COM_FORMULARIO: ${LOGGING_LEVEL:-INFO}
       # Clave secreta para generacion de tokens de examen (OBLIGATORIO en produccion)
       EXAMEN_TOKEN_SECRET: ${EXAMEN_TOKEN_SECRET}
+      # Contraseña del admin - solo se usa la primera vez que se crea el usuario
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:admin123}
       # Token de API de Bondarea (opcional - también se puede configurar desde la UI)
       # API_TOKEN_BONDAREA: ${API_TOKEN_BONDAREA:-}
     ports:

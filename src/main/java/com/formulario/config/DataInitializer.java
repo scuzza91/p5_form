@@ -15,6 +15,7 @@ import com.formulario.service.ConfiguracionService;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +30,9 @@ import java.util.List;
 public class DataInitializer implements CommandLineRunner {
 
     private static final Logger logger = LoggerFactory.getLogger(DataInitializer.class);
+
+    @Value("${admin.password:admin123}")
+    private String adminPassword;
 
     @Autowired
     private ProvinciaRepository provinciaRepository;
@@ -89,9 +93,13 @@ public class DataInitializer implements CommandLineRunner {
         logger.info("🔄 Inicializando roles profesionales de ejemplo...");
         rolProfesionalService.inicializarRolesEjemplo();
         
-        // Crear usuario administrador por defecto (siempre recrear para debug)
-        logger.info("🔄 Forzando recreación del usuario administrador...");
-        crearUsuarioAdministrador();
+        // Crear usuario administrador solo si no existe
+        if (usuarioRepository.findByUsername("admin").isEmpty()) {
+            logger.info("🔄 Usuario admin no existe, creando por primera vez...");
+            crearUsuarioAdministrador();
+        } else {
+            logger.info("✅ Usuario administrador ya existe, no se modifica");
+        }
         
         // Inicializar configuraciones del sistema
         logger.info("🔄 Inicializando configuraciones del sistema...");
@@ -247,35 +255,22 @@ public class DataInitializer implements CommandLineRunner {
     }
     
     private void crearUsuarioAdministrador() {
-        logger.info("🔄 Creando usuario administrador por defecto...");
-        
         try {
-            // Primero, eliminar el usuario admin si existe
-            var usuarioExistente = usuarioRepository.findByUsername("admin");
-            if (usuarioExistente.isPresent()) {
-                logger.info("🗑️ Eliminando usuario admin existente...");
-                usuarioRepository.delete(usuarioExistente.get());
-            }
-            
             Usuario admin = new Usuario();
             admin.setUsername("admin");
             admin.setEmail("admin@piso5.com");
-            admin.setPassword("admin123");
+            admin.setPassword(adminPassword);
             admin.setNombreCompleto("Administrador del Sistema");
             admin.setRol(Usuario.Rol.ADMIN);
             admin.setActivo(true);
-            
-            Usuario usuarioCreado = authService.crearUsuario(admin);
-            
-            logger.info("✅ Usuario administrador creado correctamente");
-            logger.info("📧 Usuario: " + usuarioCreado.getUsername());
-            logger.info("🔑 Contraseña: admin123");
-            logger.info("🔐 Contraseña encriptada: " + usuarioCreado.getPassword());
-            logger.info("⚠️  IMPORTANTE: Cambie la contraseña después del primer inicio de sesión");
-            
+
+            authService.crearUsuario(admin);
+
+            logger.info("✅ Usuario administrador creado. Usuario: admin");
+            logger.info("⚠️  Usá la variable ADMIN_PASSWORD para definir la contraseña");
+
         } catch (Exception e) {
-            logger.error("❌ Error al crear usuario administrador: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("❌ Error al crear usuario administrador: {}", e.getMessage());
         }
     }
 } 
