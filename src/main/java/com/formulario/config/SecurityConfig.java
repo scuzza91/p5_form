@@ -12,29 +12,45 @@ import org.springframework.web.cors.CorsConfigurationSource;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
-    
+
     @Autowired
     private CustomUserDetailsService userDetailsService;
-    
+
     @Autowired
     private CorsConfigurationSource corsConfigurationSource;
-    
+
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-    
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource))
-            .csrf(csrf -> csrf.disable())
+            .csrf(csrf -> csrf
+                // Excluir endpoints llamados desde servidores externos (sin CSRF token)
+                .ignoringRequestMatchers(
+                    "/api/**",      // Bondarea webhook - llamada de servidor a servidor
+                    "/examen/**"    // Flujo del candidato - puede usar AJAX
+                )
+            )
             .authorizeHttpRequests(auth -> auth
-                // Permitir acceso al endpoint de API sin autenticación
-                .requestMatchers("/api/persona/crear").permitAll()
+                // API con su propio sistema de tokens
                 .requestMatchers("/api/**").permitAll()
-                // Permitir todas las rutas temporalmente para debug
-                .anyRequest().permitAll()
+                // Rutas públicas para candidatos
+                .requestMatchers("/", "/login", "/logout").permitAll()
+                .requestMatchers("/examen/**").permitAll()
+                .requestMatchers("/resultado/**").permitAll()
+                .requestMatchers("/recomendaciones/**").permitAll()
+                .requestMatchers("/pdf/**").permitAll()
+                // Endpoints de diagnóstico (bajo riesgo, sin datos sensibles)
+                .requestMatchers("/basic", "/hello", "/test/**").permitAll()
+                // Recursos estáticos
+                .requestMatchers("/static/**", "/css/**", "/js/**",
+                                 "/images/**", "/uploads/**", "/favicon.ico").permitAll()
+                // Todo lo demás requiere autenticación (dashboard, admin, configuracion, etc.)
+                .anyRequest().authenticated()
             )
             .formLogin(form -> form
                 .loginPage("/login")
@@ -49,7 +65,7 @@ public class SecurityConfig {
                 .permitAll()
             )
             .userDetailsService(userDetailsService);
-            
+
         return http.build();
     }
 } 
