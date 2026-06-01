@@ -529,10 +529,10 @@
                     <span>Filas por página:</span>
                     <select onchange="cambiarTamanoPagina(this.value)"
                             class="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option th:each="s : ${#arrays.toIntArray({10, 20, 50, 100})}"
-                                th:value="${s}"
-                                th:text="${s}"
-                                th:selected="${s == pageSize}">20</option>
+                        <option value="10"  th:selected="${pageSize == 10}">10</option>
+                        <option value="20"  th:selected="${pageSize == 20}">20</option>
+                        <option value="50"  th:selected="${pageSize == 50}">50</option>
+                        <option value="100" th:selected="${pageSize == 100}">100</option>
                     </select>
                 </div>
             </div>
