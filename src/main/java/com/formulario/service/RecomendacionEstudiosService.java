@@ -9,7 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -53,6 +55,52 @@ public class RecomendacionEstudiosService {
                 .collect(Collectors.toList());
     }
     
+    /**
+     * Crea una nueva recomendación de estudios recibida desde la API de Bondarea.
+     * NO asigna posicionesLaborales ni imagenInstitucion — esos campos se gestionan desde el admin.
+     */
+    @Transactional
+    public RecomendacionEstudios crearDesdeApi(Map<String, Object> datos) {
+        RecomendacionEstudios rec = new RecomendacionEstudios();
+        mapearCamposDesdeApi(rec, datos);
+        return recomendacionEstudiosRepository.save(rec);
+    }
+
+    /**
+     * Actualiza una recomendación existente recibida desde la API de Bondarea.
+     * NO toca posicionesLaborales ni imagenInstitucion — esos campos se gestionan desde el admin.
+     */
+    @Transactional
+    public RecomendacionEstudios actualizarDesdeApi(Long id, Map<String, Object> datos) {
+        RecomendacionEstudios rec = recomendacionEstudiosRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Recomendación de estudios no encontrada con ID: " + id));
+        mapearCamposDesdeApi(rec, datos);
+        return recomendacionEstudiosRepository.save(rec);
+    }
+
+    /**
+     * Mapea los campos enviados por API a la entidad.
+     * Solo mapea los campos permitidos por API; ignora posicionesLaborales e imagenInstitucion.
+     */
+    private void mapearCamposDesdeApi(RecomendacionEstudios rec, Map<String, Object> datos) {
+        if (datos.get("nombreInstitucion") != null)
+            rec.setNombreInstitucion(datos.get("nombreInstitucion").toString().trim());
+        if (datos.get("nombreOferta") != null)
+            rec.setNombreOferta(datos.get("nombreOferta").toString().trim());
+        if (datos.containsKey("duracion"))
+            rec.setDuracion(datos.get("duracion") != null ? datos.get("duracion").toString().trim() : null);
+        if (datos.containsKey("descripcion"))
+            rec.setDescripcion(datos.get("descripcion") != null ? datos.get("descripcion").toString().trim() : null);
+        if (datos.get("costo") != null)
+            rec.setCosto(new BigDecimal(datos.get("costo").toString()));
+        if (datos.containsKey("gratuita") && datos.get("gratuita") != null)
+            rec.setGratuita(Boolean.parseBoolean(datos.get("gratuita").toString()));
+        if (datos.containsKey("activa") && datos.get("activa") != null)
+            rec.setActiva(Boolean.parseBoolean(datos.get("activa").toString()));
+        if (datos.containsKey("recomendacionUniversal") && datos.get("recomendacionUniversal") != null)
+            rec.setRecomendacionUniversal(Boolean.parseBoolean(datos.get("recomendacionUniversal").toString()));
+    }
+
     /**
      * Crea una nueva recomendación de estudios
      */
