@@ -1,8 +1,11 @@
 package com.formulario.controller;
 
+import com.formulario.model.RecomendacionEstudios;
 import com.formulario.model.RecomendacionEstudiosDTO;
+import com.formulario.service.ConfiguracionService;
 import com.formulario.service.RecomendacionEstudiosService;
 import com.formulario.service.RecomendacionService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,9 +28,19 @@ public class RecomendacionEstudiosController {
     
     @Autowired
     private RecomendacionEstudiosService recomendacionEstudiosService;
-    
+
     @Autowired
     private RecomendacionService recomendacionService;
+
+    @Autowired
+    private ConfiguracionService configuracionService;
+
+    /** Extrae el token del header X-API-Token o Authorization Bearer */
+    private String resolverToken(String apiToken, String authorization) {
+        if (apiToken != null) return apiToken;
+        if (authorization != null && authorization.startsWith("Bearer ")) return authorization.substring(7);
+        return null;
+    }
     
     /**
      * Obtiene todas las recomendaciones de estudios activas
@@ -87,33 +100,81 @@ public class RecomendacionEstudiosController {
     }
     
     /**
-     * Crea una nueva recomendación de estudios
+     * Crea una nueva recomendación de estudios desde Bondarea via API.
+     * Requiere X-API-Token. Solo gestiona los campos de contenido.
+     * Las posicionesLaborales e imagenInstitucion se gestionan desde el panel admin.
      */
     @PostMapping
-    public ResponseEntity<?> crear(@Valid @RequestBody RecomendacionEstudiosDTO dto) {
+    public ResponseEntity<?> crear(
+            @RequestBody(required = false) Map<String, Object> body,
+            @RequestHeader(value = "X-API-Token", required = false) String apiToken,
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            HttpServletRequest request) {
         try {
-            RecomendacionEstudiosDTO creada = recomendacionEstudiosService.crear(dto);
-            return ResponseEntity.status(HttpStatus.CREATED).body(creada);
+            String token = resolverToken(apiToken, authorization);
+            if (!configuracionService.validarApiToken(token)) {
+                logger.warn("Intento de crear recomendación con token inválido desde IP: {}", request.getRemoteAddr());
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Token de API inválido o no proporcionado"));
+            }
+            if (body == null || body.get("nombreInstitucion") == null || body.get("nombreOferta") == null || body.get("costo") == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "Campos obligatorios: nombreInstitucion, nombreOferta, costo"));
+            }
+            RecomendacionEstudios creada = recomendacionEstudiosService.crearDesdeApi(body);
+            logger.info("Recomendación creada via API - ID: {}, Institución: {}", creada.getId(), creada.getNombreInstitucion());
+            return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
+                "success", true,
+                "id", creada.getId(),
+                "nombreInstitucion", creada.getNombreInstitucion(),
+                "nombreOferta", creada.getNombreOferta(),
+                "mensaje", "Recomendación creada. Las posiciones laborales se vinculan desde el panel admin."
+            ));
         } catch (Exception e) {
-            logger.error("Error al crear recomendación de estudios", e);
+            logger.error("Error al crear recomendación de estudios via API", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error al crear recomendación de estudios: " + e.getMessage()));
+                    .body(Map.of("error", "Error al crear recomendación: " + e.getMessage()));
         }
     }
-    
+
     /**
-     * Actualiza una recomendación de estudios existente
+     * Actualiza una recomendación de estudios existente desde Bondarea via API.
+     * Requiere X-API-Token. NO toca posicionesLaborales ni imagenInstitucion.
      */
     @PutMapping("/{id}")
-    public ResponseEntity<?> actualizar(@PathVariable Long id, @Valid @RequestBody RecomendacionEstudiosDTO dto) {
+    public ResponseEntity<?> actualizar(
+            @PathVariable Long id,
+            @RequestBody(required = false) Map<String, Object> body,
+            @RequestHeader(value = "X-API-Token", required = false) String apiToken,
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            HttpServletRequest request) {
         try {
-            Optional<RecomendacionEstudiosDTO> actualizada = recomendacionEstudiosService.actualizar(id, dto);
-            return actualizada.map(ResponseEntity::ok)
-                    .orElse(ResponseEntity.notFound().build());
-        } catch (Exception e) {
-            logger.error("Error al actualizar recomendación de estudios con ID: {}", id, e);
+            String token = resolverToken(apiToken, authorization);
+            if (!configuracionService.validarApiToken(token)) {
+                logger.warn("Intento de actualizar recomendación con token inválido desde IP: {}", request.getRemoteAddr());
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Token de API inválido o no proporcionado"));
+            }
+            if (body == null || body.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "El cuerpo de la solicitud es requerido"));
+            }
+            RecomendacionEstudios actualizada = recomendacionEstudiosService.actualizarDesdeApi(id, body);
+            logger.info("Recomendación actualizada via API - ID: {}", actualizada.getId());
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "id", actualizada.getId(),
+                "nombreInstitucion", actualizada.getNombreInstitucion(),
+                "nombreOferta", actualizada.getNombreOferta(),
+                "mensaje", "Recomendación actualizada. Las posiciones laborales se gestionan desde el panel admin."
+            ));
+        } catch (RuntimeException e) {
+            if (e.getMessage() != null && e.getMessage().contains("no encontrada")) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+            }
+            logger.error("Error al actualizar recomendación ID: {} via API", id, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error al actualizar recomendación de estudios: " + e.getMessage()));
+                    .body(Map.of("error", "Error al actualizar recomendación: " + e.getMessage()));
         }
     }
     
