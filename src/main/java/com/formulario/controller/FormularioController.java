@@ -1133,6 +1133,100 @@ public class FormularioController {
         return "redirect:/inscripciones";
     }
 
+    /**
+     * Renueva en Bondarea el link de reintento de TODOS los exámenes que tienen idCasoBondarea.
+     * Proceso en segundo plano con 4 segundos de delay entre cada llamada.
+     * Ver progreso: docker logs -f p5_form_app | grep RENOVAR-LINKS
+     */
+    @PostMapping("/admin/renovar-links-bondarea")
+    public ResponseEntity<?> renovarLinksBondarea(
+            @RequestHeader(value = "X-API-Token", required = false) String apiToken,
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            HttpServletRequest request) {
+
+        // Validar token de API
+        String token = apiToken;
+        if (token == null && authorization != null && authorization.startsWith("Bearer ")) {
+            token = authorization.substring(7);
+        }
+        if (!configuracionService.validarApiToken(token)) {
+            logger.warn("Intento de renovar links con token inválido desde IP: {}", getClientIpAddress(request));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("error", "Token de API inválido o no proporcionado"));
+        }
+
+        // Obtener baseUrl ANTES de iniciar el hilo (el request no estará disponible después)
+        final String baseUrl = obtenerBaseUrl(request);
+
+        // Cargar exámenes y contar cuántos tienen idCasoBondarea
+        List<Examen> todosLosExamenes = formularioService.listarTodosLosExamenes();
+        long conBondarea = todosLosExamenes.stream()
+            .filter(e -> e.getPersona() != null
+                && e.getPersona().getIdCasoBondarea() != null
+                && !e.getPersona().getIdCasoBondarea().isBlank())
+            .count();
+
+        logger.info("[RENOVAR-LINKS] Solicitud recibida - {} exámenes totales, {} con idCasoBondarea",
+            todosLosExamenes.size(), conBondarea);
+
+        // Iniciar proceso en segundo plano
+        Thread proceso = new Thread(() -> {
+            logger.info("🔄 [RENOVAR-LINKS] Iniciando renovación masiva - {} exámenes a procesar, delay: 4s", conBondarea);
+            int actualizados = 0, errores = 0, sinBondarea = 0, procesados = 0;
+
+            for (Examen examen : todosLosExamenes) {
+                if (examen.getPersona() == null) { sinBondarea++; continue; }
+                String idCaso = examen.getPersona().getIdCasoBondarea();
+                if (idCaso == null || idCaso.isBlank()) { sinBondarea++; continue; }
+
+                procesados++;
+                try {
+                    String nuevoLink = baseUrl + "/examen/reintento/" + ExamenTokenUtil.generarToken(examen.getId());
+                    Map<String, Object> resultado = bondareaService.actualizarUrlReintentoEnBondarea(idCaso, nuevoLink);
+
+                    if (Boolean.TRUE.equals(resultado.get("success"))) {
+                        actualizados++;
+                        logger.info("✅ [RENOVAR-LINKS] {}/{} | Examen: {} | idCaso: {}",
+                            procesados, conBondarea, examen.getId(), idCaso);
+                    } else {
+                        errores++;
+                        logger.warn("❌ [RENOVAR-LINKS] {}/{} | Falló | Examen: {} | idCaso: {} | Respuesta: {}",
+                            procesados, conBondarea, examen.getId(), idCaso, resultado);
+                    }
+
+                    Thread.sleep(4000);
+
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    logger.error("🛑 [RENOVAR-LINKS] Proceso interrumpido en examen ID: {}", examen.getId());
+                    break;
+                } catch (Exception e) {
+                    errores++;
+                    logger.error("❌ [RENOVAR-LINKS] {}/{} | Error | Examen: {} | idCaso: {} | {}",
+                        procesados, conBondarea, examen.getId(), idCaso, e.getMessage());
+                    try { Thread.sleep(4000); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); break; }
+                }
+            }
+
+            logger.info("🏁 [RENOVAR-LINKS] Proceso completado: {} actualizados ✅ | {} errores ❌ | {} sin Bondarea ⏭",
+                actualizados, errores, sinBondarea);
+        });
+
+        proceso.setName("renovar-links-bondarea");
+        proceso.setDaemon(true);
+        proceso.start();
+
+        long tiempoMinutos = (conBondarea * 4) / 60;
+        return ResponseEntity.accepted().body(Map.of(
+            "success", true,
+            "mensaje", "Proceso iniciado en segundo plano",
+            "examenesConBondarea", conBondarea,
+            "examenesTotales", todosLosExamenes.size(),
+            "tiempoEstimadoMinutos", tiempoMinutos,
+            "comoVerProgreso", "docker logs -f p5_form_app | grep RENOVAR-LINKS"
+        ));
+    }
+
     // Vista de todas las inscripciones con resultados
     @GetMapping("/inscripciones")
     public String mostrarInscripciones(
