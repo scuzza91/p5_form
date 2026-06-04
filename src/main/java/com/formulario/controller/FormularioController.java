@@ -1149,13 +1149,12 @@ public class FormularioController {
             List<InscripcionDTO> inscripciones = formularioService.obtenerTodasLasInscripciones();
             logger.info("Inscripciones obtenidas de BD: {}", inscripciones.size());
 
-            // Generar link de reintento para exámenes con tiempo agotado sin finalizar
+            // Generar link de reintento para TODOS los exámenes (con clave actual)
+            // Esto permite al admin copiar y reenviar links válidos a cualquier candidato
             String baseUrl = obtenerBaseUrl(request);
             inscripciones.forEach(inscripcion -> {
-                if (InscripcionDTO.ESTADO_TIEMPO_TIEMPO_AGOTADO_SIN_FINALIZAR.equals(inscripcion.getEstadoTiempo())) {
-                    String tokenReintento = ExamenTokenUtil.generarToken(inscripcion.getId());
-                    inscripcion.setLinkReintentoAutomatico(baseUrl + "/examen/reintento/" + tokenReintento);
-                }
+                String tokenReintento = ExamenTokenUtil.generarToken(inscripcion.getId());
+                inscripcion.setLinkReintentoAutomatico(baseUrl + "/examen/reintento/" + tokenReintento);
             });
 
             // Aplicar filtros

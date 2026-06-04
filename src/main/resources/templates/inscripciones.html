@@ -433,19 +433,17 @@
                                         Nuevo examen
                                     </a>
 
-                                    <a th:if="${inscripcion.linkReintentoAutomatico != null}"
-                                       th:href="${inscripcion.linkReintentoAutomatico}"
+                                    <a th:href="${inscripcion.linkReintentoAutomatico}"
                                        target="_blank"
                                        class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md text-white bg-cyan-600 hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 transition-colors duration-200"
-                                       title="Link automático para reintento">
+                                       title="Link de acceso al examen (siempre válido)">
                                         <i class="fas fa-link mr-1"></i>
-                                        Link reintento
+                                        Link examen
                                     </a>
-                                    <button th:if="${inscripcion.linkReintentoAutomatico != null}"
-                                            type="button"
+                                    <button type="button"
                                             th:attr="onclick=|copiarLink('${inscripcion.linkReintentoAutomatico}', this)|"
                                             class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md text-white bg-slate-600 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 transition-colors duration-200"
-                                            title="Copiar link automático">
+                                            title="Copiar link del examen">
                                         <i class="fas fa-copy mr-1"></i>
                                         Copiar link
                                     </button>
