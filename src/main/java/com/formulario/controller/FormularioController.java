@@ -1138,7 +1138,7 @@ public class FormularioController {
      * Proceso en segundo plano con 4 segundos de delay entre cada llamada.
      * Ver progreso: docker logs -f p5_form_app | grep RENOVAR-LINKS
      */
-    @PostMapping("/admin/renovar-links-bondarea")
+    @PostMapping("/api/renovar-links-bondarea")
     public ResponseEntity<?> renovarLinksBondarea(
             @RequestHeader(value = "X-API-Token", required = false) String apiToken,
             @RequestHeader(value = "Authorization", required = false) String authorization,
@@ -1223,7 +1223,7 @@ public class FormularioController {
             "examenesConBondarea", conBondarea,
             "examenesTotales", todosLosExamenes.size(),
             "tiempoEstimadoMinutos", tiempoMinutos,
-            "comoVerProgreso", "docker logs -f p5_form_app | grep RENOVAR-LINKS"
+            "comoVerProgreso", "En el servidor: docker logs -f p5_form_app | grep RENOVAR-LINKS"
         ));
     }
 
