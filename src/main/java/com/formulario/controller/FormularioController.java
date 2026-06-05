@@ -1143,6 +1143,7 @@ public class FormularioController {
             @RequestHeader(value = "X-API-Token", required = false) String apiToken,
             @RequestHeader(value = "Authorization", required = false) String authorization,
             @RequestParam(value = "baseUrl") String baseUrlParam,
+            @RequestParam(value = "limite", required = false) Integer limite,
             HttpServletRequest request) {
 
         // Validar token de API
@@ -1159,6 +1160,9 @@ public class FormularioController {
         // Sanitizar baseUrl: quitar slash final si tiene
         final String baseUrl = baseUrlParam.endsWith("/") ? baseUrlParam.substring(0, baseUrlParam.length() - 1) : baseUrlParam;
 
+        // Límite opcional de registros a procesar (para pruebas). Null = todos.
+        final Integer limiteProcesar = limite;
+
         // Cargar exámenes y contar cuántos tienen idCasoBondarea
         List<Examen> todosLosExamenes = formularioService.listarTodosLosExamenes();
         long conBondarea = todosLosExamenes.stream()
@@ -1172,10 +1176,18 @@ public class FormularioController {
 
         // Iniciar proceso en segundo plano
         Thread proceso = new Thread(() -> {
-            logger.info("🔄 [RENOVAR-LINKS] Iniciando renovación masiva - {} exámenes a procesar, delay: 4s", conBondarea);
+            long aProcesar = limiteProcesar != null ? Math.min(limiteProcesar, conBondarea) : conBondarea;
+            logger.info("🔄 [RENOVAR-LINKS] Iniciando renovación - {} exámenes a procesar{}, delay: 4s",
+                aProcesar, limiteProcesar != null ? " (LÍMITE DE PRUEBA)" : "");
             int actualizados = 0, errores = 0, sinBondarea = 0, procesados = 0;
 
             for (Examen examen : todosLosExamenes) {
+                // Cortar si se alcanzó el límite de prueba
+                if (limiteProcesar != null && procesados >= limiteProcesar) {
+                    logger.info("🔵 [RENOVAR-LINKS] Límite de prueba alcanzado ({} registros)", limiteProcesar);
+                    break;
+                }
+
                 if (examen.getPersona() == null) { sinBondarea++; continue; }
                 String idCaso = examen.getPersona().getIdCasoBondarea();
                 if (idCaso == null || idCaso.isBlank()) { sinBondarea++; continue; }
@@ -1188,11 +1200,11 @@ public class FormularioController {
                     if (Boolean.TRUE.equals(resultado.get("success"))) {
                         actualizados++;
                         logger.info("✅ [RENOVAR-LINKS] {}/{} | Examen: {} | idCaso: {}",
-                            procesados, conBondarea, examen.getId(), idCaso);
+                            procesados, aProcesar, examen.getId(), idCaso);
                     } else {
                         errores++;
                         logger.warn("❌ [RENOVAR-LINKS] {}/{} | Falló | Examen: {} | idCaso: {} | Respuesta: {}",
-                            procesados, conBondarea, examen.getId(), idCaso, resultado);
+                            procesados, aProcesar, examen.getId(), idCaso, resultado);
                     }
 
                     Thread.sleep(4000);
@@ -1204,7 +1216,7 @@ public class FormularioController {
                 } catch (Exception e) {
                     errores++;
                     logger.error("❌ [RENOVAR-LINKS] {}/{} | Error | Examen: {} | idCaso: {} | {}",
-                        procesados, conBondarea, examen.getId(), idCaso, e.getMessage());
+                        procesados, aProcesar, examen.getId(), idCaso, e.getMessage());
                     try { Thread.sleep(4000); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); break; }
                 }
             }
