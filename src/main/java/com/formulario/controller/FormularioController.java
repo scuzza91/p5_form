@@ -1142,6 +1142,7 @@ public class FormularioController {
     public ResponseEntity<?> renovarLinksBondarea(
             @RequestHeader(value = "X-API-Token", required = false) String apiToken,
             @RequestHeader(value = "Authorization", required = false) String authorization,
+            @RequestParam(value = "baseUrl") String baseUrlParam,
             HttpServletRequest request) {
 
         // Validar token de API
@@ -1155,8 +1156,8 @@ public class FormularioController {
                 .body(Map.of("error", "Token de API inválido o no proporcionado"));
         }
 
-        // Obtener baseUrl ANTES de iniciar el hilo (el request no estará disponible después)
-        final String baseUrl = obtenerBaseUrl(request);
+        // Sanitizar baseUrl: quitar slash final si tiene
+        final String baseUrl = baseUrlParam.endsWith("/") ? baseUrlParam.substring(0, baseUrlParam.length() - 1) : baseUrlParam;
 
         // Cargar exámenes y contar cuántos tienen idCasoBondarea
         List<Examen> todosLosExamenes = formularioService.listarTodosLosExamenes();
