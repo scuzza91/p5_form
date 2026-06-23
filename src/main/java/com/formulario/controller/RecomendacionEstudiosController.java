@@ -9,15 +9,19 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/recomendaciones-estudios")
@@ -35,11 +39,50 @@ public class RecomendacionEstudiosController {
     @Autowired
     private ConfiguracionService configuracionService;
 
+    @Value("${api.recomendaciones.allowed-ips:}")
+    private String allowedIpsConfig;
+
     /** Extrae el token del header X-API-Token o Authorization Bearer */
     private String resolverToken(String apiToken, String authorization) {
         if (apiToken != null) return apiToken;
         if (authorization != null && authorization.startsWith("Bearer ")) return authorization.substring(7);
         return null;
+    }
+
+    /** Obtiene la IP real del cliente (considera proxy/CloudFront via X-Forwarded-For) */
+    private String obtenerIpCliente(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("X-Real-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getRemoteAddr();
+        }
+        // X-Forwarded-For puede traer "clienteReal, proxy1, proxy2" — tomamos la primera
+        if (ip != null && ip.contains(",")) {
+            ip = ip.split(",")[0].trim();
+        }
+        return ip;
+    }
+
+    /**
+     * Verifica si la IP del cliente está en la lista blanca.
+     * Si la lista está vacía (no configurada), permite cualquier IP (solo valida token).
+     */
+    private boolean ipPermitida(HttpServletRequest request) {
+        if (allowedIpsConfig == null || allowedIpsConfig.isBlank()) {
+            return true; // Sin lista configurada → no se restringe por IP
+        }
+        Set<String> permitidas = Arrays.stream(allowedIpsConfig.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toSet());
+        String ipCliente = obtenerIpCliente(request);
+        boolean permitida = permitidas.contains(ipCliente);
+        if (!permitida) {
+            logger.warn("IP no autorizada intentó acceder a la API de recomendaciones: {}", ipCliente);
+        }
+        return permitida;
     }
     
     /**
@@ -111,9 +154,13 @@ public class RecomendacionEstudiosController {
             @RequestHeader(value = "Authorization", required = false) String authorization,
             HttpServletRequest request) {
         try {
+            if (!ipPermitida(request)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "Acceso denegado: IP no autorizada"));
+            }
             String token = resolverToken(apiToken, authorization);
             if (!configuracionService.validarApiToken(token)) {
-                logger.warn("Intento de crear recomendación con token inválido desde IP: {}", request.getRemoteAddr());
+                logger.warn("Intento de crear recomendación con token inválido desde IP: {}", obtenerIpCliente(request));
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("error", "Token de API inválido o no proporcionado"));
             }
@@ -149,9 +196,13 @@ public class RecomendacionEstudiosController {
             @RequestHeader(value = "Authorization", required = false) String authorization,
             HttpServletRequest request) {
         try {
+            if (!ipPermitida(request)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "Acceso denegado: IP no autorizada"));
+            }
             String token = resolverToken(apiToken, authorization);
             if (!configuracionService.validarApiToken(token)) {
-                logger.warn("Intento de actualizar recomendación con token inválido desde IP: {}", request.getRemoteAddr());
+                logger.warn("Intento de actualizar recomendación con token inválido desde IP: {}", obtenerIpCliente(request));
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("error", "Token de API inválido o no proporcionado"));
             }

@@ -49,6 +49,8 @@ services:
       EXAMEN_TOKEN_SECRET: ${EXAMEN_TOKEN_SECRET}
       # Contraseña del admin - solo se usa la primera vez que se crea el usuario
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
+      # IPs permitidas para la API de recomendaciones (separadas por coma). Vacío = sin restricción por IP
+      API_ALLOWED_IPS: ${API_ALLOWED_IPS:-}
       # Token de API de Bondarea (opcional - también se puede configurar desde la UI)
       # API_TOKEN_BONDAREA: ${API_TOKEN_BONDAREA:-}
     ports:
